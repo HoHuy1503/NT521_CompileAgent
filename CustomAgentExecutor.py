@@ -1,4 +1,12 @@
+import re
 from langchain.agents import AgentExecutor
+from langchain.agents.output_parsers.react_single_input import (
+    FINAL_ANSWER_ACTION,
+    FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE,
+    MISSING_ACTION_AFTER_THOUGHT_ERROR_MESSAGE,
+    MISSING_ACTION_INPUT_AFTER_ACTION_ERROR_MESSAGE,
+    ReActSingleInputOutputParser,
+)
 from langchain_core.agents import AgentAction, AgentFinish, AgentStep
 from langchain_core.tools import BaseTool
 from langchain_core.callbacks import (
@@ -10,6 +18,39 @@ from langchain_core.exceptions import OutputParserException
 from langchain.agents.tools import InvalidTool
 from langchain.agents.agent import ExceptionTool
 import asyncio
+
+from Config import call_with_rate_limit_retry, strip_thinking_tags
+
+
+class SafeReActSingleInputOutputParser(ReActSingleInputOutputParser):
+    """ReAct parser that strips reasoning tags and preserves trailing shell quotes."""
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        cleaned_text = strip_thinking_tags(text)
+        includes_answer = FINAL_ANSWER_ACTION in cleaned_text
+        regex = r"Action\s*\d*\s*:[\s]*(.*?)Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
+        action_match = re.search(regex, cleaned_text, re.DOTALL)
+        if action_match:
+            if includes_answer:
+                msg = f"{FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE}: {cleaned_text}"
+                raise OutputParserException(msg)
+            action = action_match.group(1).strip()
+            tool_input = action_match.group(2).strip()
+            # Drop hallucinated extra ReAct turns appended after Action Input
+            tool_input = re.split(
+                r"\n\s*(?:---\s*\n\s*)?(?:Thought|Action(?:\s*\d+)?|Observation|Final Answer)\s*:",
+                tool_input,
+                maxsplit=1,
+            )[0].strip()
+            if (
+                len(tool_input) >= 2
+                and tool_input.startswith('"')
+                and tool_input.endswith('"')
+                and '"' not in tool_input[1:-1]
+            ):
+                tool_input = tool_input[1:-1].strip()
+            return AgentAction(action, tool_input, cleaned_text)
+        return super().parse(cleaned_text)
 
 
 class CompilationAgentExecutor(AgentExecutor):
@@ -28,8 +69,9 @@ class CompilationAgentExecutor(AgentExecutor):
         try:
             intermediate_steps = self._prepare_intermediate_steps(intermediate_steps)
 
-            # Call the LLM to see what to do.
-            output = self.agent.plan(
+            # Call the LLM to see what to do (retrying gracefully on transient RPM limits).
+            output = call_with_rate_limit_retry(
+                self.agent.plan,
                 intermediate_steps,
                 callbacks=run_manager.get_child() if run_manager else None,
                 **inputs,
@@ -91,6 +133,26 @@ class CompilationAgentExecutor(AgentExecutor):
                 name_to_tool_map, color_mapping, agent_action, run_manager, intermediate_steps
             )
 
+    @staticmethod
+    def _enrich_tool_input(agent_action: AgentAction, intermediate_steps: list) -> None:
+        if not intermediate_steps:
+            return
+        raw_input = str(agent_action.tool_input or "").strip()
+        if agent_action.tool in ("GET_INSTRUCTIONS", "CompileNavigator"):
+            tree_obs = str(intermediate_steps[0][1])
+            if len(raw_input) < 25:
+                agent_action.tool_input = tree_obs
+            elif "|--" not in raw_input and "`--" not in raw_input:
+                agent_action.tool_input = f"{raw_input}\n\nProject directory structure:\n{tree_obs}"
+        elif agent_action.tool in ("RECONCILE", "ErrorSolver"):
+            last_obs = str(intermediate_steps[-1][1])
+            if len(raw_input) < 25:
+                agent_action.tool_input = last_obs
+            else:
+                tail = last_obs[-2000:]
+                if tail[:120] not in raw_input:
+                    agent_action.tool_input = f"{raw_input}\n\nRecent command output:\n{tail}"
+
     def _perform_agent_action(
         self,
         name_to_tool_map: Dict[str, BaseTool],
@@ -110,17 +172,10 @@ class CompilationAgentExecutor(AgentExecutor):
             if return_direct:
                 tool_run_kwargs["llm_prefix"] = ""
             # We then call the tool on the tool input to get an observation
-            
-            if agent_action.tool == 'GET_INSTRUCTIONS':
-                try:
-                    agent_action.tool_input = intermediate_steps[0][1]
-                except Exception as e:
-                    pass
-            if agent_action.tool == 'RECONCILE':
-                try:
-                    agent_action.tool_input = intermediate_steps[-1][1]
-                except Exception as e:
-                    pass
+            try:
+                self._enrich_tool_input(agent_action, intermediate_steps)
+            except Exception:
+                pass
             # breakpoint()
             
             observation = tool.run(
@@ -251,11 +306,10 @@ class CompilationAgentExecutor(AgentExecutor):
             if return_direct:
                 tool_run_kwargs["llm_prefix"] = ""
             # We then call the tool on the tool input to get an observation
-            
-            if agent_action.tool == 'GET_INSTRUCTIONS':
-                agent_action.tool_input = intermediate_steps[0][1]
-            if agent_action.tool == 'RECONCILE':
-                agent_action.tool_input = intermediate_steps[-1][1]
+            try:
+                self._enrich_tool_input(agent_action, intermediate_steps)
+            except Exception:
+                pass
 
             observation = await tool.arun(
                 agent_action.tool_input,
