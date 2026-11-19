@@ -1,0 +1,2525 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project redis from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Early stop: loop detected"
+		]
+	],
+	"tools": {
+		"Shell": [],
+		"CompileNavigator": [],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "redis",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 135.79,
+		"iterations": 4,
+		"tool_calls": {
+			"Shell": 0,
+			"CompileNavigator": 0,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "make",
+			"workdir": "/work",
+			"clean_cmd": "find . -maxdepth 4 \\( -name '*.o' -o -name '*.lo' -o -name '*.obj' -o -path '*/_o/*.o' \\) -delete",
+			"build_cmd": "make -j4",
+			"compile_db_cmd": "",
+			"test_cmd": ""
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\redis.semgrep.json",
+				"total_findings": 57,
+				"by_severity": {
+					"WARNING": 15,
+					"ERROR": 42
+				},
+				"by_rule": {
+					"c-integer-overflow-alloc": 15,
+					"c-unsafe-string-copy": 26,
+					"c-command-injection": 1,
+					"c-format-string-vuln": 15
+				},
+				"errors_count": 183,
+				"findings": [
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/hiredis/examples/example.c",
+						"line": 16,
+						"col": 12,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/hiredis/examples/example.c",
+						"line": 17,
+						"col": 15,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/hiredis.c",
+						"line": 516,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/hiredis.c",
+						"line": 518,
+						"col": 16,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/hiredis.c",
+						"line": 664,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/hiredis.c",
+						"line": 667,
+						"col": 16,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/test.c",
+						"line": 2227,
+						"col": 5,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/test.c",
+						"line": 2245,
+						"col": 5,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/hiredis/test.c",
+						"line": 2258,
+						"col": 5,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/jemalloc/src/prof_log.c",
+						"line": 193,
+						"col": 3,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/jemalloc/src/prof_log.c",
+						"line": 459,
+						"col": 3,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 526,
+						"col": 12,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 1330,
+						"col": 19,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 1332,
+						"col": 29,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 1375,
+						"col": 25,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 1521,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/linenoise/linenoise.c",
+						"line": 1522,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 145,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 193,
+						"col": 7,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 196,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 198,
+						"col": 7,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 204,
+						"col": 7,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 207,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 210,
+						"col": 9,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lobject.c",
+						"line": 211,
+						"col": 7,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-command-injection",
+						"rule": "c-command-injection",
+						"severity": "ERROR",
+						"path": "deps/lua/src/loslib.c",
+						"line": 39,
+						"col": 22,
+						"message": "Dynamic command passed to system() or popen() (CWE-78). Invoking a shell with non-literal input may allow OS command injection. Prefer execv/execvp with explicit argument arrays and strict input allowlists.",
+						"cwe": "CWE-78: OS Command Injection"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 820,
+						"col": 3,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 847,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 852,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 857,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 862,
+						"col": 11,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/lua/src/lstrlib.c",
+						"line": 880,
+						"col": 13,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "deps/tre/lib/regerror.c",
+						"line": 80,
+						"col": 4,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 49,
+						"col": 30,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 57,
+						"col": 29,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 84,
+						"col": 26,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 95,
+						"col": 31,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 96,
+						"col": 33,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 97,
+						"col": 29,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 98,
+						"col": 31,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "modules/vector-sets/w2v.c",
+						"line": 452,
+						"col": 25,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7334,
+						"col": 44,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7335,
+						"col": 44,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7336,
+						"col": 43,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7337,
+						"col": 47,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7338,
+						"col": 18,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7345,
+						"col": 21,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7888,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7955,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7968,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 7981,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 8212,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 8432,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 8490,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 8689,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "src/redis-cli.c",
+						"line": 8774,
+						"col": 5,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "utils/lru/lfu-simulation.c",
+						"line": 87,
+						"col": 29,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					}
+				]
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\redis.cppcheck.json",
+				"total_findings": 804,
+				"by_severity": {
+					"style": 644,
+					"error": 46,
+					"warning": 109,
+					"portability": 5
+				},
+				"findings": [
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'offset' can be reduced.",
+						"verbose": "The scope of the variable 'offset' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1059
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'load' can be reduced.",
+						"verbose": "The scope of the variable 'load' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1059
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'newload' can be reduced.",
+						"verbose": "The scope of the variable 'newload' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1059
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'pos' can be reduced.",
+						"verbose": "The scope of the variable 'pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1059
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'index' can be reduced.",
+						"verbose": "The scope of the variable 'index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1059
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'offset' can be reduced.",
+						"verbose": "The scope of the variable 'offset' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1076
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'load' can be reduced.",
+						"verbose": "The scope of the variable 'load' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1076
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'newload' can be reduced.",
+						"verbose": "The scope of the variable 'newload' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1076
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'pos' can be reduced.",
+						"verbose": "The scope of the variable 'pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1076
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'index' can be reduced.",
+						"verbose": "The scope of the variable 'index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1076
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'offset' can be reduced.",
+						"verbose": "The scope of the variable 'offset' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1092
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'load' can be reduced.",
+						"verbose": "The scope of the variable 'load' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1092
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'newload' can be reduced.",
+						"verbose": "The scope of the variable 'newload' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1092
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'pos' can be reduced.",
+						"verbose": "The scope of the variable 'pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1092
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'index' can be reduced.",
+						"verbose": "The scope of the variable 'index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1092
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'offset' can be reduced.",
+						"verbose": "The scope of the variable 'offset' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1112
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'newload' can be reduced.",
+						"verbose": "The scope of the variable 'newload' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1112
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'pos' can be reduced.",
+						"verbose": "The scope of the variable 'pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1112
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'index' can be reduced.",
+						"verbose": "The scope of the variable 'index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1112
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'offset' can be reduced.",
+						"verbose": "The scope of the variable 'offset' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1130
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'load' can be reduced.",
+						"verbose": "The scope of the variable 'load' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1130
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'newload' can be reduced.",
+						"verbose": "The scope of the variable 'newload' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1130
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'pos' can be reduced.",
+						"verbose": "The scope of the variable 'pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1130
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'index' can be reduced.",
+						"verbose": "The scope of the variable 'index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/bitset_util.c",
+						"line": 1130
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'newarraysize>smallest' is always false",
+						"verbose": "Condition 'newarraysize>smallest' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/bitset.c",
+						"line": 171
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'size' can be reduced.",
+						"verbose": "The scope of the variable 'size' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/containers/bitset.c",
+						"line": 1192
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'compare_result>0' is always false",
+						"verbose": "Condition 'compare_result>0' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 2091
+					},
+					{
+						"id": "redundantInitialization",
+						"severity": "style",
+						"msg": "Redundant initialization for 'new_ref'. The initialized value is overwritten before it is read.",
+						"verbose": "Redundant initialization for 'new_ref'. The initialized value is overwritten before it is read.",
+						"cwe": "563",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 1345
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'val' can be reduced.",
+						"verbose": "The scope of the variable 'val' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/containers/mixed_andnot.c",
+						"line": 399
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'val' is assigned a value that is never used.",
+						"verbose": "Variable 'val' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/containers/mixed_andnot.c",
+						"line": 399
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 370
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 387
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 400
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 420
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 557
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 574
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 587
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 607
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 735
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 754
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 762
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 782
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 909
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 928
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 936
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"verbose": "Uninitialized variables: indexed_child.index, indexed_child.key_chunk",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 956
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: result.value_erased",
+						"verbose": "Uninitialized variable: result.value_erased",
+						"cwe": "457",
+						"file": "deps/croaring/src/art/art.c",
+						"line": 1441
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'last_val_in_range' can be reduced.",
+						"verbose": "The scope of the variable 'last_val_in_range' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/containers/mixed_negation.c",
+						"line": 292
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'first_val_past_range' can be reduced.",
+						"verbose": "The scope of the variable 'first_val_past_range' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/containers/mixed_negation.c",
+						"line": 293
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'last_val_in_range' is assigned a value that is never used.",
+						"verbose": "Variable 'last_val_in_range' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/containers/mixed_negation.c",
+						"line": 292
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'start_pos' can be reduced.",
+						"verbose": "The scope of the variable 'start_pos' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/containers/mixed_subset.c",
+						"line": 29
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'start_pos' is assigned a value that is never used.",
+						"verbose": "Variable 'start_pos' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/containers/mixed_subset.c",
+						"line": 29
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "union member 'Anonymous0::dbl' is never used.",
+						"verbose": "union member 'Anonymous0::dbl' is never used.",
+						"cwe": "563",
+						"file": "deps/fpconv/fpconv_dtoa.c",
+						"line": 82
+					},
+					{
+						"id": "uselessAssignmentPtrArg",
+						"severity": "warning",
+						"msg": "Assignment of function parameter has no effect outside the function. Did you forget dereferencing it?",
+						"verbose": "Assignment of function parameter has no effect outside the function. Did you forget dereferencing it?",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring64.c",
+						"line": 2727
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'low16==0' is always false",
+						"verbose": "Condition 'low16==0' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/roaring64.c",
+						"line": 1985
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'lo!=NULL' is always false",
+						"verbose": "Condition 'lo!=NULL' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/roaring64.c",
+						"line": 2043
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'hi!=NULL' is always false",
+						"verbose": "Condition 'hi!=NULL' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/roaring64.c",
+						"line": 2064
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition '!is_ok' is always false",
+						"verbose": "Condition '!is_ok' is always false",
+						"cwe": "570",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 1565
+					},
+					{
+						"id": "shadowFunction",
+						"severity": "style",
+						"msg": "Local variable 'counts_index' shadows outer function",
+						"verbose": "Local variable 'counts_index' shadows outer function",
+						"cwe": "398",
+						"file": "deps/hdr_histogram/hdr_histogram.c",
+						"line": 769
+					},
+					{
+						"id": "shadowFunction",
+						"severity": "style",
+						"msg": "Local variable 'counts_index' shadows outer function",
+						"verbose": "Local variable 'counts_index' shadows outer function",
+						"cwe": "398",
+						"file": "deps/hdr_histogram/hdr_histogram.c",
+						"line": 790
+					},
+					{
+						"id": "shadowFunction",
+						"severity": "style",
+						"msg": "Local variable 'counts_index' shadows outer function",
+						"verbose": "Local variable 'counts_index' shadows outer function",
+						"cwe": "398",
+						"file": "deps/hdr_histogram/hdr_histogram.c",
+						"line": 1308
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'field' can be declared as pointer to const",
+						"verbose": "Parameter 'field' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/hdr_histogram/hdr_histogram.c",
+						"line": 178
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'expected' can be declared as pointer to const",
+						"verbose": "Parameter 'expected' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/hdr_histogram/hdr_histogram.c",
+						"line": 202
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'override' can be declared as pointer to const",
+						"verbose": "Parameter 'override' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/hiredis/alloc.c",
+						"line": 45
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "The comparison 'answer != 0' is always false.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2941
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 's1' can be reduced.",
+						"verbose": "The scope of the variable 's1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 1213
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 's2' can be reduced.",
+						"verbose": "The scope of the variable 's2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 1214
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'lo_ptr' can be reduced.",
+						"verbose": "The scope of the variable 'lo_ptr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2391
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'hi_ptr' can be reduced.",
+						"verbose": "The scope of the variable 'hi_ptr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2391
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2392
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'container' can be reduced.",
+						"verbose": "The scope of the variable 'container' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2891
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'typecode' can be reduced.",
+						"verbose": "The scope of the variable 'typecode' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2892
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'key' can be reduced.",
+						"verbose": "The scope of the variable 'key' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2893
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 's1' is assigned a value that is never used.",
+						"verbose": "Variable 's1' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 1213
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 's2' is assigned a value that is never used.",
+						"verbose": "Variable 's2' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 1214
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'hb_end' is assigned a value that is never used.",
+						"verbose": "Variable 'hb_end' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/croaring/src/roaring.c",
+						"line": 2312
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If EV_DEFAULT_ is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If EV_DEFAULT_ is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/hiredis/examples/example-libev.c",
+						"line": 52
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "deps/hiredis/examples/example-push.c",
+						"line": 149
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "deps/hiredis/examples/example-push.c",
+						"line": 149
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "deps/hiredis/examples/example-push.c",
+						"line": 155
+					},
+					{
+						"id": "uninitMemberVar",
+						"severity": "warning",
+						"msg": "Member variable 'ExampleQt::m_ctx' is not initialized in the constructor.",
+						"verbose": "Member variable 'ExampleQt::m_ctx' is not initialized in the constructor.",
+						"cwe": "398",
+						"file": "deps/hiredis/examples/example-qt.h",
+						"line": 11
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ExampleQt' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ExampleQt' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "deps/hiredis/examples/example-qt.h",
+						"line": 11
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'argc>1' is always true",
+						"verbose": "Condition 'argc>1' is always true",
+						"cwe": "571",
+						"file": "deps/hiredis/examples/example-ssl.c",
+						"line": 22
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'hints.ai_family' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'hints.ai_family' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "deps/hiredis/net.c",
+						"line": 561
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "The comparison 'res == -1' is always true.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "deps/hiredis/net.c",
+						"line": 283
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'res' can be reduced.",
+						"verbose": "The scope of the variable 'res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/net.c",
+						"line": 332
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 's' can be declared as pointer to const",
+						"verbose": "Parameter 's' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/hiredis/sds.h",
+						"line": 203
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 93
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'parent' can be reduced.",
+						"verbose": "The scope of the variable 'parent' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 175
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'parent' can be reduced.",
+						"verbose": "The scope of the variable 'parent' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 203
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'parent' can be reduced.",
+						"verbose": "The scope of the variable 'parent' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 223
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'parent' can be reduced.",
+						"verbose": "The scope of the variable 'parent' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 260
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'parent' can be reduced.",
+						"verbose": "The scope of the variable 'parent' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 278
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'len' can be reduced.",
+						"verbose": "The scope of the variable 'len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/hiredis.c",
+						"line": 685
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'cb' shadows outer variable",
+						"verbose": "Local variable 'cb' shadows outer variable",
+						"cwe": "398",
+						"file": "deps/hiredis/async.c",
+						"line": 528
+					},
+					{
+						"id": "invalidLifetime",
+						"severity": "error",
+						"msg": "Using pointer to local variable 'buf' that is out of scope.",
+						"verbose": "Using pointer to local variable 'buf' that is out of scope.",
+						"cwe": "562",
+						"file": "deps/hiredis/read.c",
+						"line": 383
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p' can be reduced.",
+						"verbose": "The scope of the variable 'p' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 115
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'len' can be reduced.",
+						"verbose": "The scope of the variable 'len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 227
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cur' can be reduced.",
+						"verbose": "The scope of the variable 'cur' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 241
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'prv' can be reduced.",
+						"verbose": "The scope of the variable 'prv' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 241
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'bytelen' can be reduced.",
+						"verbose": "The scope of the variable 'bytelen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 402
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'success' can be reduced.",
+						"verbose": "The scope of the variable 'success' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 403
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'root' can be reduced.",
+						"verbose": "The scope of the variable 'root' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 500
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p' can be reduced.",
+						"verbose": "The scope of the variable 'p' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/read.c",
+						"line": 575
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'root' is assigned a value that is never used.",
+						"verbose": "Variable 'root' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/hiredis/read.c",
+						"line": 500
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "portability",
+						"msg": "%zd in format string (no. 1) requires 'ssize_t' but the argument type is 'size_t {aka unsigned long}'.",
+						"verbose": "%zd in format string (no. 1) requires 'ssize_t' but the argument type is 'size_t {aka unsigned long}'.",
+						"cwe": "686",
+						"file": "deps/jemalloc/msvc/test_threads/test_threads.cpp",
+						"line": 83
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "deps/jemalloc/msvc/test_threads/test_threads.cpp",
+						"line": 54
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'aux' can be reduced.",
+						"verbose": "The scope of the variable 'aux' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/sds.c",
+						"line": 435
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'aux' can be reduced.",
+						"verbose": "The scope of the variable 'aux' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/hiredis/sds.c",
+						"line": 467
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'start' is assigned a value that is never used.",
+						"verbose": "Variable 'start' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "deps/hiredis/sds.c",
+						"line": 698
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'bin_shard_sizes' can be declared as const array",
+						"verbose": "Parameter 'bin_shard_sizes' can be declared as const array",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/bin_info.c",
+						"line": 9
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'backup_buf' can be reduced.",
+						"verbose": "The scope of the variable 'backup_buf' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/buf_writer.c",
+						"line": 120
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition '!is_background_thread' is always true",
+						"verbose": "Condition '!is_background_thread' is always true",
+						"cwe": "571",
+						"file": "deps/jemalloc/src/arena.c",
+						"line": 400
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'slab' can be declared as pointer to const",
+						"verbose": "Parameter 'slab' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/arena.c",
+						"line": 1344
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cell' can be reduced.",
+						"verbose": "The scope of the variable 'cell' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ckh.c",
+						"line": 63
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cell' can be reduced.",
+						"verbose": "The scope of the variable 'cell' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ckh.c",
+						"line": 103
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'target' can be reduced.",
+						"verbose": "The scope of the variable 'target' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/decay.c",
+						"line": 280
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'npurge' can be reduced.",
+						"verbose": "The scope of the variable 'npurge' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/decay.c",
+						"line": 280
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error",
+						"verbose": "syntax error",
+						"cwe": "",
+						"file": "deps/jemalloc/src/edata.c",
+						"line": 4
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'edata' can be reduced.",
+						"verbose": "The scope of the variable 'edata' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/edata_cache.c",
+						"line": 68
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'reply'.",
+						"verbose": "Variable 'reply' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1159
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'reply'.",
+						"verbose": "Variable 'reply' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1185
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'reply'.",
+						"verbose": "Variable 'reply' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1187
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'c'.",
+						"verbose": "Variable 'c' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1225
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'ac'.",
+						"verbose": "Variable 'ac' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1231
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'c'.",
+						"verbose": "Variable 'c' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1238
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'c'.",
+						"verbose": "Variable 'c' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1245
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'ac'.",
+						"verbose": "Variable 'ac' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1252
+					},
+					{
+						"id": "assignmentInAssert",
+						"severity": "warning",
+						"msg": "Assert statement modifies 'c'.",
+						"verbose": "Variable 'c' is modified inside assert statement. Assert statements are removed from release builds so the code inside assert statement is not executed. If the code is needed also in release builds, this is a bug.",
+						"cwe": "398",
+						"file": "deps/hiredis/test.c",
+						"line": 1270
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'Anonymous8::ca_cert' is never used.",
+						"verbose": "struct member 'Anonymous8::ca_cert' is never used.",
+						"cwe": "563",
+						"file": "deps/hiredis/test.c",
+						"line": 62
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'Anonymous8::cert' is never used.",
+						"verbose": "struct member 'Anonymous8::cert' is never used.",
+						"cwe": "563",
+						"file": "deps/hiredis/test.c",
+						"line": 63
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'Anonymous8::key' is never used.",
+						"verbose": "struct member 'Anonymous8::key' is never used.",
+						"cwe": "563",
+						"file": "deps/hiredis/test.c",
+						"line": 64
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'zero' can be declared as pointer to const",
+						"verbose": "Parameter 'zero' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/extent_dss.c",
+						"line": 110
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'expand_edata' can be declared as pointer to const",
+						"verbose": "Parameter 'expand_edata' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/extent.c",
+						"line": 481
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'to_install' can be declared as pointer to const",
+						"verbose": "Parameter 'to_install' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/hook.c",
+						"line": 28
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error",
+						"verbose": "syntax error",
+						"cwe": "",
+						"file": "deps/jemalloc/src/hpdata.c",
+						"line": 18
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_ALIGNED is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_ALIGNED is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/jemalloc.c",
+						"line": 175
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/malloc_io.c",
+						"line": 632
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err' can be reduced.",
+						"verbose": "The scope of the variable 'err' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/pa.c",
+						"line": 21
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'new_limit' can be declared as pointer to const",
+						"verbose": "Parameter 'new_limit' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/pac.c",
+						"line": 318
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/prof_data.c",
+						"line": 507
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_FORMAT_PRINTF is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/prof_sys.c",
+						"line": 425
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'thr_old_node' can be reduced.",
+						"verbose": "The scope of the variable 'thr_old_node' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/prof_log.c",
+						"line": 496
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'bt_old_node' can be reduced.",
+						"verbose": "The scope of the variable 'bt_old_node' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/prof_log.c",
+						"line": 520
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'alloc_old_node' can be reduced.",
+						"verbose": "The scope of the variable 'alloc_old_node' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/prof_log.c",
+						"line": 549
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: node",
+						"verbose": "Uninitialized variable: node",
+						"cwe": "457",
+						"file": "deps/jemalloc/src/rtree.c",
+						"line": 233
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_ALIGNED is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If JEMALLOC_ALIGNED is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/sz.c",
+						"line": 5
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"verbose": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"cwe": "476",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2467
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"verbose": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"cwe": "476",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 3101
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"verbose": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"cwe": "476",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 3126
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"verbose": "Either the condition 'oldlenp==NULL' is redundant or there is possible null pointer dereference: oldlenp.",
+						"cwe": "476",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 4273
+					},
+					{
+						"id": "duplicateCondition",
+						"severity": "style",
+						"msg": "The if condition is the same as the previous if condition",
+						"verbose": "The if condition is the same as the previous if condition",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/tcache.c",
+						"line": 375
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 1056
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 1089
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ITERATE_OVER_ALL_EVENTS is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ITERATE_OVER_ALL_EVENTS is a macro then please configure it.",
+						"cwe": "",
+						"file": "deps/jemalloc/src/thread_event.c",
+						"line": 81
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 1979
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2113
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2114
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2115
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2116
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2117
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2118
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2119
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2120
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2121
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2122
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2123
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2124
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2128
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2129
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2130
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2131
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2132
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2135
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2136
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2138
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2139
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2146
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2147
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2150
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2151
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2152
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2153
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2155
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2158
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2160
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2161
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2162
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2163
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2165
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2166
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2167
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2168
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2169
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2170
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2171
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2172
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2173
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2174
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'newp' can be declared as pointer to const",
+						"verbose": "Parameter 'newp' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "deps/jemalloc/src/ctl.c",
+						"line": 2175
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\redis.security.json"
+	}
+}

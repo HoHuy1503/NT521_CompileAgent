@@ -1,0 +1,1548 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project masscan from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I need to inspect the project structure first to understand how to compile masscan.\nAction: Shell\nAction Input: tree . -L 2 || find . -maxdepth 2 -print"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2 || find . -maxdepth 2 -print\n.\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- VULNINFO.md\n|-- bin\n|-- data\n|   |-- afl-http.pcap\n|   |-- exclude.conf\n|   `-- flush_all.pcap\n|-- debian\n|   |-- README.Debian\n|   |-- changelog\n|   |-- compat\n|   |-- control\n|   |-- copyright\n|   |-- masscan.dirs\n|   |-- masscan.docs\n|   |-- masscan.install\n|   |-- masscan.manpages\n|   |-- rules\n|   |-- source\n|   `-- watch\n|-- doc\n|   |-- algorithm.js\n|   |-- bot.html\n|   |-- faq\n|   |-- howto-afl.md\n|   |-- masscan.8\n|   `-- masscan.8.markdown\n|-- src\n|   |-- crypto-base64.c\n|   |-- crypto-base64.h\n|   |-- crypto-blackrock.c\n|   |-- crypto-blackrock.h\n|   |-- crypto-blackrock2.c\n|   |-- crypto-lcg.c\n|   |-- crypto-lcg.h\n|   |-- crypto-primegen.c\n|   |-- crypto-primegen.h\n|   |-- crypto-siphash24.c\n|   |-- crypto-siphash24.h\n|   |-- event-timeout.c\n|   |-- event-timeout.h\n|   |-- in-binary.c\n|   |-- in-binary.h\n|   |-- in-filter.c\n|   |-- in-filter.h\n|   |-- in-report.c\n|   |-- in-report.h\n|   |-- main-conf.c\n|   |-- main-dedup.c\n|   |-- main-dedup.h\n|   |-- main-globals.h\n|   |-- main-initadapter.c\n|   |-- main-listscan.c\n|   |-- main-ptrace.c\n|   |-- main-ptrace.h\n|   |-- main-readrange.c\n|   |-- main-readrange.h\n|   |-- main-status.c\n|   |-- main-status.h\n|   |-- main-throttle.c\n|   |-- main-throttle.h\n|   |-- main.c\n|   |-- masscan-app.c\n|   |-- masscan-app.h\n|   |-- masscan-status.h\n|   |-- masscan-version.h\n|   |-- masscan.h\n|   |-- massip-addr.c\n|   |-- massip-addr.h\n|   |-- massip-parse.c\n|   |-- massip-parse.h\n|   |-- massip-port.h\n|   |-- massip-rangesv4.c\n|   |-- massip-rangesv4.h\n|   |-- massip-rangesv6.c\n|   |-- massip-rangesv6.h\n|   |-- massip.c\n|   |-- massip.h\n|   |-- misc-rstfilter.c\n|   |-- misc-rstfilter.h\n|   |-- out-binary.c\n|   |-- out-certs.c\n|   |-- out-grepable.c\n|   |-- out-hostonly.c\n|   |-- out-json.c\n|   |-- out-ndjson.c\n|   |-- out-null.c\n|   |-- out-record.h\n|   |-- out-redis.c\n|   |-- out-tcp-services.c\n|   |-- out-tcp-services.h\n|   |-- out-text.c\n|   |-- out-unicornscan.c\n|   |-- out-xml.c\n|   |-- output.c\n|   |-- output.h\n|   |-- pixie-backtrace.c\n|   |-- pixie-backtrace.h\n|   |-- pixie-file.c\n|   |-- pixie-file.h\n|   |-- pixie-sockets.h\n|   |-- pixie-threads.c\n|   |-- pixie-threads.h\n|   |-- pixie-timer.c\n|   |-- pixie-timer.h\n|   |-- proto-arp.c\n|   |-- proto-arp.h\n|   |-- proto-banner1.c\n|   |-- proto-banner1.h\n|   |-- proto-banout.c\n|   |-- proto-banout.h\n|   |-- proto-coap.c\n|   |-- proto-coap.h\n|   |-- proto-dns-parse.h\n|   |-- proto-dns.c\n|   |-- proto-dns.h\n|   |-- proto-ftp.c\n|   |-- proto-ftp.h\n|   |-- proto-http.c\n|   |-- proto-http.h\n|   |-- proto-icmp.c\n|   |-- proto-icmp.h\n|   |-- proto-imap4.c\n|   |-- proto-imap4.h\n|   |-- proto-isakmp.c\n|   |-- proto-isakmp.h\n|   |-- proto-mc.c\n|   |-- proto-mc.h\n|   |-- proto-memcached.c\n|   |-- proto-memcached.h\n|   |-- proto-netbios.c\n|   |-- proto-netbios.h\n|   |-- proto-ntlmssp.c\n|   |-- proto-ntlmssp.h\n|   |-- proto-ntp.c\n|   |-- proto-ntp.h\n|   |-- proto-oproto.c\n|   |-- proto-oproto.h\n|   |-- proto-pop3.c\n|   |-- proto-pop3.h\n|   |-- proto-preprocess.c\n|   |-- proto-preprocess.h\n|   |-- proto-sctp.c\n|   |-- proto-sctp.h\n|   |-- proto-smb.c\n|   |-- proto-smb.h\n|   |-- proto-smtp.c\n|   |-- proto-smtp.h\n|   |-- proto-snmp.c\n|   |-- proto-snmp.h\n|   |-- proto-spnego.h\n|   |-- proto-ssh.c\n|   |-- proto-ssh.h\n|   |-- proto-ssl-test.c\n|   |-- proto-ssl.c\n|   |-- proto-ssl.h\n|   |-- proto-tcp-rdp.c\n|   |-- proto-tcp-rdp.h\n|   |-- proto-tcp-telnet.c\n|   |-- proto-tcp-telnet.h\n|   |-- proto-udp.c\n|   |-- proto-udp.h\n|   |-- proto-versioning.c\n|   |-- proto-versioning.h\n|   |-- proto-vnc.c\n|   |-- proto-vnc.h\n|   |-- proto-x509.c\n|   |-- proto-x509.h\n|   |-- proto-zeroaccess.c\n|   |-- proto-zeroaccess.h\n|   |-- rawsock-adapter.h\n|   |-- rawsock-getif.c\n|   |-- rawsock-getip.c\n|   |-- rawsock-getip6.c\n|   |-- rawsock-getmac.c\n|   |-- rawsock-getroute.c\n|   |-- rawsock-pcapfile.c\n|   |-- rawsock-pcapfile.h\n|   |-- rawsock.c\n|   |-- rawsock.h\n|   |-- read-service-probes.c\n|   |-- read-service-probes.h\n|   |-- rte-ring.c\n|   |-- rte-ring.h\n|   |-- scripting-banner.c\n|   |-- scripting-masscan.c\n|   |-- scripting.c\n|   |-- scripting.h\n|   |-- smack.h\n|   |-- smack1.c\n|   |-- smackqueue.c\n|   |-- smackqueue.h\n|   |-- stack-arpv4.c\n|   |-- stack-arpv4.h\n|   |-- stack-if.c\n|   |-- stack-ndpv6.c\n|   |-- stack-ndpv6.h\n|   |-- stack-queue.c\n|   |-- stack-queue.h\n|   |-- stack-src.c\n|   |-- stack-src.h\n|   |-- stack-tcp-api.h\n|   |-- stack-tcp-app.c\n|   |-- stack-tcp-app.h\n|   |-- stack-tcp-core.c\n|   |-- stack-tcp-core.h\n|   |-- stub-lua.c\n|   |-- stub-lua.h\n|   |-- stub-pcap-dlt.h\n|   |-- stub-pcap.c\n|   |-- stub-pcap.h\n|   |-- stub-pfring.c\n|   |-- stub-pfring.h\n|   |-- syn-cookie.c\n|   |-- syn-cookie.h\n|   |-- templ-nmap-payloads.c\n|   |-- templ-nmap-payloads.h\n|   |-- templ-opts.h\n|   |-- templ-payloads.c\n|   |-- templ-payloads.h\n|   |-- templ-pkt.c\n|   |-- templ-pkt.h\n|   |-- templ-tcp-hdr.c\n|   |-- templ-tcp-hdr.h\n|   |-- unusedparm.h\n|   |-- util-bool.h\n|   |-- util-checksum.c\n|   |-- util-checksum.h\n|   |-- util-errormsg.c\n|   |-- util-errormsg.h\n|   |-- util-extract.c\n|   |-- util-extract.h\n|   |-- util-logger.c\n|   |-- util-logger.h\n|   |-- util-malloc.c\n|   |-- util-malloc.h\n|   |-- util-safefunc.c\n|   |-- util-safefunc.h\n|   |-- vulncheck-heartbleed.c\n|   |-- vulncheck-ntp-monlist.c\n|   |-- vulncheck-sslv3.c\n|   |-- vulncheck.c\n|   |-- vulncheck.h\n|   |-- xring.c\n|   `-- xring.h\n|-- tmp\n|-- vs10\n|   |-- masscan.sln\n|   |-- masscan.vcxproj\n|   `-- masscan.vcxproj.filters\n`-- xcode4\n    `-- masscan.xcodeproj\n\n12 directories, 243 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I need to determine the correct compilation instructions for this project from its structure.\nAction: CompileNavigator\nAction Input: /work contains Makefile, src/*.c, data, debian, doc, vs10, xcode4; likely a C project built with make."
+		],
+		[
+			"Agent stopped due to iteration limit or time limit.",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Early stop: loop detected"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2 || find . -maxdepth 2 -print",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2 || find . -maxdepth 2 -print\n.\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- VULNINFO.md\n|-- bin\n|-- data\n|   |-- afl-http.pcap\n|   |-- exclude.conf\n|   `-- flush_all.pcap\n|-- debian\n|   |-- README.Debian\n|   |-- changelog\n|   |-- compat\n|   |-- control\n|   |-- copyright\n|   |-- masscan.dirs\n|   |-- masscan.docs\n|   |-- masscan.install\n|   |-- masscan.manpages\n|   |-- rules\n|   |-- source\n|   `-- watch\n|-- doc\n|   |-- algorithm.js\n|   |-- bot.html\n|   |-- faq\n|   |-- howto-afl.md\n|   |-- masscan.8\n|   `-- masscan.8.markdown\n|-- src\n|   |-- crypto-base64.c\n|   |-- crypto-base64.h\n|   |-- crypto-blackrock.c\n|   |-- crypto-blackrock.h\n|   |-- crypto-blackrock2.c\n|   |-- crypto-lcg.c\n|   |-- crypto-lcg.h\n|   |-- crypto-primegen.c\n|   |-- crypto-primegen.h\n|   |-- crypto-siphash24.c\n|   |-- crypto-siphash24.h\n|   |-- event-timeout.c\n|   |-- event-timeout.h\n|   |-- in-binary.c\n|   |-- in-binary.h\n|   |-- in-filter.c\n|   |-- in-filter.h\n|   |-- in-report.c\n|   |-- in-report.h\n|   |-- main-conf.c\n|   |-- main-dedup.c\n|   |-- main-dedup.h\n|   |-- main-globals.h\n|   |-- main-initadapter.c\n|   |-- main-listscan.c\n|   |-- main-ptrace.c\n|   |-- main-ptrace.h\n|   |-- main-readrange.c\n|   |-- main-readrange.h\n|   |-- main-status.c\n|   |-- main-status.h\n|   |-- main-throttle.c\n|   |-- main-throttle.h\n|   |-- main.c\n|   |-- masscan-app.c\n|   |-- masscan-app.h\n|   |-- masscan-status.h\n|   |-- masscan-version.h\n|   |-- masscan.h\n|   |-- massip-addr.c\n|   |-- massip-addr.h\n|   |-- massip-parse.c\n|   |-- massip-parse.h\n|   |-- massip-port.h\n|   |-- massip-rangesv4.c\n|   |-- massip-rangesv4.h\n|   |-- massip-rangesv6.c\n|   |-- massip-rangesv6.h\n|   |-- massip.c\n|   |-- massip.h\n|   |-- misc-rstfilter.c\n|   |-- misc-rstfilter.h\n|   |-- out-binary.c\n|   |-- out-certs.c\n|   |-- out-grepable.c\n|   |-- out-hostonly.c\n|   |-- out-json.c\n|   |-- out-ndjson.c\n|   |-- out-null.c\n|   |-- out-record.h\n|   |-- out-redis.c\n|   |-- out-tcp-services.c\n|   |-- out-tcp-services.h\n|   |-- out-text.c\n|   |-- out-unicornscan.c\n|   |-- out-xml.c\n|   |-- output.c\n|   |-- output.h\n|   |-- pixie-backtrace.c\n|   |-- pixie-backtrace.h\n|   |-- pixie-file.c\n|   |-- pixie-file.h\n|   |-- pixie-sockets.h\n|   |-- pixie-threads.c\n|   |-- pixie-threads.h\n|   |-- pixie-timer.c\n|   |-- pixie-timer.h\n|   |-- proto-arp.c\n|   |-- proto-arp.h\n|   |-- proto-banner1.c\n|   |-- proto-banner1.h\n|   |-- proto-banout.c\n|   |-- proto-banout.h\n|   |-- proto-coap.c\n|   |-- proto-coap.h\n|   |-- proto-dns-parse.h\n|   |-- proto-dns.c\n|   |-- proto-dns.h\n|   |-- proto-ftp.c\n|   |-- proto-ftp.h\n|   |-- proto-http.c\n|   |-- proto-http.h\n|   |-- proto-icmp.c\n|   |-- proto-icmp.h\n|   |-- proto-imap4.c\n|   |-- proto-imap4.h\n|   |-- proto-isakmp.c\n|   |-- proto-isakmp.h\n|   |-- proto-mc.c\n|   |-- proto-mc.h\n|   |-- proto-memcached.c\n|   |-- proto-memcached.h\n|   |-- proto-netbios.c\n|   |-- proto-netbios.h\n|   |-- proto-ntlmssp.c\n|   |-- proto-ntlmssp.h\n|   |-- proto-ntp.c\n|   |-- proto-ntp.h\n|   |-- proto-oproto.c\n|   |-- proto-oproto.h\n|   |-- proto-pop3.c\n|   |-- proto-pop3.h\n|   |-- proto-preprocess.c\n|   |-- proto-preprocess.h\n|   |-- proto-sctp.c\n|   |-- proto-sctp.h\n|   |-- proto-smb.c\n|   |-- proto-smb.h\n|   |-- proto-smtp.c\n|   |-- proto-smtp.h\n|   |-- proto-snmp.c\n|   |-- proto-snmp.h\n|   |-- proto-spnego.h\n|   |-- proto-ssh.c\n|   |-- proto-ssh.h\n|   |-- proto-ssl-test.c\n|   |-- proto-ssl.c\n|   |-- proto-ssl.h\n|   |-- proto-tcp-rdp.c\n|   |-- proto-tcp-rdp.h\n|   |-- proto-tcp-telnet.c\n|   |-- proto-tcp-telnet.h\n|   |-- proto-udp.c\n|   |-- proto-udp.h\n|   |-- proto-versioning.c\n|   |-- proto-versioning.h\n|   |-- proto-vnc.c\n|   |-- proto-vnc.h\n|   |-- proto-x509.c\n|   |-- proto-x509.h\n|   |-- proto-zeroaccess.c\n|   |-- proto-zeroaccess.h\n|   |-- rawsock-adapter.h\n|   |-- rawsock-getif.c\n|   |-- rawsock-getip.c\n|   |-- rawsock-getip6.c\n|   |-- rawsock-getmac.c\n|   |-- rawsock-getroute.c\n|   |-- rawsock-pcapfile.c\n|   |-- rawsock-pcapfile.h\n|   |-- rawsock.c\n|   |-- rawsock.h\n|   |-- read-service-probes.c\n|   |-- read-service-probes.h\n|   |-- rte-ring.c\n|   |-- rte-ring.h\n|   |-- scripting-banner.c\n|   |-- scripting-masscan.c\n|   |-- scripting.c\n|   |-- scripting.h\n|   |-- smack.h\n|   |-- smack1.c\n|   |-- smackqueue.c\n|   |-- smackqueue.h\n|   |-- stack-arpv4.c\n|   |-- stack-arpv4.h\n|   |-- stack-if.c\n|   |-- stack-ndpv6.c\n|   |-- stack-ndpv6.h\n|   |-- stack-queue.c\n|   |-- stack-queue.h\n|   |-- stack-src.c\n|   |-- stack-src.h\n|   |-- stack-tcp-api.h\n|   |-- stack-tcp-app.c\n|   |-- stack-tcp-app.h\n|   |-- stack-tcp-core.c\n|   |-- stack-tcp-core.h\n|   |-- stub-lua.c\n|   |-- stub-lua.h\n|   |-- stub-pcap-dlt.h\n|   |-- stub-pcap.c\n|   |-- stub-pcap.h\n|   |-- stub-pfring.c\n|   |-- stub-pfring.h\n|   |-- syn-cookie.c\n|   |-- syn-cookie.h\n|   |-- templ-nmap-payloads.c\n|   |-- templ-nmap-payloads.h\n|   |-- templ-opts.h\n|   |-- templ-payloads.c\n|   |-- templ-payloads.h\n|   |-- templ-pkt.c\n|   |-- templ-pkt.h\n|   |-- templ-tcp-hdr.c\n|   |-- templ-tcp-hdr.h\n|   |-- unusedparm.h\n|   |-- util-bool.h\n|   |-- util-checksum.c\n|   |-- util-checksum.h\n|   |-- util-errormsg.c\n|   |-- util-errormsg.h\n|   |-- util-extract.c\n|   |-- util-extract.h\n|   |-- util-logger.c\n|   |-- util-logger.h\n|   |-- util-malloc.c\n|   |-- util-malloc.h\n|   |-- util-safefunc.c\n|   |-- util-safefunc.h\n|   |-- vulncheck-heartbleed.c\n|   |-- vulncheck-ntp-monlist.c\n|   |-- vulncheck-sslv3.c\n|   |-- vulncheck.c\n|   |-- vulncheck.h\n|   |-- xring.c\n|   `-- xring.h\n|-- tmp\n|-- vs10\n|   |-- masscan.sln\n|   |-- masscan.vcxproj\n|   `-- masscan.vcxproj.filters\n`-- xcode4\n    `-- masscan.xcodeproj\n\n12 directories, 243 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.8051295280456543
+			]
+		],
+		"CompileNavigator": [
+			[
+				"/work contains Makefile, src/*.c, data, debian, doc, vs10, xcode4; likely a C project built with make.\n\nProject directory structure:\nroot@c0mpi1er-c0nta1ner:/work# { tree . -L 2 || find . -maxdepth 2 -print\n.\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- VULNINFO.md\n|-- bin\n|-- data\n|   |-- afl-http.pcap\n|   |-- exclude.conf\n|   `-- flush_all.pcap\n|-- debian\n|   |-- README.Debian\n|   |-- changelog\n|   |-- compat\n|   |-- control\n|   |-- copyright\n|   |-- masscan.dirs\n|   |-- masscan.docs\n|   |-- masscan.install\n|   |-- masscan.manpages\n|   |-- rules\n|   |-- source\n|   `-- watch\n|-- doc\n|   |-- algorithm.js\n|   |-- bot.html\n|   |-- faq\n|   |-- howto-afl.md\n|   |-- masscan.8\n|   `-- masscan.8.markdown\n|-- src\n|   |-- crypto-base64.c\n|   |-- crypto-base64.h\n|   |-- crypto-blackrock.c\n|   |-- crypto-blackrock.h\n|   |-- crypto-blackrock2.c\n|   |-- crypto-lcg.c\n|   |-- crypto-lcg.h\n|   |-- crypto-primegen.c\n|   |-- crypto-primegen.h\n|   |-- crypto-siphash24.c\n|   |-- crypto-siphash24.h\n|   |-- event-timeout.c\n|   |-- event-timeout.h\n|   |-- in-binary.c\n|   |-- in-binary.h\n|   |-- in-filter.c\n|   |-- in-filter.h\n|   |-- in-report.c\n|   |-- in-report.h\n|   |-- main-conf.c\n|   |-- main-dedup.c\n|   |-- main-dedup.h\n|   |-- main-globals.h\n|   |-- main-initadapter.c\n|   |-- main-listscan.c\n|   |-- main-ptrace.c\n|   |-- main-ptrace.h\n|   |-- main-readrange.c\n|   |-- main-readrange.h\n|   |-- main-status.c\n|   |-- main-status.h\n|   |-- main-throttle.c\n|   |-- main-throttle.h\n|   |-- main.c\n|   |-- masscan-app.c\n|   |-- masscan-app.h\n|   |-- masscan-status.h\n|   |-- masscan-version.h\n|   |-- masscan.h\n|   |-- massip-addr.c\n|   |-- massip-addr.h\n|   |-- massip-parse.c\n|   |-- massip-parse.h\n|   |-- massip-port.h\n|   |-- massip-rangesv4.c\n|   |-- massip-rangesv4.h\n|   |-- massip-rangesv6.c\n|   |-- massip-rangesv6.h\n|   |-- massip.c\n|   |-- massip.h\n|   |-- misc-rstfilter.c\n|   |-- misc-rstfilter.h\n|   |-- out-binary.c\n|   |-- out-certs.c\n|   |-- out-grepable.c\n|   |-- out-hostonly.c\n|   |-- out-json.c\n|   |-- out-ndjson.c\n|   |-- out-null.c\n|   |-- out-record.h\n|   |-- out-redis.c\n|   |-- out-tcp-services.c\n|   |-- out-tcp-services.h\n|   |-- out-text.c\n|   |-- out-unicornscan.c\n|   |-- out-xml.c\n|   |-- output.c\n|   |-- output.h\n|   |-- pixie-backtrace.c\n|   |-- pixie-backtrace.h\n|   |-- pixie-file.c\n|   |-- pixie-file.h\n|   |-- pixie-sockets.h\n|   |-- pixie-threads.c\n|   |-- pixie-threads.h\n|   |-- pixie-timer.c\n|   |-- pixie-timer.h\n|   |-- proto-arp.c\n|   |-- proto-arp.h\n|   |-- proto-banner1.c\n|   |-- proto-banner1.h\n|   |-- proto-banout.c\n|   |-- proto-banout.h\n|   |-- proto-coap.c\n|   |-- proto-coap.h\n|   |-- proto-dns-parse.h\n|   |-- proto-dns.c\n|   |-- proto-dns.h\n|   |-- proto-ftp.c\n|   |-- proto-ftp.h\n|   |-- proto-http.c\n|   |-- proto-http.h\n|   |-- proto-icmp.c\n|   |-- proto-icmp.h\n|   |-- proto-imap4.c\n|   |-- proto-imap4.h\n|   |-- proto-isakmp.c\n|   |-- proto-isakmp.h\n|   |-- proto-mc.c\n|   |-- proto-mc.h\n|   |-- proto-memcached.c\n|   |-- proto-memcached.h\n|   |-- proto-netbios.c\n|   |-- proto-netbios.h\n|   |-- proto-ntlmssp.c\n|   |-- proto-ntlmssp.h\n|   |-- proto-ntp.c\n|   |-- proto-ntp.h\n|   |-- proto-oproto.c\n|   |-- proto-oproto.h\n|   |-- proto-pop3.c\n|   |-- proto-pop3.h\n|   |-- proto-preprocess.c\n|   |-- proto-preprocess.h\n|   |-- proto-sctp.c\n|   |-- proto-sctp.h\n|   |-- proto-smb.c\n|   |-- proto-smb.h\n|   |-- proto-smtp.c\n|   |-- proto-smtp.h\n|   |-- proto-snmp.c\n|   |-- proto-snmp.h\n|   |-- proto-spnego.h\n|   |-- proto-ssh.c\n|   |-- proto-ssh.h\n|   |-- proto-ssl-test.c\n|   |-- proto-ssl.c\n|   |-- proto-ssl.h\n|   |-- proto-tcp-rdp.c\n|   |-- proto-tcp-rdp.h\n|   |-- proto-tcp-telnet.c\n|   |-- proto-tcp-telnet.h\n|   |-- proto-udp.c\n|   |-- proto-udp.h\n|   |-- proto-versioning.c\n|   |-- proto-versioning.h\n|   |-- proto-vnc.c\n|   |-- proto-vnc.h\n|   |-- proto-x509.c\n|   |-- proto-x509.h\n|   |-- proto-zeroaccess.c\n|   |-- proto-zeroaccess.h\n|   |-- rawsock-adapter.h\n|   |-- rawsock-getif.c\n|   |-- rawsock-getip.c\n|   |-- rawsock-getip6.c\n|   |-- rawsock-getmac.c\n|   |-- rawsock-getroute.c\n|   |-- rawsock-pcapfile.c\n|   |-- rawsock-pcapfile.h\n|   |-- rawsock.c\n|   |-- rawsock.h\n|   |-- read-service-probes.c\n|   |-- read-service-probes.h\n|   |-- rte-ring.c\n|   |-- rte-ring.h\n|   |-- scripting-banner.c\n|   |-- scripting-masscan.c\n|   |-- scripting.c\n|   |-- scripting.h\n|   |-- smack.h\n|   |-- smack1.c\n|   |-- smackqueue.c\n|   |-- smackqueue.h\n|   |-- stack-arpv4.c\n|   |-- stack-arpv4.h\n|   |-- stack-if.c\n|   |-- stack-ndpv6.c\n|   |-- stack-ndpv6.h\n|   |-- stack-queue.c\n|   |-- stack-queue.h\n|   |-- stack-src.c\n|   |-- stack-src.h\n|   |-- stack-tcp-api.h\n|   |-- stack-tcp-app.c\n|   |-- stack-tcp-app.h\n|   |-- stack-tcp-core.c\n|   |-- stack-tcp-core.h\n|   |-- stub-lua.c\n|   |-- stub-lua.h\n|   |-- stub-pcap-dlt.h\n|   |-- stub-pcap.c\n|   |-- stub-pcap.h\n|   |-- stub-pfring.c\n|   |-- stub-pfring.h\n|   |-- syn-cookie.c\n|   |-- syn-cookie.h\n|   |-- templ-nmap-payloads.c\n|   |-- templ-nmap-payloads.h\n|   |-- templ-opts.h\n|   |-- templ-payloads.c\n|   |-- templ-payloads.h\n|   |-- templ-pkt.c\n|   |-- templ-pkt.h\n|   |-- templ-tcp-hdr.c\n|   |-- templ-tcp-hdr.h\n|   |-- unusedparm.h\n|   |-- util-bool.h\n|   |-- util-checksum.c\n|   |-- util-checksum.h\n|   |-- util-errormsg.c\n|   |-- util-errormsg.h\n|   |-- util-extract.c\n|   |-- util-extract.h\n|   |-- util-logger.c\n|   |-- util-logger.h\n|   |-- util-malloc.c\n|   |-- util-malloc.h\n|   |-- util-safefunc.c\n|   |-- util-safefunc.h\n|   |-- vulncheck-heartbleed.c\n|   |-- vulncheck-ntp-monlist.c\n|   |-- vulncheck-sslv3.c\n|   |-- vulncheck.c\n|   |-- vulncheck.h\n|   |-- xring.c\n|   `-- xring.h\n|-- tmp\n|-- vs10\n|   |-- masscan.sln\n|   |-- masscan.vcxproj\n|   `-- masscan.vcxproj.filters\n`-- xcode4\n    `-- masscan.xcodeproj\n\n12 directories, 243 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+				"Agent stopped due to iteration limit or time limit.",
+				[
+					[
+						"debate",
+						"/work/README.md",
+						"/work/Makefile\n/work/README.md\n/work/debian/rules\n/work/doc/masscan.8.markdown\n/work/doc/faq\n/work/doc/howto-afl.md\n/work/debian/README.Debian"
+					],
+					[
+						"search_instructions_from_files",
+						"/work/README.md",
+						"# Building\n\nOn Debian/Ubuntu, it goes something like the following. It doesn't\nreally have any dependencies other than a C compiler (such as `gcc`\nor `clang`).\n\n\tsudo apt-get --assume-yes install git make gcc\n\tgit clone https://github.com/robertdavidgraham/masscan\n\tcd masscan\n\tmake\n\nThis puts the program in the `masscan/bin` subdirectory. \nTo install it (on Linux) run:\n\n    make install\n\nThe source consists of a lot of small files, so building goes a lot faster\nby using the multi-threaded build. This requires more than 2gigs on a \nRaspberry Pi (and breaks), so you might use a smaller number, like `-j4` rather than\nall possible threads.\n\n\tmake -j\n\nWhile Linux is the primary target platform, the code runs well on many other\nsystems (Windows, macOS, etc.). Here's some additional build info:\n\n  * Windows w/ Visual Studio: use the VS10 project\n  * Windows w/ MinGW: just type `make`\n  * Windows w/ cygwin: won't work\n  * Mac OS X /w XCode: use the XCode4 project\n  * Mac OS X /w cmdline: just type `make`\n  * FreeBSD: type `gmake`\n  * other: try just compiling all the files together, `cc src/*.c -o bin/masscan`\n\nOn macOS, the x86 binaries seem to work just as fast under ARM emulation."
+					]
+				]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "masscan",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 832.55,
+		"iterations": 8,
+		"tool_calls": {
+			"Shell": 1,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "make",
+			"workdir": "/work",
+			"clean_cmd": "make clean",
+			"build_cmd": "make -j4",
+			"compile_db_cmd": "",
+			"test_cmd": "make test"
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\masscan.semgrep.json",
+				"total_findings": 6,
+				"by_severity": {
+					"ERROR": 1,
+					"WARNING": 5
+				},
+				"by_rule": {
+					"c-command-injection": 1,
+					"c-integer-overflow-alloc": 5
+				},
+				"errors_count": 14,
+				"findings": [
+					{
+						"check_id": "opt.rules.c-command-injection",
+						"rule": "c-command-injection",
+						"severity": "ERROR",
+						"path": "src/pixie-backtrace.c",
+						"line": 48,
+						"col": 17,
+						"message": "Dynamic command passed to system() or popen() (CWE-78). Invoking a shell with non-literal input may allow OS command injection. Prefer execv/execvp with explicit argument arrays and strict input allowlists.",
+						"cwe": "CWE-78: OS Command Injection"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/smack1.c",
+						"line": 429,
+						"col": 28,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/smack1.c",
+						"line": 457,
+						"col": 32,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/smack1.c",
+						"line": 745,
+						"col": 44,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/smack1.c",
+						"line": 1014,
+						"col": 13,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/util-malloc.c",
+						"line": 21,
+						"col": 9,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					}
+				]
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\masscan.cppcheck.json",
+				"total_findings": 144,
+				"by_severity": {
+					"style": 82,
+					"warning": 50,
+					"portability": 2,
+					"error": 10
+				},
+				"findings": [
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i<sizeof_src' is always true",
+						"verbose": "Condition 'i<sizeof_src' is always true",
+						"cwe": "571",
+						"file": "src/crypto-base64.c",
+						"line": 134
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i++>=sizeof_src' is always false",
+						"verbose": "Condition 'i++>=sizeof_src' is always false",
+						"cwe": "570",
+						"file": "src/crypto-base64.c",
+						"line": 136
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i<sizeof_src' is always true",
+						"verbose": "Condition 'i<sizeof_src' is always true",
+						"cwe": "571",
+						"file": "src/crypto-base64.c",
+						"line": 146
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i++>=sizeof_src' is always false",
+						"verbose": "Condition 'i++>=sizeof_src' is always false",
+						"cwe": "570",
+						"file": "src/crypto-base64.c",
+						"line": 148
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'br->range' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'br->range' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "src/crypto-blackrock.c",
+						"line": 156
+					},
+					{
+						"id": "arrayIndexThenCheck",
+						"severity": "style",
+						"msg": "Array index 'j' is used before limits check.",
+						"verbose": "Defensive programming: The variable 'j' is used as an array index before it is checked that is within limits. This can mean that the array might be accessed out of bounds. Reorder conditions such as '(a[i] && i < 10)' to '(i < 10 && a[i])'. That way the array will not be accessed if the index is out of limits.",
+						"cwe": "398",
+						"file": "src/crypto-lcg.c",
+						"line": 286
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'prime' can be reduced.",
+						"verbose": "The scope of the variable 'prime' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-lcg.c",
+						"line": 51
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'is_success' can be reduced.",
+						"verbose": "The scope of the variable 'is_success' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-lcg.c",
+						"line": 367
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'is_success' is assigned a value that is never used.",
+						"verbose": "Variable 'is_success' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/crypto-lcg.c",
+						"line": 367
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-blackrock2.c",
+						"line": 344
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'is_success' can be reduced.",
+						"verbose": "The scope of the variable 'is_success' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-blackrock2.c",
+						"line": 529
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'result' can be reduced.",
+						"verbose": "The scope of the variable 'result' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-blackrock2.c",
+						"line": 541
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'result2' can be reduced.",
+						"verbose": "The scope of the variable 'result2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-blackrock2.c",
+						"line": 541
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'is_success' is assigned a value that is never used.",
+						"verbose": "Variable 'is_success' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/crypto-blackrock2.c",
+						"line": 529
+					},
+					{
+						"id": "uselessAssignmentPtrArg",
+						"severity": "warning",
+						"msg": "Assignment of function parameter has no effect outside the function. Did you forget dereferencing it?",
+						"verbose": "Assignment of function parameter has no effect outside the function. Did you forget dereferencing it?",
+						"cwe": "398",
+						"file": "src/event-timeout.c",
+						"line": 169
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'timeouts' is assigned a value that is never used.",
+						"verbose": "Variable 'timeouts' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/event-timeout.c",
+						"line": 169
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i0' can be reduced.",
+						"verbose": "The scope of the variable 'i0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-primegen.c",
+						"line": 57
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y0' can be reduced.",
+						"verbose": "The scope of the variable 'y0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-primegen.c",
+						"line": 58
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i0' can be reduced.",
+						"verbose": "The scope of the variable 'i0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-primegen.c",
+						"line": 96
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y0' can be reduced.",
+						"verbose": "The scope of the variable 'y0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/crypto-primegen.c",
+						"line": 97
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'Lmodqq' can be declared as pointer to const",
+						"verbose": "Parameter 'Lmodqq' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/crypto-primegen.c",
+						"line": 339
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'todo::index' is never used.",
+						"verbose": "struct member 'todo::index' is never used.",
+						"cwe": "563",
+						"file": "src/crypto-primegen.c",
+						"line": 365
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'line' is assigned a value that is never used.",
+						"verbose": "Variable 'line' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/main-dedup.c",
+						"line": 339
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'r_data_length' can be declared as pointer to const",
+						"verbose": "Parameter 'r_data_length' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/in-report.c",
+						"line": 331
+					},
+					{
+						"id": "shiftTooManyBitsSigned",
+						"severity": "portability",
+						"msg": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"verbose": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"cwe": "758",
+						"file": "src/rte-ring.h",
+						"line": 367
+					},
+					{
+						"id": "shiftTooManyBitsSigned",
+						"severity": "portability",
+						"msg": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"verbose": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"cwe": "758",
+						"file": "src/rte-ring.h",
+						"line": 454
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression '1<<31'.",
+						"verbose": "Signed integer overflow for expression '1<<31'.",
+						"cwe": "190",
+						"file": "src/rte-ring.h",
+						"line": 367
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression '1<<31'.",
+						"verbose": "Signed integer overflow for expression '1<<31'.",
+						"cwe": "190",
+						"file": "src/rte-ring.h",
+						"line": 454
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 5) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 5) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/main-ptrace.c",
+						"line": 103
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'adapter_ip' can be reduced.",
+						"verbose": "The scope of the variable 'adapter_ip' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main-initadapter.c",
+						"line": 32
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'adapter_ip' is assigned a value that is never used.",
+						"verbose": "Variable 'adapter_ip' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/main-initadapter.c",
+						"line": 32
+					},
+					{
+						"id": "invalidPrintfArgType_float",
+						"severity": "warning",
+						"msg": "%f in format string (no. 5) requires 'double' but the argument type is 'unsigned long'.",
+						"verbose": "%f in format string (no. 5) requires 'double' but the argument type is 'unsigned long'.",
+						"cwe": "686",
+						"file": "src/main-status.c",
+						"line": 216
+					},
+					{
+						"id": "wrongPrintfScanfParameterPositionError",
+						"severity": "warning",
+						"msg": "fprintf: referencing parameter 6 while 5 arguments given",
+						"verbose": "fprintf: referencing parameter 6 while 5 arguments given",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 216
+					},
+					{
+						"id": "wrongPrintfScanfArgNum",
+						"severity": "warning",
+						"msg": "fprintf format string requires 5 parameters but 7 are given.",
+						"verbose": "fprintf format string requires 5 parameters but 7 are given.",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 216
+					},
+					{
+						"id": "invalidPrintfArgType_float",
+						"severity": "warning",
+						"msg": "%f in format string (no. 3) requires 'double' but the argument type is 'signed int'.",
+						"verbose": "%f in format string (no. 3) requires 'double' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/main-status.c",
+						"line": 232
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned long'.",
+						"verbose": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned long'.",
+						"cwe": "686",
+						"file": "src/main-status.c",
+						"line": 232
+					},
+					{
+						"id": "wrongPrintfScanfParameterPositionError",
+						"severity": "warning",
+						"msg": "fprintf: referencing parameter 5 while 4 arguments given",
+						"verbose": "fprintf: referencing parameter 5 while 4 arguments given",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 232
+					},
+					{
+						"id": "wrongPrintfScanfArgNum",
+						"severity": "warning",
+						"msg": "fprintf format string requires 4 parameters but 8 are given.",
+						"verbose": "fprintf format string requires 4 parameters but 8 are given.",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 232
+					},
+					{
+						"id": "invalidPrintfArgType_float",
+						"severity": "warning",
+						"msg": "%f in format string (no. 3) requires 'double' but the argument type is 'unsigned int'.",
+						"verbose": "%f in format string (no. 3) requires 'double' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/main-status.c",
+						"line": 249
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 6) requires 'unsigned int' but the argument type is 'unsigned long'.",
+						"verbose": "%u in format string (no. 6) requires 'unsigned int' but the argument type is 'unsigned long'.",
+						"cwe": "686",
+						"file": "src/main-status.c",
+						"line": 249
+					},
+					{
+						"id": "wrongPrintfScanfParameterPositionError",
+						"severity": "warning",
+						"msg": "fprintf: referencing parameter 7 while 6 arguments given",
+						"verbose": "fprintf: referencing parameter 7 while 6 arguments given",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 249
+					},
+					{
+						"id": "wrongPrintfScanfArgNum",
+						"severity": "warning",
+						"msg": "fprintf format string requires 6 parameters but 10 are given.",
+						"verbose": "fprintf format string requires 6 parameters but 10 are given.",
+						"cwe": "685",
+						"file": "src/main-status.c",
+						"line": 249
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'current_tcbs' can be reduced.",
+						"verbose": "The scope of the variable 'current_tcbs' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main-status.c",
+						"line": 42
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'current_synacks' can be reduced.",
+						"verbose": "The scope of the variable 'current_synacks' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main-status.c",
+						"line": 43
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'current_syns' can be reduced.",
+						"verbose": "The scope of the variable 'current_syns' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main-status.c",
+						"line": 44
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'current_tcbs' is assigned a value that is never used.",
+						"verbose": "Variable 'current_tcbs' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/main-status.c",
+						"line": 42
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'current_synacks' is assigned a value that is never used.",
+						"verbose": "Variable 'current_synacks' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/main-status.c",
+						"line": 43
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'current_syns' is assigned a value that is never used.",
+						"verbose": "Variable 'current_syns' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/main-status.c",
+						"line": 44
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/masscan-app.c",
+						"line": 54
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/masscan-app.c",
+						"line": 139
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/masscan-app.c",
+						"line": 139
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'fmt' can be reduced.",
+						"verbose": "The scope of the variable 'fmt' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/massip-addr.c",
+						"line": 297
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: out",
+						"verbose": "Uninitialized variable: out",
+						"cwe": "457",
+						"file": "src/massip-addr.c",
+						"line": 108
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: out",
+						"verbose": "Uninitialized variable: out",
+						"cwe": "457",
+						"file": "src/massip-addr.c",
+						"line": 162
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: out",
+						"verbose": "Uninitialized variable: out",
+						"cwe": "457",
+						"file": "src/massip-addr.c",
+						"line": 188
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: out",
+						"verbose": "Uninitialized variable: out",
+						"cwe": "457",
+						"file": "src/massip-addr.c",
+						"line": 215
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: ip",
+						"verbose": "Unused variable: ip",
+						"cwe": "563",
+						"file": "src/massip-addr.c",
+						"line": 296
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'count' is less than zero.",
+						"verbose": "The unsigned expression 'count' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/massip-parse.c",
+						"line": 870
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'massip_parser::state' is never used.",
+						"verbose": "struct member 'massip_parser::state' is never used.",
+						"cwe": "563",
+						"file": "src/massip-parse.c",
+						"line": 26
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'massip_parser::addr' is never used.",
+						"verbose": "struct member 'massip_parser::addr' is never used.",
+						"cwe": "563",
+						"file": "src/massip-parse.c",
+						"line": 29
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'massip_parser::begin' is never used.",
+						"verbose": "struct member 'massip_parser::begin' is never used.",
+						"cwe": "563",
+						"file": "src/massip-parse.c",
+						"line": 30
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'massip_parser::end' is never used.",
+						"verbose": "struct member 'massip_parser::end' is never used.",
+						"cwe": "563",
+						"file": "src/massip-parse.c",
+						"line": 31
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "union member 'Anonymous3::ipv6' is never used.",
+						"verbose": "union member 'Anonymous3::ipv6' is never used.",
+						"cwe": "563",
+						"file": "src/massip-parse.c",
+						"line": 1118
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'ip.lo==~0' is always false",
+						"verbose": "Condition 'ip.lo==~0' is always false",
+						"cwe": "570",
+						"file": "src/massip-rangesv6.c",
+						"line": 156
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'index>=picker[mid]' is always true",
+						"verbose": "Condition 'index>=picker[mid]' is always true",
+						"cwe": "571",
+						"file": "src/massip-rangesv6.c",
+						"line": 532
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/massip-rangesv6.c",
+						"line": 710
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'index>=picker[mid]' is always true",
+						"verbose": "Condition 'index>=picker[mid]' is always true",
+						"cwe": "571",
+						"file": "src/massip-rangesv4.c",
+						"line": 862
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'end' can be reduced.",
+						"verbose": "The scope of the variable 'end' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/massip-rangesv4.c",
+						"line": 943
+					},
+					{
+						"id": "shiftTooManyBits",
+						"severity": "error",
+						"msg": "Shifting 32-bit value by 32 bits is undefined behaviour",
+						"verbose": "Shifting 32-bit value by 32 bits is undefined behaviour",
+						"cwe": "758",
+						"file": "src/massip-rangesv4.c",
+						"line": 100
+					},
+					{
+						"id": "shiftTooManyBits",
+						"severity": "error",
+						"msg": "Shifting 32-bit value by 32 bits is undefined behaviour",
+						"verbose": "Shifting 32-bit value by 32 bits is undefined behaviour",
+						"cwe": "758",
+						"file": "src/massip-rangesv4.c",
+						"line": 107
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/misc-rstfilter.c",
+						"line": 161
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/misc-rstfilter.c",
+						"line": 176
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/misc-rstfilter.c",
+						"line": 182
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/main.c",
+						"line": 1145
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'status' can be reduced.",
+						"verbose": "The scope of the variable 'status' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main.c",
+						"line": 755
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'transmit_count' can be reduced.",
+						"verbose": "The scope of the variable 'transmit_count' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main.c",
+						"line": 1461
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'receive_count' can be reduced.",
+						"verbose": "The scope of the variable 'receive_count' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main.c",
+						"line": 1462
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/out-redis.c",
+						"line": 294
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/out-unicornscan.c",
+						"line": 37
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 5) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 5) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/out-unicornscan.c",
+						"line": 37
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error need to find CPU count",
+						"verbose": "#error need to find CPU count",
+						"cwe": "",
+						"file": "src/pixie-threads.c",
+						"line": 177
+					},
+					{
+						"id": "duplicateCondition",
+						"severity": "style",
+						"msg": "The if condition is the same as the previous if condition",
+						"verbose": "The if condition is the same as the previous if condition",
+						"cwe": "398",
+						"file": "src/proto-banner1.c",
+						"line": 830
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression 'px[16]<<24'.",
+						"verbose": "Signed integer overflow for expression 'px[16]<<24'.",
+						"cwe": "190",
+						"file": "src/proto-icmp.c",
+						"line": 36
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 2) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/proto-http.c",
+						"line": 748
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 3) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 3) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/proto-ntlmssp.c",
+						"line": 172
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'length' is less than zero.",
+						"verbose": "The unsigned expression 'length' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/proto-netbios.c",
+						"line": 70
+					},
+					{
+						"id": "badBitmaskCheck",
+						"severity": "style",
+						"msg": "Operator '|' with one operand equal to zero is redundant.",
+						"verbose": "Operator '|' with one operand equal to zero is redundant.",
+						"cwe": "571",
+						"file": "src/proto-preprocess.c",
+						"line": 240
+					},
+					{
+						"id": "badBitmaskCheck",
+						"severity": "style",
+						"msg": "Operator '|' with one operand equal to zero is redundant.",
+						"verbose": "Operator '|' with one operand equal to zero is redundant.",
+						"cwe": "571",
+						"file": "src/proto-preprocess.c",
+						"line": 249
+					},
+					{
+						"id": "badBitmaskCheck",
+						"severity": "style",
+						"msg": "Operator '|' with one operand equal to zero is redundant.",
+						"verbose": "Operator '|' with one operand equal to zero is redundant.",
+						"cwe": "571",
+						"file": "src/proto-preprocess.c",
+						"line": 260
+					},
+					{
+						"id": "badBitmaskCheck",
+						"severity": "style",
+						"msg": "Operator '|' with one operand equal to zero is redundant.",
+						"verbose": "Operator '|' with one operand equal to zero is redundant.",
+						"cwe": "571",
+						"file": "src/proto-preprocess.c",
+						"line": 269
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'info->found_offset' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'info->found_offset' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "src/proto-preprocess.c",
+						"line": 625
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'id' can be reduced.",
+						"verbose": "The scope of the variable 'id' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/proto-snmp.c",
+						"line": 211
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/proto-snmp.c",
+						"line": 261
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/proto-snmp.c",
+						"line": 680
+					},
+					{
+						"id": "selfAssignment",
+						"severity": "warning",
+						"msg": "Redundant assignment of 'state' to itself.",
+						"verbose": "Redundant assignment of 'state' to itself.",
+						"cwe": "398",
+						"file": "src/proto-ssh.c",
+						"line": 134
+					},
+					{
+						"id": "selfAssignment",
+						"severity": "warning",
+						"msg": "Redundant assignment of 'state' to itself.",
+						"verbose": "Redundant assignment of 'state' to itself.",
+						"cwe": "398",
+						"file": "src/proto-ssh.c",
+						"line": 137
+					},
+					{
+						"id": "selfAssignment",
+						"severity": "warning",
+						"msg": "Redundant assignment of 'state' to itself.",
+						"verbose": "Redundant assignment of 'state' to itself.",
+						"cwe": "398",
+						"file": "src/proto-ssh.c",
+						"line": 141
+					},
+					{
+						"id": "selfAssignment",
+						"severity": "warning",
+						"msg": "Redundant assignment of 'rdp->tpkt_length' to itself.",
+						"verbose": "Redundant assignment of 'rdp->tpkt_length' to itself.",
+						"cwe": "398",
+						"file": "src/proto-tcp-rdp.c",
+						"line": 240
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'pstate->sub.vnc.sectype' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'pstate->sub.vnc.sectype' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "src/proto-vnc.c",
+						"line": 216
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'readLen' can be reduced.",
+						"verbose": "The scope of the variable 'readLen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/rawsock-getif.c",
+						"line": 207
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'readLen' is assigned a value that is never used.",
+						"verbose": "Variable 'readLen' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/rawsock-getif.c",
+						"line": 207
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'readLen' can be reduced.",
+						"verbose": "The scope of the variable 'readLen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/rawsock-getroute.c",
+						"line": 259
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'readLen' is assigned a value that is never used.",
+						"verbose": "Variable 'readLen' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/rawsock-getroute.c",
+						"line": 259
+					},
+					{
+						"id": "oppositeInnerCondition",
+						"severity": "warning",
+						"msg": "Opposite inner 'if' condition leads to a dead code block.",
+						"verbose": "Opposite inner 'if' condition leads to a dead code block (outer condition is '*r_time_usecs>1000100' and inner condition is '*r_time_usecs<1000100').",
+						"cwe": "398",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 312
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'bytes_read==0' is always false",
+						"verbose": "Condition 'bytes_read==0' is always false",
+						"cwe": "570",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 295
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 593
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 593
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 607
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 795
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'bytes_read' is less than zero.",
+						"verbose": "The unsigned expression 'bytes_read' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 292
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'bytes_read' is less than zero.",
+						"verbose": "The unsigned expression 'bytes_read' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 380
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'bytes_read' is less than zero.",
+						"verbose": "The unsigned expression 'bytes_read' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 496
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'bytes_read' is less than zero.",
+						"verbose": "The unsigned expression 'bytes_read' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/rawsock-pcapfile.c",
+						"line": 563
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err' can be reduced.",
+						"verbose": "The scope of the variable 'err' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/rte-ring.c",
+						"line": 323
+					},
+					{
+						"id": "oppositeInnerCondition",
+						"severity": "warning",
+						"msg": "Opposite inner 'if' condition leads to a dead code block.",
+						"verbose": "Opposite inner 'if' condition leads to a dead code block (outer condition is 'offset<line_length' and inner condition is 'offset>=line_length').",
+						"cwe": "398",
+						"file": "src/read-service-probes.c",
+						"line": 531
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/read-service-probes.c",
+						"line": 919
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/read-service-probes.c",
+						"line": 921
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/smack1.c",
+						"line": 1758
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/smack1.c",
+						"line": 1770
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/smack1.c",
+						"line": 1781
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/smack1.c",
+						"line": 1785
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/smack1.c",
+						"line": 1793
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variable: hLibpcap",
+						"verbose": "Uninitialized variable: hLibpcap",
+						"cwe": "457",
+						"file": "src/stub-pcap.c",
+						"line": 391
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'pcap_if::addresses' is never used.",
+						"verbose": "struct member 'pcap_if::addresses' is never used.",
+						"cwe": "563",
+						"file": "src/stub-pcap.c",
+						"line": 62
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'pcap_if::flags' is never used.",
+						"verbose": "struct member 'pcap_if::flags' is never used.",
+						"cwe": "563",
+						"file": "src/stub-pcap.c",
+						"line": 63
+					},
+					{
+						"id": "duplicateCondition",
+						"severity": "style",
+						"msg": "The if condition is the same as the previous if condition",
+						"verbose": "The if condition is the same as the previous if condition",
+						"cwe": "398",
+						"file": "src/stack-tcp-core.c",
+						"line": 1140
+					},
+					{
+						"id": "duplicateCondition",
+						"severity": "style",
+						"msg": "The if condition is the same as the previous if condition",
+						"verbose": "The if condition is the same as the previous if condition",
+						"cwe": "398",
+						"file": "src/stack-tcp-core.c",
+						"line": 1200
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'socket==NULL' is redundant or there is possible null pointer dereference: socket.",
+						"verbose": "Either the condition 'socket==NULL' is redundant or there is possible null pointer dereference: socket.",
+						"cwe": "476",
+						"file": "src/stack-tcp-core.c",
+						"line": 1717
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'socket==NULL' is redundant or there is possible null pointer dereference: socket.",
+						"verbose": "Either the condition 'socket==NULL' is redundant or there is possible null pointer dereference: socket.",
+						"cwe": "476",
+						"file": "src/stack-tcp-core.c",
+						"line": 1718
+					},
+					{
+						"id": "duplicateBreak",
+						"severity": "style",
+						"msg": "Consecutive return, break, continue, goto or throw statements are unnecessary.",
+						"verbose": "Consecutive return, break, continue, goto or throw statements are unnecessary. The second statement can never be executed, and so should be removed.",
+						"cwe": "561",
+						"file": "src/stack-tcp-core.c",
+						"line": 2306
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'Anonymous35::data' is never used.",
+						"verbose": "struct member 'Anonymous35::data' is never used.",
+						"cwe": "563",
+						"file": "src/stack-tcp-core.c",
+						"line": 193
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'Anonymous35::cb' is never used.",
+						"verbose": "struct member 'Anonymous35::cb' is never used.",
+						"cwe": "563",
+						"file": "src/stack-tcp-core.c",
+						"line": 194
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'PayloadUDP_Item::rarity' is never used.",
+						"verbose": "struct member 'PayloadUDP_Item::rarity' is never used.",
+						"cwe": "563",
+						"file": "src/templ-payloads.c",
+						"line": 38
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'offset>max' is always false",
+						"verbose": "Condition 'offset>max' is always false",
+						"cwe": "570",
+						"file": "src/templ-tcp-hdr.c",
+						"line": 244
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'field[2]' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'field[2]' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "src/templ-tcp-hdr.c",
+						"line": 1112
+					},
+					{
+						"id": "duplicateBreak",
+						"severity": "style",
+						"msg": "Consecutive return, break, continue, goto or throw statements are unnecessary.",
+						"verbose": "Consecutive return, break, continue, goto or throw statements are unnecessary. The second statement can never be executed, and so should be removed.",
+						"cwe": "561",
+						"file": "src/templ-pkt.c",
+						"line": 1314
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'str!=NULL' is redundant or there is possible null pointer dereference: str.",
+						"verbose": "Either the condition 'str!=NULL' is redundant or there is possible null pointer dereference: str.",
+						"cwe": "476",
+						"file": "src/util-malloc.c",
+						"line": 107
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ring' can be reduced.",
+						"verbose": "The scope of the variable 'ring' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/xring.c",
+						"line": 57
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'range->begin.lo==0' is always false",
+						"verbose": "Condition 'range->begin.lo==0' is always false",
+						"cwe": "570",
+						"file": "src/main-conf.c",
+						"line": 282
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'Templ_Oproto_first<=rrange.begin' is always false",
+						"verbose": "Condition 'Templ_Oproto_first<=rrange.begin' is always false",
+						"cwe": "570",
+						"file": "src/main-conf.c",
+						"line": 3707
+					},
+					{
+						"id": "invalidPrintfArgType_uint",
+						"severity": "warning",
+						"msg": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"verbose": "%u in format string (no. 1) requires 'unsigned int' but the argument type is 'signed int'.",
+						"cwe": "686",
+						"file": "src/main-conf.c",
+						"line": 1686
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/main-conf.c",
+						"line": 3669
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "src/main-conf.c",
+						"line": 3672
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'point' can be reduced.",
+						"verbose": "The scope of the variable 'point' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/main-conf.c",
+						"line": 1866
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\masscan.security.json"
+	}
+}

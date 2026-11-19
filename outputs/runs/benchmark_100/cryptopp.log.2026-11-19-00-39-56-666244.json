@@ -1,0 +1,1956 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project cryptopp from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			"Thought: I need to inspect the project structure in /work to identify how to compile cryptopp.\nAction: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- 3way.cpp\n|-- 3way.h\n|-- Doxyfile\n|-- Filelist.txt\n|-- GNUmakefile\n|-- GNUmakefile-cross\n|-- History.txt\n|-- Install.txt\n|-- License.txt\n|-- Readme.txt\n|-- Security.md\n|-- TestData\n|   |-- 3desval.dat\n|   |-- 3wayval.dat\n|   |-- aria.dat\n|   |-- camellia.dat\n|   |-- cast128v.dat\n|   |-- cast256v.dat\n|   |-- defdmac1.bin\n|   |-- defdmac2.bin\n|   |-- descert.dat\n|   |-- dh1024.dat\n|   |-- dh2048.dat\n|   |-- dlie1024.dat\n|   |-- dlie2048.dat\n|   |-- dsa1024.dat\n|   |-- dsa1024b.dat\n|   |-- dsa512.dat\n|   |-- ecies_p160.dat\n|   |-- ecies_t163.dat\n|   |-- ed25519.dat\n|   |-- ed25519v0.dat\n|   |-- ed25519v1.dat\n|   |-- elgc1024.dat\n|   |-- esig1023.dat\n|   |-- esig1536.dat\n|   |-- esig2046.dat\n|   |-- fhmqv160.dat\n|   |-- fhmqv256.dat\n|   |-- fhmqv384.dat\n|   |-- fhmqv512.dat\n|   |-- gostval.dat\n|   |-- hmqv160.dat\n|   |-- hmqv256.dat\n|   |-- hmqv384.dat\n|   |-- hmqv512.dat\n|   |-- ideaval.dat\n|   |-- luc1024.dat\n|   |-- luc2048.dat\n|   |-- lucc1024.dat\n|   |-- lucc512.dat\n|   |-- lucd1024.dat\n|   |-- lucd512.dat\n|   |-- lucs1024.dat\n|   |-- lucs512.dat\n|   |-- marsval.dat\n|   |-- mqv1024.dat\n|   |-- mqv2048.dat\n|   |-- nr1024.dat\n|   |-- nr2048.dat\n|   |-- rabi1024.dat\n|   |-- rabi2048.dat\n|   |-- rc2val.dat\n|   |-- rc5val.dat\n|   |-- rc6val.dat\n|   |-- rijndael.dat\n|   |-- rsa1024.dat\n|   |-- rsa2048.dat\n|   |-- rsa2048a.dat\n|   |-- rsa400pb.dat\n|   |-- rsa400pv.dat\n|   |-- rsa512a.dat\n|   |-- rw1024.dat\n|   |-- rw2048.dat\n|   |-- saferval.dat\n|   |-- serpentv.dat\n|   |-- shacal2v.dat\n|   |-- sharkval.dat\n|   |-- skipjack.dat\n|   |-- squareva.dat\n|   |-- twofishv.dat\n|   |-- usage.dat\n|   |-- x25519.dat\n|   |-- x25519v0.dat\n|   |-- x25519v1.dat\n|   |-- xtrdh171.dat\n|   `-- xtrdh342.dat\n|-- TestPrograms\n|   |-- dump2def.cpp\n|   |-- test_32bit.cpp\n|   |-- test_64bit.cpp\n|   |-- test_arm_acle_header.cpp\n|   |-- test_arm_aes.cpp\n|   |-- test_arm_armv7.cpp\n|   |-- test_arm_asimd.cpp\n|   |-- test_arm_crc.cpp\n|   |-- test_arm_neon.cpp\n|   |-- test_arm_neon_header.cpp\n|   |-- test_arm_pmull.cpp\n|   |-- test_arm_sha1.cpp\n|   |-- test_arm_sha256.cpp\n|   |-- test_arm_sha3.cpp\n|   |-- test_arm_sha512.cpp\n|   |-- test_arm_sm3.cpp\n|   |-- test_arm_sm4.cpp\n|   |-- test_asm_mixed.cpp\n|   |-- test_cxx.cpp\n|   |-- test_cxx11.cpp\n|   |-- test_cxx11_alignas.cpp\n|   |-- test_cxx11_alignof.cpp\n|   |-- test_cxx11_assert.cpp\n|   |-- test_cxx11_atomic.cpp\n|   |-- test_cxx11_auto.cpp\n|   |-- test_cxx11_constexpr.cpp\n|   |-- test_cxx11_deletefn.cpp\n|   |-- test_cxx11_enumtype.cpp\n|   |-- test_cxx11_initializer.cpp\n|   |-- test_cxx11_lambda.cpp\n|   |-- test_cxx11_noexcept.cpp\n|   |-- test_cxx11_nullptr.cpp\n|   |-- test_cxx11_staticinit.cpp\n|   |-- test_cxx11_sync.cpp\n|   |-- test_cxx11_vartemplates.cpp\n|   |-- test_cxx14.cpp\n|   |-- test_cxx17.cpp\n|   |-- test_cxx17_assert.cpp\n|   |-- test_cxx17_exceptions.cpp\n|   |-- test_cxx98_exception.cpp\n|   |-- test_glibc.cpp\n|   |-- test_newlib.cpp\n|   |-- test_nodevirtualize.cpp\n|   |-- test_ppc_aes.cpp\n|   |-- test_ppc_altivec.cpp\n|   |-- test_ppc_power7.cpp\n|   |-- test_ppc_power8.cpp\n|   |-- test_ppc_power9.cpp\n|   |-- test_ppc_sha.cpp\n|   |-- test_ppc_vmull.cpp\n|   |-- test_pthreads.cpp\n|   |-- test_x86_aes.cpp\n|   |-- test_x86_avx.cpp\n|   |-- test_x86_avx2.cpp\n|   |-- test_x86_avx512.cpp\n|   |-- test_x86_clmul.cpp\n|   |-- test_x86_cpuid.cpp\n|   |-- test_x86_rdrand.cpp\n|   |-- test_x86_rdseed.cpp\n|   |-- test_x86_sha.cpp\n|   |-- test_x86_sse2.cpp\n|   |-- test_x86_sse3.cpp\n|   |-- test_x86_sse41.cpp\n|   |-- test_x86_sse42.cpp\n|   |-- test_x86_ssse3.cpp\n|   |-- test_x86_via_aes.cpp\n|   |-- test_x86_via_rng.cpp\n|   `-- test_x86_via_sha.cpp\n|-- TestScripts\n|   |-- change-version.sh\n|   |-- configure.sh\n|   |-- coverity-linux.txt\n|   |-- coverity-macosx.txt\n|   |-- coverity-windows.txt\n|   |-- cryptdll-windows.cmd\n|   |-- cryptest-android-mk.sh\n|   |-- cryptest-android.sh\n|   |-- cryptest-autotools.sh\n|   |-- cryptest-coverage.sh\n|   |-- cryptest-coverity.cpp\n|   |-- c\n......\nn.h\n|-- factory.h\n|-- fhmqv.h\n|-- files.cpp\n|-- files.h\n|-- filters.cpp\n|-- filters.h\n|-- fips140.cpp\n|-- fips140.h\n|-- fipsalgt.cpp\n|-- fipstest.cpp\n|-- fltrimpl.h\n|-- gcm.cpp\n|-- gcm.h\n|-- gcm_simd.cpp\n|-- gf256.cpp\n|-- gf256.h\n|-- gf2_32.cpp\n|-- gf2_32.h\n|-- gf2n.cpp\n|-- gf2n.h\n|-- gf2n_simd.cpp\n|-- gfpcrypt.cpp\n|-- gfpcrypt.h\n|-- gost.cpp\n|-- gost.h\n|-- gzip.cpp\n|-- gzip.h\n|-- hashfwd.h\n|-- hc128.cpp\n|-- hc128.h\n|-- hc256.cpp\n|-- hc256.h\n|-- hex.cpp\n|-- hex.h\n|-- hight.cpp\n|-- hight.h\n|-- hkdf.h\n|-- hmac.cpp\n|-- hmac.h\n|-- hmqv.h\n|-- hrtimer.cpp\n|-- hrtimer.h\n|-- ida.cpp\n|-- ida.h\n|-- idea.cpp\n|-- idea.h\n|-- integer.cpp\n|-- integer.h\n|-- iterhash.cpp\n|-- iterhash.h\n|-- kalyna.cpp\n|-- kalyna.h\n|-- kalynatab.cpp\n|-- keccak.cpp\n|-- keccak.h\n|-- keccak_core.cpp\n|-- keccak_simd.cpp\n|-- lea.cpp\n|-- lea.h\n|-- lea_simd.cpp\n|-- lsh.h\n|-- lsh256.cpp\n|-- lsh256_avx.cpp\n|-- lsh256_sse.cpp\n|-- lsh512.cpp\n|-- lsh512_avx.cpp\n|-- lsh512_sse.cpp\n|-- lubyrack.h\n|-- luc.cpp\n|-- luc.h\n|-- mars.cpp\n|-- mars.h\n|-- marss.cpp\n|-- md2.cpp\n|-- md2.h\n|-- md4.cpp\n|-- md4.h\n|-- md5.cpp\n|-- md5.h\n|-- mdc.h\n|-- mersenne.h\n|-- misc.cpp\n|-- misc.h\n|-- modarith.h\n|-- modes.cpp\n|-- modes.h\n|-- modexppc.h\n|-- mqueue.cpp\n|-- mqueue.h\n|-- mqv.cpp\n|-- mqv.h\n|-- naclite.h\n|-- nbtheory.cpp\n|-- nbtheory.h\n|-- neon_simd.cpp\n|-- nr.h\n|-- oaep.cpp\n|-- oaep.h\n|-- oids.h\n|-- osrng.cpp\n|-- osrng.h\n|-- ossig.h\n|-- padlkrng.cpp\n|-- padlkrng.h\n|-- panama.cpp\n|-- panama.h\n|-- pch.cpp\n|-- pch.h\n|-- pkcspad.cpp\n|-- pkcspad.h\n|-- poly1305.cpp\n|-- poly1305.h\n|-- polynomi.cpp\n|-- polynomi.h\n|-- power7_ppc.cpp\n|-- power8_ppc.cpp\n|-- power9_ppc.cpp\n|-- ppc_simd.cpp\n|-- ppc_simd.h\n|-- primetab.cpp\n|-- pssr.cpp\n|-- pssr.h\n|-- pubkey.cpp\n|-- pubkey.h\n|-- pwdbased.h\n|-- queue.cpp\n|-- queue.h\n|-- rabbit.cpp\n|-- rabbit.h\n|-- rabin.cpp\n|-- rabin.h\n|-- randpool.cpp\n|-- randpool.h\n|-- rc2.cpp\n|-- rc2.h\n|-- rc5.cpp\n|-- rc5.h\n|-- rc6.cpp\n|-- rc6.h\n|-- rdrand.asm\n|-- rdrand.cpp\n|-- rdrand.h\n|-- rdseed.asm\n|-- rdtables.cpp\n|-- regtest1.cpp\n|-- regtest2.cpp\n|-- regtest3.cpp\n|-- regtest4.cpp\n|-- resource.h\n|-- rijndael.cpp\n|-- rijndael.h\n|-- rijndael_simd.cpp\n|-- ripemd.cpp\n|-- ripemd.h\n|-- rng.cpp\n|-- rng.h\n|-- rsa.cpp\n|-- rsa.h\n|-- rw.cpp\n|-- rw.h\n|-- safer.cpp\n|-- safer.h\n|-- salsa.cpp\n|-- salsa.h\n|-- scrypt.cpp\n|-- scrypt.h\n|-- seal.cpp\n|-- seal.h\n|-- secblock.h\n|-- secblockfwd.h\n|-- seckey.h\n|-- seed.cpp\n|-- seed.h\n|-- serpent.cpp\n|-- serpent.h\n|-- serpentp.h\n|-- sha.cpp\n|-- sha.h\n|-- sha1_armv4.S\n|-- sha1_armv4.h\n|-- sha256_armv4.S\n|-- sha256_armv4.h\n|-- sha3.cpp\n|-- sha3.h\n|-- sha512_armv4.S\n|-- sha512_armv4.h\n|-- sha_simd.cpp\n|-- shacal2.cpp\n|-- shacal2.h\n|-- shacal2_simd.cpp\n|-- shake.cpp\n|-- shake.h\n|-- shark.cpp\n|-- shark.h\n|-- sharkbox.cpp\n|-- simeck.cpp\n|-- simeck.h\n|-- simon.cpp\n|-- simon.h\n|-- simon128_simd.cpp\n|-- simple.cpp\n|-- simple.h\n|-- siphash.h\n|-- skipjack.cpp\n|-- skipjack.h\n|-- sm3.cpp\n|-- sm3.h\n|-- sm4.cpp\n|-- sm4.h\n|-- sm4_simd.cpp\n|-- smartptr.h\n|-- sosemanuk.cpp\n|-- sosemanuk.h\n|-- speck.cpp\n|-- speck.h\n|-- speck128_simd.cpp\n|-- square.cpp\n|-- square.h\n|-- squaretb.cpp\n|-- sse_simd.cpp\n|-- stdcpp.h\n|-- strciphr.cpp\n|-- strciphr.h\n|-- tea.cpp\n|-- tea.h\n|-- test.cpp\n|-- tftables.cpp\n|-- threefish.cpp\n|-- threefish.h\n|-- tiger.cpp\n|-- tiger.h\n|-- tigertab.cpp\n|-- trap.h\n|-- trunhash.h\n|-- ttmac.cpp\n|-- ttmac.h\n|-- tweetnacl.cpp\n|-- tweetnacl.h\n|-- twofish.cpp\n|-- twofish.h\n|-- validat0.cpp\n|-- validat1.cpp\n|-- validat10.cpp\n|-- validat2.cpp\n|-- validat3.cpp\n|-- validat4.cpp\n|-- validat5.cpp\n|-- validat6.cpp\n|-- validat7.cpp\n|-- validat8.cpp\n|-- validat9.cpp\n|-- validate.h\n|-- vc60.zip\n|-- vmac.cpp\n|-- vmac.h\n|-- vs2005.zip\n|-- wake.cpp\n|-- wake.h\n|-- whrlpool.cpp\n|-- whrlpool.h\n|-- words.h\n|-- x64dll.asm\n|-- x64masm.asm\n|-- xed25519.cpp\n|-- xed25519.h\n|-- xtr.cpp\n|-- xtr.h\n|-- xtrcrypt.cpp\n|-- xtrcrypt.h\n|-- xts.cpp\n|-- xts.h\n|-- zdeflate.cpp\n|-- zdeflate.h\n|-- zinflate.cpp\n|-- zinflate.h\n|-- zlib.cpp\n`-- zlib.h\n\n5 directories, 679 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Early stop: loop detected"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- 3way.cpp\n|-- 3way.h\n|-- Doxyfile\n|-- Filelist.txt\n|-- GNUmakefile\n|-- GNUmakefile-cross\n|-- History.txt\n|-- Install.txt\n|-- License.txt\n|-- Readme.txt\n|-- Security.md\n|-- TestData\n|   |-- 3desval.dat\n|   |-- 3wayval.dat\n|   |-- aria.dat\n|   |-- camellia.dat\n|   |-- cast128v.dat\n|   |-- cast256v.dat\n|   |-- defdmac1.bin\n|   |-- defdmac2.bin\n|   |-- descert.dat\n|   |-- dh1024.dat\n|   |-- dh2048.dat\n|   |-- dlie1024.dat\n|   |-- dlie2048.dat\n|   |-- dsa1024.dat\n|   |-- dsa1024b.dat\n|   |-- dsa512.dat\n|   |-- ecies_p160.dat\n|   |-- ecies_t163.dat\n|   |-- ed25519.dat\n|   |-- ed25519v0.dat\n|   |-- ed25519v1.dat\n|   |-- elgc1024.dat\n|   |-- esig1023.dat\n|   |-- esig1536.dat\n|   |-- esig2046.dat\n|   |-- fhmqv160.dat\n|   |-- fhmqv256.dat\n|   |-- fhmqv384.dat\n|   |-- fhmqv512.dat\n|   |-- gostval.dat\n|   |-- hmqv160.dat\n|   |-- hmqv256.dat\n|   |-- hmqv384.dat\n|   |-- hmqv512.dat\n|   |-- ideaval.dat\n|   |-- luc1024.dat\n|   |-- luc2048.dat\n|   |-- lucc1024.dat\n|   |-- lucc512.dat\n|   |-- lucd1024.dat\n|   |-- lucd512.dat\n|   |-- lucs1024.dat\n|   |-- lucs512.dat\n|   |-- marsval.dat\n|   |-- mqv1024.dat\n|   |-- mqv2048.dat\n|   |-- nr1024.dat\n|   |-- nr2048.dat\n|   |-- rabi1024.dat\n|   |-- rabi2048.dat\n|   |-- rc2val.dat\n|   |-- rc5val.dat\n|   |-- rc6val.dat\n|   |-- rijndael.dat\n|   |-- rsa1024.dat\n|   |-- rsa2048.dat\n|   |-- rsa2048a.dat\n|   |-- rsa400pb.dat\n|   |-- rsa400pv.dat\n|   |-- rsa512a.dat\n|   |-- rw1024.dat\n|   |-- rw2048.dat\n|   |-- saferval.dat\n|   |-- serpentv.dat\n|   |-- shacal2v.dat\n|   |-- sharkval.dat\n|   |-- skipjack.dat\n|   |-- squareva.dat\n|   |-- twofishv.dat\n|   |-- usage.dat\n|   |-- x25519.dat\n|   |-- x25519v0.dat\n|   |-- x25519v1.dat\n|   |-- xtrdh171.dat\n|   `-- xtrdh342.dat\n|-- TestPrograms\n|   |-- dump2def.cpp\n|   |-- test_32bit.cpp\n|   |-- test_64bit.cpp\n|   |-- test_arm_acle_header.cpp\n|   |-- test_arm_aes.cpp\n|   |-- test_arm_armv7.cpp\n|   |-- test_arm_asimd.cpp\n|   |-- test_arm_crc.cpp\n|   |-- test_arm_neon.cpp\n|   |-- test_arm_neon_header.cpp\n|   |-- test_arm_pmull.cpp\n|   |-- test_arm_sha1.cpp\n|   |-- test_arm_sha256.cpp\n|   |-- test_arm_sha3.cpp\n|   |-- test_arm_sha512.cpp\n|   |-- test_arm_sm3.cpp\n|   |-- test_arm_sm4.cpp\n|   |-- test_asm_mixed.cpp\n|   |-- test_cxx.cpp\n|   |-- test_cxx11.cpp\n|   |-- test_cxx11_alignas.cpp\n|   |-- test_cxx11_alignof.cpp\n|   |-- test_cxx11_assert.cpp\n|   |-- test_cxx11_atomic.cpp\n|   |-- test_cxx11_auto.cpp\n|   |-- test_cxx11_constexpr.cpp\n|   |-- test_cxx11_deletefn.cpp\n|   |-- test_cxx11_enumtype.cpp\n|   |-- test_cxx11_initializer.cpp\n|   |-- test_cxx11_lambda.cpp\n|   |-- test_cxx11_noexcept.cpp\n|   |-- test_cxx11_nullptr.cpp\n|   |-- test_cxx11_staticinit.cpp\n|   |-- test_cxx11_sync.cpp\n|   |-- test_cxx11_vartemplates.cpp\n|   |-- test_cxx14.cpp\n|   |-- test_cxx17.cpp\n|   |-- test_cxx17_assert.cpp\n|   |-- test_cxx17_exceptions.cpp\n|   |-- test_cxx98_exception.cpp\n|   |-- test_glibc.cpp\n|   |-- test_newlib.cpp\n|   |-- test_nodevirtualize.cpp\n|   |-- test_ppc_aes.cpp\n|   |-- test_ppc_altivec.cpp\n|   |-- test_ppc_power7.cpp\n|   |-- test_ppc_power8.cpp\n|   |-- test_ppc_power9.cpp\n|   |-- test_ppc_sha.cpp\n|   |-- test_ppc_vmull.cpp\n|   |-- test_pthreads.cpp\n|   |-- test_x86_aes.cpp\n|   |-- test_x86_avx.cpp\n|   |-- test_x86_avx2.cpp\n|   |-- test_x86_avx512.cpp\n|   |-- test_x86_clmul.cpp\n|   |-- test_x86_cpuid.cpp\n|   |-- test_x86_rdrand.cpp\n|   |-- test_x86_rdseed.cpp\n|   |-- test_x86_sha.cpp\n|   |-- test_x86_sse2.cpp\n|   |-- test_x86_sse3.cpp\n|   |-- test_x86_sse41.cpp\n|   |-- test_x86_sse42.cpp\n|   |-- test_x86_ssse3.cpp\n|   |-- test_x86_via_aes.cpp\n|   |-- test_x86_via_rng.cpp\n|   `-- test_x86_via_sha.cpp\n|-- TestScripts\n|   |-- change-version.sh\n|   |-- configure.sh\n|   |-- coverity-linux.txt\n|   |-- coverity-macosx.txt\n|   |-- coverity-windows.txt\n|   |-- cryptdll-windows.cmd\n|   |-- cryptest-android-mk.sh\n|   |-- cryptest-android.sh\n|   |-- cryptest-autotools.sh\n|   |-- cryptest-coverage.sh\n|   |-- cryptest-coverity.cpp\n|   |-- cryptest-ios.sh\n|   |-- cryptest-pem.sh\n|   |-- cryptest-symbols.sh\n|   |-- cryptest-tidy.sh\n|   |-- cryptest.sh\n|   |-- cryptopp-compiler.cpp\n|   |-- governor.sh\n|   |-- install-ndk.sh\n|   |-- make-benchmarks.sh\n|   |-- reset-fork.sh\n|   |-- setenv-android.sh\n|   |-- setenv-embedded.sh\n|   |-- setenv-ios.sh\n|   `-- setenv-macos.sh\n|-- TestVectors\n|   |-- Readme.txt\n|   |-- aead.txt\n|   |-- aes.txt\n|   |-- all.txt\n|   |-- aria.txt\n|   |-- blake2.txt\n|   |-- blake2b.txt\n|   |-- blake2s.txt\n|   |-- camellia.txt\n|   |-- ccm.txt\n|   |-- chacha.txt\n|   |-- chacha20poly1305.txt\n|   |-- chacha_tls.txt\n|   |-- cham.txt\n|   |-- cmac.txt\n|   |-- dlies.txt\n|   |-- dsa.txt\n|   |-- dsa_1363.txt\n|   |-- dsa_rfc6979.txt\n|   |-- eax.txt\n|   |-- esign.txt\n|   |-- gcm.txt\n|   |-- hc128.txt\n|   |-- hc256.txt\n|   |-- hight.txt\n|   |-- hkdf.txt\n|   |-- hmac.txt\n|   |-- kalyna.txt\n|   |-- keccak.txt\n|   |-- lea.txt\n|   |-- lsh.txt\n|   |-- lsh256.txt\n|   |-- lsh512.txt\n|   |-- lsh512_256.txt\n|   |-- mars.txt\n|   |-- nr.txt\n|   |-- ocb.txt\n|   |-- panama.txt\n|   |-- poly1305_tls.txt\n|   |-- poly1305aes.txt\n|   |-- rabbit.txt\n|   |-- rsa_oaep.txt\n|   |-- rsa_pkcs1_1_5.txt\n|   |-- rsa_pss.txt\n|   |-- rw.txt\n|   |-- salsa.txt\n|   |-- seal.txt\n|   |-- seed.txt\n|   |-- sha.txt\n|   |-- sha1_160_fips_180.txt\n|   |-- sha1_fips_180.txt\n|   |-- sha2.txt\n|   |-- sha2_224_fips_180.txt\n|   |-- sha2_256_fips_180.txt\n|   |-- sha2_384_fips_180.txt\n|   |-- sha2_512_fips_180.txt\n|   |-- sha2_fips_180.txt\n|   |-- sha3.txt\n|   |-- sha3_224_fips_202.txt\n|   |-- sha3_256_fips_202.txt\n|   |-- sha3_384_fips_202.txt\n|   |-- sha3_512_fips_202.txt\n|   |-- sha3_fips_202.txt\n|   |-- shacal2.txt\n|   |-- shake.txt\n|   |-- simeck.txt\n|   |-- simon.txt\n|   |-- siphash.txt\n|   |-- skipjack.txt\n|   |-- sm3.txt\n|   |-- sm4.txt\n|   |-- sosemanuk.txt\n|   |-- speck.txt\n|   |-- tea.txt\n|   |-- threefish.txt\n|   |-- ttmac.txt\n|   |-- vmac.txt\n|   |-- wake.txt\n|   |-- whrlpool.txt\n|   |-- xchacha.txt\n|   `-- xts.txt\n|-- adhoc.cpp.proto\n|-- adler32.cpp\n|-- adler32.h\n|-- adv_simd.h\n|-- aes.h\n|-- aes_armv4.S\n|-- aes_armv4.h\n|-- algebra.cpp\n|-- algebra.h\n|-- algparam.cpp\n|-- algparam.h\n|-- allocate.cpp\n|-- allocate.h\n|-- arc4.cpp\n|-- arc4.h\n|-- argnames.h\n|-- aria.cpp\n|-- aria.h\n|-- ariatab.cpp\n|-- arm_simd.h\n|-- asn.cpp\n|-- asn.h\n|-- authenc.cpp\n|-- authenc.h\n|-- base32.cpp\n|-- base32.h\n|-- base64.cpp\n|-- base64.h\n|-- basecode.cpp\n|-- basecode.h\n|-- bds10.zip\n|-- bench.h\n|-- bench1.cpp\n|-- bench2.cpp\n|-- bench3.cpp\n|-- bfinit.cpp\n|-- blake2.cpp\n|-- blake2.h\n|-- blake2b_simd.cpp\n|-- blake2s_simd.cpp\n|-- blowfish.cpp\n|-- blowfish.h\n|-- blumshub.cpp\n|-- blumshub.h\n|-- camellia.cpp\n|-- camellia.h\n|-- cast.cpp\n|-- cast.h\n|-- casts.cpp\n|-- cbcmac.cpp\n|-- cbcmac.h\n|-- ccm.cpp\n|-- ccm.h\n|-- chacha.cpp\n|-- chacha.h\n|-- chacha_avx.cpp\n|-- chacha_simd.cpp\n|-- chachapoly.cpp\n|-- chachapoly.h\n|-- cham.cpp\n|-- cham.h\n|-- cham_simd.cpp\n|-- channels.cpp\n|-- channels.h\n|-- cmac.cpp\n|-- cmac.h\n|-- config.h\n|-- config_align.h\n|-- config_asm.h\n|-- config_cpu.h\n|-- config_cxx.h\n|-- config_dll.h\n|-- config_int.h\n|-- config_misc.h\n|-- config_ns.h\n|-- config_os.h\n|-- config_ver.h\n|-- cpu.cpp\n|-- cpu.h\n|-- cpuid64.asm\n|-- crc.cpp\n|-- crc.h\n|-- crc_simd.cpp\n|-- cryptdll.vcxproj\n|-- cryptdll.vcxproj.filters\n|-- cryptest.nmake\n|-- cryptest.sln\n|-- cryptest.vcxproj\n|-- cryptest.vcxproj.filters\n|-- cryptest.vcxproj.user\n|-- cryptlib.cpp\n|-- cryptlib.h\n|-- cryptlib.vcxproj\n|-- cryptlib.vcxproj.filters\n|-- cryptopp.mapfile\n|-- cryptopp.rc\n|-- cryptopp.supp\n|-- darn.cpp\n|-- darn.h\n|-- datatest.cpp\n|-- default.cpp\n|-- default.h\n|-- des.cpp\n|-- des.h\n|-- dessp.cpp\n|-- dh.cpp\n|-- dh.h\n|-- dh2.cpp\n|-- dh2.h\n|-- dll.cpp\n|-- dll.h\n|-- dlltest.cpp\n|-- dlltest.vcxproj\n|-- dlltest.vcxproj.filters\n|-- dmac.h\n|-- donna.h\n|-- donna_32.cpp\n|-- donna_32.h\n|-- donna_64.cpp\n|-- donna_64.h\n|-- donna_sse.cpp\n|-- donna_sse.h\n|-- drbg.h\n|-- dsa.cpp\n|-- dsa.h\n|-- eax.cpp\n|-- eax.h\n|-- ec2n.cpp\n|-- ec2n.h\n|-- eccrypto.cpp\n|-- eccrypto.h\n|-- ecp.cpp\n|-- ecp.h\n|-- ecpoint.h\n|-- elgamal.cpp\n|-- elgamal.h\n|-- emsa2.cpp\n|-- emsa2.h\n|-- eprecomp.cpp\n|-- eprecomp.h\n|-- esign.cpp\n|-- esign.h\n|-- factory.h\n|-- fhmqv.h\n|-- files.cpp\n|-- files.h\n|-- filters.cpp\n|-- filters.h\n|-- fips140.cpp\n|-- fips140.h\n|-- fipsalgt.cpp\n|-- fipstest.cpp\n|-- fltrimpl.h\n|-- gcm.cpp\n|-- gcm.h\n|-- gcm_simd.cpp\n|-- gf256.cpp\n|-- gf256.h\n|-- gf2_32.cpp\n|-- gf2_32.h\n|-- gf2n.cpp\n|-- gf2n.h\n|-- gf2n_simd.cpp\n|-- gfpcrypt.cpp\n|-- gfpcrypt.h\n|-- gost.cpp\n|-- gost.h\n|-- gzip.cpp\n|-- gzip.h\n|-- hashfwd.h\n|-- hc128.cpp\n|-- hc128.h\n|-- hc256.cpp\n|-- hc256.h\n|-- hex.cpp\n|-- hex.h\n|-- hight.cpp\n|-- hight.h\n|-- hkdf.h\n|-- hmac.cpp\n|-- hmac.h\n|-- hmqv.h\n|-- hrtimer.cpp\n|-- hrtimer.h\n|-- ida.cpp\n|-- ida.h\n|-- idea.cpp\n|-- idea.h\n|-- integer.cpp\n|-- integer.h\n|-- iterhash.cpp\n|-- iterhash.h\n|-- kalyna.cpp\n|-- kalyna.h\n|-- kalynatab.cpp\n|-- keccak.cpp\n|-- keccak.h\n|-- keccak_core.cpp\n|-- keccak_simd.cpp\n|-- lea.cpp\n|-- lea.h\n|-- lea_simd.cpp\n|-- lsh.h\n|-- lsh256.cpp\n|-- lsh256_avx.cpp\n|-- lsh256_sse.cpp\n|-- lsh512.cpp\n|-- lsh512_avx.cpp\n|-- lsh512_sse.cpp\n|-- lubyrack.h\n|-- luc.cpp\n|-- luc.h\n|-- mars.cpp\n|-- mars.h\n|-- marss.cpp\n|-- md2.cpp\n|-- md2.h\n|-- md4.cpp\n|-- md4.h\n|-- md5.cpp\n|-- md5.h\n|-- mdc.h\n|-- mersenne.h\n|-- misc.cpp\n|-- misc.h\n|-- modarith.h\n|-- modes.cpp\n|-- modes.h\n|-- modexppc.h\n|-- mqueue.cpp\n|-- mqueue.h\n|-- mqv.cpp\n|-- mqv.h\n|-- naclite.h\n|-- nbtheory.cpp\n|-- nbtheory.h\n|-- neon_simd.cpp\n|-- nr.h\n|-- oaep.cpp\n|-- oaep.h\n|-- oids.h\n|-- osrng.cpp\n|-- osrng.h\n|-- ossig.h\n|-- padlkrng.cpp\n|-- padlkrng.h\n|-- panama.cpp\n|-- panama.h\n|-- pch.cpp\n|-- pch.h\n|-- pkcspad.cpp\n|-- pkcspad.h\n|-- poly1305.cpp\n|-- poly1305.h\n|-- polynomi.cpp\n|-- polynomi.h\n|-- power7_ppc.cpp\n|-- power8_ppc.cpp\n|-- power9_ppc.cpp\n|-- ppc_simd.cpp\n|-- ppc_simd.h\n|-- primetab.cpp\n|-- pssr.cpp\n|-- pssr.h\n|-- pubkey.cpp\n|-- pubkey.h\n|-- pwdbased.h\n|-- queue.cpp\n|-- queue.h\n|-- rabbit.cpp\n|-- rabbit.h\n|-- rabin.cpp\n|-- rabin.h\n|-- randpool.cpp\n|-- randpool.h\n|-- rc2.cpp\n|-- rc2.h\n|-- rc5.cpp\n|-- rc5.h\n|-- rc6.cpp\n|-- rc6.h\n|-- rdrand.asm\n|-- rdrand.cpp\n|-- rdrand.h\n|-- rdseed.asm\n|-- rdtables.cpp\n|-- regtest1.cpp\n|-- regtest2.cpp\n|-- regtest3.cpp\n|-- regtest4.cpp\n|-- resource.h\n|-- rijndael.cpp\n|-- rijndael.h\n|-- rijndael_simd.cpp\n|-- ripemd.cpp\n|-- ripemd.h\n|-- rng.cpp\n|-- rng.h\n|-- rsa.cpp\n|-- rsa.h\n|-- rw.cpp\n|-- rw.h\n|-- safer.cpp\n|-- safer.h\n|-- salsa.cpp\n|-- salsa.h\n|-- scrypt.cpp\n|-- scrypt.h\n|-- seal.cpp\n|-- seal.h\n|-- secblock.h\n|-- secblockfwd.h\n|-- seckey.h\n|-- seed.cpp\n|-- seed.h\n|-- serpent.cpp\n|-- serpent.h\n|-- serpentp.h\n|-- sha.cpp\n|-- sha.h\n|-- sha1_armv4.S\n|-- sha1_armv4.h\n|-- sha256_armv4.S\n|-- sha256_armv4.h\n|-- sha3.cpp\n|-- sha3.h\n|-- sha512_armv4.S\n|-- sha512_armv4.h\n|-- sha_simd.cpp\n|-- shacal2.cpp\n|-- shacal2.h\n|-- shacal2_simd.cpp\n|-- shake.cpp\n|-- shake.h\n|-- shark.cpp\n|-- shark.h\n|-- sharkbox.cpp\n|-- simeck.cpp\n|-- simeck.h\n|-- simon.cpp\n|-- simon.h\n|-- simon128_simd.cpp\n|-- simple.cpp\n|-- simple.h\n|-- siphash.h\n|-- skipjack.cpp\n|-- skipjack.h\n|-- sm3.cpp\n|-- sm3.h\n|-- sm4.cpp\n|-- sm4.h\n|-- sm4_simd.cpp\n|-- smartptr.h\n|-- sosemanuk.cpp\n|-- sosemanuk.h\n|-- speck.cpp\n|-- speck.h\n|-- speck128_simd.cpp\n|-- square.cpp\n|-- square.h\n|-- squaretb.cpp\n|-- sse_simd.cpp\n|-- stdcpp.h\n|-- strciphr.cpp\n|-- strciphr.h\n|-- tea.cpp\n|-- tea.h\n|-- test.cpp\n|-- tftables.cpp\n|-- threefish.cpp\n|-- threefish.h\n|-- tiger.cpp\n|-- tiger.h\n|-- tigertab.cpp\n|-- trap.h\n|-- trunhash.h\n|-- ttmac.cpp\n|-- ttmac.h\n|-- tweetnacl.cpp\n|-- tweetnacl.h\n|-- twofish.cpp\n|-- twofish.h\n|-- validat0.cpp\n|-- validat1.cpp\n|-- validat10.cpp\n|-- validat2.cpp\n|-- validat3.cpp\n|-- validat4.cpp\n|-- validat5.cpp\n|-- validat6.cpp\n|-- validat7.cpp\n|-- validat8.cpp\n|-- validat9.cpp\n|-- validate.h\n|-- vc60.zip\n|-- vmac.cpp\n|-- vmac.h\n|-- vs2005.zip\n|-- wake.cpp\n|-- wake.h\n|-- whrlpool.cpp\n|-- whrlpool.h\n|-- words.h\n|-- x64dll.asm\n|-- x64masm.asm\n|-- xed25519.cpp\n|-- xed25519.h\n|-- xtr.cpp\n|-- xtr.h\n|-- xtrcrypt.cpp\n|-- xtrcrypt.h\n|-- xts.cpp\n|-- xts.h\n|-- zdeflate.cpp\n|-- zdeflate.h\n|-- zinflate.cpp\n|-- zinflate.h\n|-- zlib.cpp\n`-- zlib.h\n\n5 directories, 679 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				1.5623250007629395
+			]
+		],
+		"CompileNavigator": [],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "cryptopp",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 129.12,
+		"iterations": 5,
+		"tool_calls": {
+			"Shell": 1,
+			"CompileNavigator": 0,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "make",
+			"workdir": "/work",
+			"clean_cmd": "make clean",
+			"build_cmd": "make -j4",
+			"compile_db_cmd": "",
+			"test_cmd": "make test"
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\cryptopp.semgrep.json",
+				"total_findings": 0,
+				"by_severity": {},
+				"by_rule": {},
+				"errors_count": 30,
+				"findings": []
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\cryptopp.cppcheck.json",
+				"total_findings": 3053,
+				"by_severity": {
+					"style": 3017,
+					"warning": 27,
+					"error": 8,
+					"performance": 1
+				},
+				"findings": [
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_32bit.cpp",
+						"line": 5
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_64bit.cpp",
+						"line": 5
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: n",
+						"verbose": "Unused variable: n",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_armv7.cpp",
+						"line": 10
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'w' is assigned a value that is never used.",
+						"verbose": "Variable 'w' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_crc.cpp",
+						"line": 20
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'x' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'x' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_sha3.cpp",
+						"line": 16
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'w' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'w' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_sha512.cpp",
+						"line": 12
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'w' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'w' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_sha512.cpp",
+						"line": 13
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'w' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'w' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_sha512.cpp",
+						"line": 14
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'x' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'x' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_arm_sm4.cpp",
+						"line": 12
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11.cpp",
+						"line": 6
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_alignas.cpp",
+						"line": 3
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'n' is assigned a value that is never used.",
+						"verbose": "Variable 'n' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_alignof.cpp",
+						"line": 4
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_assert.cpp",
+						"line": 7
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'f' is assigned a value that is never used.",
+						"verbose": "Variable 'f' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_atomic.cpp",
+						"line": 4
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'a' is assigned a value that is never used.",
+						"verbose": "Variable 'a' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_auto.cpp",
+						"line": 3
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 's' is assigned a value that is never used.",
+						"verbose": "Variable 's' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_deletefn.cpp",
+						"line": 8
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 's' is assigned a value that is never used.",
+						"verbose": "Variable 's' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_enumtype.cpp",
+						"line": 5
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'v' is assigned a value that is never used.",
+						"verbose": "Variable 'v' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_initializer.cpp",
+						"line": 4
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_lambda.cpp",
+						"line": 7
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'p' is assigned a value that is never used.",
+						"verbose": "Variable 'p' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_nullptr.cpp",
+						"line": 4
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_staticinit.cpp",
+						"line": 8
+					},
+					{
+						"id": "localMutex",
+						"severity": "warning",
+						"msg": "The lock is ineffective because the mutex is locked at the same scope as the mutex itself.",
+						"verbose": "The lock is ineffective because the mutex is locked at the same scope as the mutex itself.",
+						"cwe": "667",
+						"file": "TestPrograms/test_cxx11_sync.cpp",
+						"line": 5
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx11_vartemplates.cpp",
+						"line": 6
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx14.cpp",
+						"line": 4
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx17.cpp",
+						"line": 4
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx17_assert.cpp",
+						"line": 7
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx17_exceptions.cpp",
+						"line": 8
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'b' is assigned a value that is never used.",
+						"verbose": "Variable 'b' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_cxx98_exception.cpp",
+						"line": 5
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_glibc.cpp",
+						"line": 5
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_newlib.cpp",
+						"line": 5
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "TestPrograms/test_ppc_altivec.cpp",
+						"line": 10
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_ppc_power7.cpp",
+						"line": 41
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: x",
+						"verbose": "Unused variable: x",
+						"cwe": "563",
+						"file": "TestPrograms/test_ppc_power8.cpp",
+						"line": 43
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'y' is assigned a value that is never used.",
+						"verbose": "Variable 'y' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_ppc_power9.cpp",
+						"line": 27
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: XXX",
+						"verbose": "Unused variable: XXX",
+						"cwe": "563",
+						"file": "TestPrograms/test_ppc_power9.cpp",
+						"line": 23
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'ret' is assigned a value that is never used.",
+						"verbose": "Variable 'ret' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_pthreads.cpp",
+						"line": 12
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "TestPrograms/test_x86_avx512.cpp",
+						"line": 6
+					},
+					{
+						"id": "duplicateValueTernary",
+						"severity": "style",
+						"msg": "Same value in both branches of ternary operator.",
+						"verbose": "Finding the same value in both branches of ternary operator is suspicious as the same code is executed regardless of the condition.",
+						"cwe": "398",
+						"file": "TestPrograms/test_x86_rdrand.cpp",
+						"line": 9
+					},
+					{
+						"id": "duplicateValueTernary",
+						"severity": "style",
+						"msg": "Same value in both branches of ternary operator.",
+						"verbose": "Finding the same value in both branches of ternary operator is suspicious as the same code is executed regardless of the condition.",
+						"cwe": "398",
+						"file": "TestPrograms/test_x86_rdseed.cpp",
+						"line": 9
+					},
+					{
+						"id": "redundantInitialization",
+						"severity": "style",
+						"msg": "Redundant initialization for 'x'. The initialized value is overwritten before it is read.",
+						"verbose": "Redundant initialization for 'x'. The initialized value is overwritten before it is read.",
+						"cwe": "563",
+						"file": "TestPrograms/test_x86_sse41.cpp",
+						"line": 8
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'x' is assigned a value that is never used.",
+						"verbose": "Variable 'x' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "TestPrograms/test_x86_sse42.cpp",
+						"line": 5
+					},
+					{
+						"id": "uninitMemberVar",
+						"severity": "warning",
+						"msg": "Member variable 'BufferedTransformation::m_buf' is not initialized in the constructor.",
+						"verbose": "Member variable 'BufferedTransformation::m_buf' is not initialized in the constructor.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 1662
+					},
+					{
+						"id": "uninitMemberVar",
+						"severity": "warning",
+						"msg": "Member variable 'FixedSizeAllocatorWithCleanup::m_allocated' is not initialized in the constructor.",
+						"verbose": "Member variable 'FixedSizeAllocatorWithCleanup::m_allocated' is not initialized in the constructor.",
+						"cwe": "398",
+						"file": "secblock.h",
+						"line": 584
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Algorithm' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Algorithm' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 616
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Struct 'BlockingInputOnly' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Struct 'BlockingInputOnly' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 1789
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Struct 'NoChannelSupport' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Struct 'NoChannelSupport' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 2188
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'InvalidKeyLength' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'InvalidKeyLength' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 2798
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'BERDecodeErr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'BERDecodeErr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "cryptlib.h",
+						"line": 3281
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'simple_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'simple_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 21
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'value_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'value_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 79
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'value_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'value_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 80
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'clonable_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'clonable_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 107
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'clonable_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'clonable_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 108
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'counted_ptr' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'counted_ptr' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 133
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'vector_member_ptrs' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'vector_member_ptrs' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "smartptr.h",
+						"line": 226
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Singleton' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Singleton' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 311
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'BlockCipherFinal' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'BlockCipherFinal' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "seckey.h",
+						"line": 328
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'MessageAuthenticationCodeFinal' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'MessageAuthenticationCodeFinal' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "seckey.h",
+						"line": 380
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'AutoSignaling < InputRejecting < BufferedTransformation > >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'AutoSignaling < InputRejecting < BufferedTransformation > >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "simple.h",
+						"line": 427
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'GetBlock < word32 , EnumToType < ByteOrder , BIG_ENDIAN_ORDER > , false >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'GetBlock < word32 , EnumToType < ByteOrder , BIG_ENDIAN_ORDER > , false >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 2979
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'GetBlock < word32 , EnumToType < ByteOrder , LITTLE_ENDIAN_ORDER > , false >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'GetBlock < word32 , EnumToType < ByteOrder , LITTLE_ENDIAN_ORDER > , false >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 2979
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1290
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1298
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1306
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1406
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmProvider' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmProvider' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1423
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1426
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1534
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetMaxWaitObjectCount' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetMaxWaitObjectCount' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1795
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetWaitObjects' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetWaitObjects' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 1805
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2604
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2608
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2628
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2631
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AccessMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2649
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetMaterial' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2652
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'DigestSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'DigestSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2869
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'TruncatedFinal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'TruncatedFinal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "cryptlib.h",
+						"line": 2873
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Flush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Flush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 318
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsolatedInitialize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsolatedInitialize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 453
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'NumberOfMessages' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'NumberOfMessages' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 459
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetNextMessage' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetNextMessage' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 460
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'TransferTo2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'TransferTo2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 481
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'CopyRangeTo2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'CopyRangeTo2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 483
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 493
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsolatedInitialize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsolatedInitialize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 494
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Put2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Put2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 496
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'SetAutoSignalPropagation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'SetAutoSignalPropagation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 433
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetAutoSignalPropagation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetAutoSignalPropagation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 439
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsolatedFlush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsolatedFlush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 126
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Put2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Put2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 211
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsolatedFlush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsolatedFlush' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 222
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsolatedMessageSeriesEnd' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsolatedMessageSeriesEnd' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 229
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'ChannelPut2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'ChannelPut2' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 239
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'ChannelMessageSeriesEnd' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'ChannelMessageSeriesEnd' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "simple.h",
+						"line": 253
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 2505
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 3022
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "secblock.h",
+						"line": 91
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 2980
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Update' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Update' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "adler32.h",
+						"line": 19
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'TruncatedFinal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'TruncatedFinal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "adler32.h",
+						"line": 20
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'DigestSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'DigestSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "adler32.h",
+						"line": 21
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmName' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "adler32.h",
+						"line": 23
+					},
+					{
+						"id": "operatorEqVarError",
+						"severity": "warning",
+						"msg": "Member variable 'AbstractRing::m_mg' is not assigned a value in 'AbstractRing::operator='.",
+						"verbose": "Member variable 'AbstractRing::m_mg' is not assigned a value in 'AbstractRing::operator='.",
+						"cwe": "398",
+						"file": "algebra.h",
+						"line": 133
+					},
+					{
+						"id": "duplInheritedMember",
+						"severity": "warning",
+						"msg": "The class 'EuclideanDomainOf' defines member variable with name 'result' also defined in its parent class 'AbstractEuclideanDomain'.",
+						"verbose": "The class 'EuclideanDomainOf' defines member variable with name 'result' also defined in its parent class 'AbstractEuclideanDomain'.",
+						"cwe": "398",
+						"file": "algebra.h",
+						"line": 374
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'GetBlock' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'GetBlock' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "misc.h",
+						"line": 2979
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Integer' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Integer' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "integer.h",
+						"line": 107
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'DEREncode' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'DEREncode' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "integer.h",
+						"line": 234
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'BERDecode' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'BERDecode' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "integer.h",
+						"line": 276
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Equal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Equal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 204
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Identity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Identity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 207
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Add' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Add' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 210
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Accumulate' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Accumulate' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 213
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Inverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Inverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 216
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Subtract' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Subtract' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 219
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Reduce' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Reduce' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 222
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Double' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Double' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 225
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'ScalarMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'ScalarMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 228
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'CascadeScalarMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'CascadeScalarMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 231
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'SimultaneousMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'SimultaneousMultiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 234
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Equal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Equal' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 322
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Identity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Identity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 325
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Add' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Add' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 328
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Accumulate' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Accumulate' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 331
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Inverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Inverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 334
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Subtract' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Subtract' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 337
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Reduce' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Reduce' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 340
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Double' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Double' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 343
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'MultiplicativeIdentity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'MultiplicativeIdentity' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 346
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Multiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Multiply' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 349
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Square' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Square' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 352
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsUnit' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsUnit' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 355
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'MultiplicativeInverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'MultiplicativeInverse' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 358
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Divide' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Divide' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 361
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Mod' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Mod' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 364
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'DivisionAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'DivisionAlgorithm' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algebra.h",
+						"line": 367
+					},
+					{
+						"id": "operatorEqVarError",
+						"severity": "warning",
+						"msg": "Member variable 'AlgorithmParametersBase::m_name' is not assigned a value in 'AlgorithmParametersBase::operator='.",
+						"verbose": "Member variable 'AlgorithmParametersBase::m_name' is not assigned a value in 'AlgorithmParametersBase::operator='.",
+						"cwe": "398",
+						"file": "algparam.cpp",
+						"line": 20
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ConstByteArrayParameter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ConstByteArrayParameter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 32
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ConstByteArrayParameter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ConstByteArrayParameter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 56
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ByteArrayParameter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ByteArrayParameter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 104
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ByteArrayParameter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ByteArrayParameter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 109
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ParameterNotUsed' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ParameterNotUsed' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 310
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetVoidValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetVoidValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algparam.h",
+						"line": 137
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetVoidValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetVoidValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algparam.h",
+						"line": 485
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AssignValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AssignValue' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algparam.h",
+						"line": 384
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'MoveInto' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'MoveInto' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "algparam.h",
+						"line": 401
+					},
+					{
+						"id": "exceptThrowInDestructor",
+						"severity": "warning",
+						"msg": "Class AlgorithmParametersBase is not safe, destructor throws exception",
+						"verbose": "The class AlgorithmParametersBase is not safe because its destructor throws an exception. If AlgorithmParametersBase is used and an exception is thrown that is caught in an outer scope the program will terminate.",
+						"cwe": "398",
+						"file": "algparam.h",
+						"line": 325
+					},
+					{
+						"id": "cstyleCast",
+						"severity": "style",
+						"msg": "C-style pointer casting",
+						"verbose": "C-style pointer casting detected. C++ offers four different kinds of casts as replacements: static_cast, const_cast, dynamic_cast and reinterpret_cast. A C-style cast could evaluate to any of those automatically, thus it is considered safer if the programmer explicitly states which kind of cast is expected. See also: https://www.securecoding.cert.org/confluence/display/cplusplus/EXP05-CPP.+Do+not+use+C-style+casts.",
+						"cwe": "398",
+						"file": "allocate.cpp",
+						"line": 46
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'SymmetricCipherFinal' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'SymmetricCipherFinal' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "strciphr.h",
+						"line": 694
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GenerateBlock' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GenerateBlock' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 29
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'DiscardBytes' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'DiscardBytes' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 30
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'ProcessData' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'ProcessData' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 32
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsRandomAccess' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsRandomAccess' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 34
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsSelfInverting' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsSelfInverting' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 35
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsForwardTransformation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsForwardTransformation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 36
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'UncheckedSetKey' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'UncheckedSetKey' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 42
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GetDefaultDiscardBytes' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GetDefaultDiscardBytes' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "arc4.h",
+						"line": 67
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'CombineMessageAndShiftRegister' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'CombineMessageAndShiftRegister' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 666
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'CombineMessageAndShiftRegister' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'CombineMessageAndShiftRegister' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 657
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'GenerateBlock' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'GenerateBlock' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 308
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'ProcessData' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'ProcessData' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 329
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'OptimalBlockSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'OptimalBlockSize' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 340
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'OptimalDataAlignment' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'OptimalDataAlignment' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 351
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsSelfInverting' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsSelfInverting' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 355
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsForwardTransformation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsForwardTransformation' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 359
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'IsRandomAccess' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'IsRandomAccess' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 364
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'Seek' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'Seek' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 369
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'AlgorithmProvider' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'AlgorithmProvider' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 385
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'UncheckedSetKey' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'UncheckedSetKey' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "strciphr.h",
+						"line": 390
+					},
+					{
+						"id": "noConstructor",
+						"severity": "style",
+						"msg": "The class 'BlockQueue' does not declare a constructor although it has private member variables which likely require initialization.",
+						"verbose": "The class 'BlockQueue' does not declare a constructor although it has private member variables. Member variables of builtin types are left uninitialized when the class is instantiated. That may cause bugs or undefined behavior.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 431
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ByteQueue' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ByteQueue' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "queue.h",
+						"line": 33
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Walker' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Walker' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "queue.h",
+						"line": 169
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'LazyPutter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'LazyPutter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "queue.h",
+						"line": 237
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Filter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Filter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 46
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'MeterFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'MeterFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 242
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'TransparentFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'TransparentFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 322
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'OpaqueFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'OpaqueFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 332
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StreamTransformationFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StreamTransformationFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 545
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'HashFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'HashFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 593
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'HashVerificationFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'HashVerificationFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 649
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'AuthenticatedEncryptionFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'AuthenticatedEncryptionFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 696
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'AuthenticatedDecryptionFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'AuthenticatedDecryptionFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 759
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'SignatureVerificationFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'SignatureVerificationFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 859
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'Redirector' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'Redirector' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 909
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'RandomNumberSink' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'RandomNumberSink' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1182
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'ArraySink' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'ArraySink' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1207
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StringStore' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StringStore' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1263
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StringStore' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StringStore' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1275
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'NullStore' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'NullStore' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1323
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StringSource' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StringSource' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1463
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'VectorSource' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'VectorSource' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1502
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'UnknownOID' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'UnknownOID' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "asn.h",
+						"line": 114
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'OID' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'OID' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "asn.h",
+						"line": 274
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'OID' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'OID' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "asn.h",
+						"line": 278
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'EncodedObjectFilter' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'EncodedObjectFilter' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "asn.h",
+						"line": 359
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'SourceTemplate < StringStore >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'SourceTemplate < StringStore >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1435
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'SourceTemplate < RandomNumberStore >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'SourceTemplate < RandomNumberStore >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1435
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StringSinkTemplate < std :: string >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StringSinkTemplate < std :: string >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1133
+					},
+					{
+						"id": "noExplicitConstructor",
+						"severity": "style",
+						"msg": "Class 'StringSinkTemplate < std :: vector < unsigned char > >' has a constructor with 1 argument that is not explicit.",
+						"verbose": "Class 'StringSinkTemplate < std :: vector < unsigned char > >' has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided.",
+						"cwe": "398",
+						"file": "filters.h",
+						"line": 1133
+					},
+					{
+						"id": "missingOverride",
+						"severity": "style",
+						"msg": "The function 'MaxRetrievable' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"verbose": "The function 'MaxRetrievable' overrides a function in a base class but is not marked with a 'override' specifier.",
+						"cwe": "",
+						"file": "queue.h",
+						"line": 40
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\cryptopp.security.json"
+	}
+}

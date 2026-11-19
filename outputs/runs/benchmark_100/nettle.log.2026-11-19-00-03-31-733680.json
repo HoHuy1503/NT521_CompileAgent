@@ -1,0 +1,1395 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project nettle from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			"Action: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CONTRIBUTING.md\n|-- COPYING.LESSERv3\n|-- COPYINGv2\n|-- COPYINGv3\n|-- ChangeLog\n|-- INSTALL\n|-- Makefile.in\n|-- NEWS\n|-- README\n|-- aclocal.m4\n|-- aes-decrypt-internal.c\n|-- aes-decrypt-table.c\n|-- aes-encrypt-internal.c\n|-- aes-encrypt-table.c\n|-- aes-internal.h\n|-- aes-invert-internal.c\n|-- aes-set-key-internal.c\n|-- aes.h\n|-- aes128-decrypt.c\n|-- aes128-encrypt.c\n|-- aes128-meta.c\n|-- aes128-set-decrypt-key.c\n|-- aes128-set-encrypt-key.c\n|-- aes192-decrypt.c\n|-- aes192-encrypt.c\n|-- aes192-meta.c\n|-- aes192-set-decrypt-key.c\n|-- aes192-set-encrypt-key.c\n|-- aes256-decrypt.c\n|-- aes256-encrypt.c\n|-- aes256-meta.c\n|-- aes256-set-decrypt-key.c\n|-- aes256-set-encrypt-key.c\n|-- aesdata.c\n|-- arcfour.c\n|-- arcfour.h\n|-- arctwo-meta.c\n|-- arctwo.c\n|-- arctwo.h\n|-- arm\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- neon\n|   `-- v6\n|-- arm64\n|   |-- README\n|   |-- chacha-2core.asm\n|   |-- chacha-4core.asm\n|   |-- chacha-core-internal.asm\n|   |-- crypto\n|   |-- fat\n|   `-- machine.m4\n|-- asm.m4\n|-- asn1.h\n|-- balloon-sha1.c\n|-- balloon-sha256.c\n|-- balloon-sha384.c\n|-- balloon-sha512.c\n|-- balloon.c\n|-- balloon.h\n|-- base16-decode.c\n|-- base16-encode.c\n|-- base16.h\n|-- base64-decode.c\n|-- base64-encode.c\n|-- base64.h\n|-- base64url-decode.c\n|-- base64url-encode.c\n|-- bignum-random-prime.c\n|-- bignum-random.c\n|-- bignum.c\n|-- bignum.h\n|-- block-internal.h\n|-- blowfish-bcrypt.c\n|-- blowfish-internal.h\n|-- blowfish.c\n|-- blowfish.h\n|-- bswap-internal.h\n|-- buffer-init.c\n|-- buffer.c\n|-- buffer.h\n|-- camellia-absorb.c\n|-- camellia-crypt-internal.c\n|-- camellia-internal.h\n|-- camellia-invert-key.c\n|-- camellia-table.c\n|-- camellia.h\n|-- camellia128-crypt.c\n|-- camellia128-meta.c\n|-- camellia128-set-decrypt-key.c\n|-- camellia128-set-encrypt-key.c\n|-- camellia192-meta.c\n|-- camellia256-crypt.c\n|-- camellia256-meta.c\n|-- camellia256-set-decrypt-key.c\n|-- camellia256-set-encrypt-key.c\n|-- cast128-meta.c\n|-- cast128.c\n|-- cast128.h\n|-- cast128_sboxes.h\n|-- cbc-aes128-encrypt.c\n|-- cbc-aes192-encrypt.c\n|-- cbc-aes256-encrypt.c\n|-- cbc.c\n|-- cbc.h\n|-- ccm-aes128.c\n|-- ccm-aes192.c\n|-- ccm-aes256.c\n|-- ccm.c\n|-- ccm.h\n|-- cfb.c\n|-- cfb.h\n|-- chacha-core-internal.c\n|-- chacha-crypt.c\n|-- chacha-internal.h\n|-- chacha-poly1305-meta.c\n|-- chacha-poly1305.c\n|-- chacha-poly1305.h\n|-- chacha-set-key.c\n|-- chacha-set-nonce.c\n|-- chacha.h\n|-- cmac-aes128-meta.c\n|-- cmac-aes128.c\n|-- cmac-aes256-meta.c\n|-- cmac-aes256.c\n|-- cmac-des3-meta.c\n|-- cmac-des3.c\n|-- cmac.c\n|-- cmac.h\n|-- cmac64.c\n|-- cnd-copy.c\n|-- cnd-memcpy.c\n|-- config.guess\n|-- config.m4.in\n|-- config.make.in\n|-- config.sub\n|-- configure.ac\n|-- ctr-internal.h\n|-- ctr.c\n|-- ctr.h\n|-- ctr16.c\n|-- curve25519-eh-to-x.c\n|-- curve25519-mul-g.c\n|-- curve25519-mul.c\n|-- curve25519.h\n|-- curve448-eh-to-x.c\n|-- curve448-mul-g.c\n|-- curve448-mul.c\n|-- curve448.h\n|-- der-iterator.c\n|-- der2dsa.c\n|-- der2rsa.c\n|-- des.c\n|-- des.h\n|-- des3.c\n|-- desCode.h\n|-- descore.README\n|-- desdata.c\n|-- desinfo.h\n|-- drbg-ctr-aes256.c\n|-- drbg-ctr.h\n|-- dsa-gen-params.c\n|-- dsa-hash.c\n|-- dsa-internal.h\n|-- dsa-keygen.c\n|-- dsa-sign.c\n|-- dsa-verify.c\n|-- dsa.c\n|-- dsa.h\n|-- dsa2sexp.c\n|-- eax-aes128-meta.c\n|-- eax-aes128.c\n|-- eax.c\n|-- eax.h\n|-- ecc-a-to-j.c\n|-- ecc-add-eh.c\n|-- ecc-add-ehh.c\n|-- ecc-add-jja.c\n|-- ecc-add-jjj.c\n|-- ecc-add-th.c\n|-- ecc-add-thh.c\n|-- ecc-curve.h\n|-- ecc-curve25519.c\n|-- ecc-curve448.c\n|-- ecc-dup-eh.c\n|-- ecc-dup-jj.c\n|-- ecc-dup-th.c\n|-- ecc-ecdsa-sign.c\n|-- ecc-ecdsa-verify.c\n|-- ecc-eh-to-a.c\n|-- ecc-gost-gc256b.c\n|-- ecc-gost-gc512a.c\n|-- ecc-gostdsa-sign.c\n|-- ecc-gostdsa-verify.c\n|-- ecc-internal.h\n|-- ecc-j-to-a.c\n|-- ecc-mod-arith.c\n|-- e\n......\nrypt-test.c\n|   |-- rsa-keygen-test.c\n|   |-- rsa-oaep-encrypt-test.c\n|   |-- rsa-pss-sign-tr-test.c\n|   |-- rsa-sec-decrypt-test.c\n|   |-- rsa-sign-tr-test.c\n|   |-- rsa-test.c\n|   |-- rsa2sexp-test.c\n|   |-- salsa20-test.c\n|   |-- sc-cnd-memcpy-test\n|   |-- sc-curve25519-dh-test\n|   |-- sc-curve448-dh-test\n|   |-- sc-ecdsa-sign-test\n|   |-- sc-ed25519-test\n|   |-- sc-ed448-test\n|   |-- sc-gcm-test\n|   |-- sc-memeql-test\n|   |-- sc-ml-kem-test\n|   |-- sc-pkcs1-sec-decrypt-test\n|   |-- sc-rsa-oaep-encrypt-test\n|   |-- sc-rsa-sec-decrypt-test\n|   |-- sc-slh-dsa-test\n|   |-- sc-sntrup761-test\n|   |-- sc-valgrind.sh\n|   |-- serpent-test.c\n|   |-- sexp-format-test.c\n|   |-- sexp-test.c\n|   |-- sexp2rsa-test.c\n|   |-- sha1-huge-test.c\n|   |-- sha1-test.c\n|   |-- sha224-test.c\n|   |-- sha256-test.c\n|   |-- sha3-224-test.c\n|   |-- sha3-256-test.c\n|   |-- sha3-384-test.c\n|   |-- sha3-512-test.c\n|   |-- sha3-permute-test.c\n|   |-- sha3.awk\n|   |-- sha384-test.c\n|   |-- sha512-224-test.c\n|   |-- sha512-256-test.c\n|   |-- sha512-test.c\n|   |-- shake.awk\n|   |-- shake128-test.c\n|   |-- shake256-test.c\n|   |-- siv-cmac-test.c\n|   |-- siv-gcm-test.c\n|   |-- slh-dsa-sha2-128f-tc7.msg\n|   |-- slh-dsa-sha2-128f-tc7.sig\n|   |-- slh-dsa-sha2-128s-tc162.msg\n|   |-- slh-dsa-sha2-128s-tc162.sig\n|   |-- slh-dsa-shake-128f-tc64.msg\n|   |-- slh-dsa-shake-128f-tc64.sig\n|   |-- slh-dsa-shake-128f.ref\n|   |-- slh-dsa-shake-128s-tc215.msg\n|   |-- slh-dsa-shake-128s-tc215.sig\n|   |-- slh-dsa-shake-128s.ref\n|   |-- slh-dsa-test.c\n|   |-- sm3-test.c\n|   |-- sm4-test.c\n|   |-- sntrup761-tc0.ct\n|   |-- sntrup761-tc0.pk\n|   |-- sntrup761-tc0.sk\n|   |-- sntrup761-tc1.ct\n|   |-- sntrup761-tc1.pk\n|   |-- sntrup761-tc1.sk\n|   |-- sntrup761-test.c\n|   |-- streebog-test.c\n|   |-- symbols-test\n|   |-- test-rules.stamp\n|   |-- testutils.c\n|   |-- testutils.h\n|   |-- twofish-test.c\n|   |-- umac-test.c\n|   |-- version-test.c\n|   |-- x86-ibt-test.c\n|   |-- xts-test.c\n|   |-- yarrow-test.c\n|   `-- yarrow-test.out\n|-- tools\n|   |-- Makefile.in\n|   |-- input.c\n|   |-- input.h\n|   |-- misc.c\n|   |-- misc.h\n|   |-- nettle-hash.c\n|   |-- nettle-lfib-stream.c\n|   |-- nettle-pbkdf2-test\n|   |-- nettle-pbkdf2.c\n|   |-- output.c\n|   |-- output.h\n|   |-- parse.c\n|   |-- parse.h\n|   |-- pkcs1-conv-test\n|   |-- pkcs1-conv.c\n|   |-- sexp-conv-test\n|   `-- sexp-conv.c\n|-- twofish-meta.c\n|-- twofish.c\n|-- twofish.h\n|-- twofishdata.c\n|-- umac-internal.h\n|-- umac-l2.c\n|-- umac-l3.c\n|-- umac-nh-n.c\n|-- umac-nh.c\n|-- umac-poly128.c\n|-- umac-poly64.c\n|-- umac-set-key.c\n|-- umac.h\n|-- umac128.c\n|-- umac32.c\n|-- umac64.c\n|-- umac96.c\n|-- version.c\n|-- version.h.in\n|-- write-be32.c\n|-- write-le32.c\n|-- write-le64.c\n|-- x86\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- camellia-crypt-internal.asm\n|   |-- machine.m4\n|   |-- sha1-compress.asm\n|   |-- sha1-compress.nlms\n|   |-- sha1-f1-noexp.nlms\n|   `-- sha1-f2.nlms\n|-- x86_64\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- aesni\n|   |-- camellia-crypt-internal.asm\n|   |-- chacha-core-internal.asm\n|   |-- ecc-curve25519-modp.asm\n|   |-- ecc-curve448-modp.asm\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- ghash-update.asm\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- pclmul\n|   |-- poly1305-blocks.asm\n|   |-- poly1305-internal.asm\n|   |-- salsa20-2core.asm\n|   |-- salsa20-core-internal.asm\n|   |-- salsa20.m4\n|   |-- serpent-decrypt.asm\n|   |-- serpent-encrypt.asm\n|   |-- serpent.m4\n|   |-- sha1-compress.asm\n|   |-- sha256-compress-n.asm\n|   |-- sha3-permute.asm\n|   |-- sha512-compress.asm\n|   |-- sha_ni\n|   |-- umac-nh-n.asm\n|   `-- umac-nh.asm\n|-- xts-aes128.c\n|-- xts-aes256.c\n|-- xts.c\n|-- xts.h\n|-- yarrow.h\n|-- yarrow256.c\n`-- yarrow_key_event.c\n\n33 directories, 874 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Action: CompileNavigator\nAction Input: /work/ is a Nettle source tree (autotools-based C library). Top-level files include configure.ac, Makefile.in, config.guess, config.sub, aclocal.m4, README, INSTALL, and many .c/.h crypto source files. Subdirectories include arm, arm64, x86, x86_64, tests, tools, and likely libnettle/libhogweed. The goal is to compile the main library targets (shared/static libraries), not install or test."
+		],
+		[
+			"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: The navigator did not provide a usable build plan, so I will directly inspect whether the autotools configure script is present before attempting to build.\nAction: Shell\nAction Input: ls -l configure bootstrap 2>/dev/null; if [ -x ./configure ]; then echo HAVE_CONFIGURE; else echo NO_CONFIGURE; fi"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { ls -l configure bootstrap 2>/dev/null; if [ -x ./configure ]; then echo HAVE_CONFIGURE; else echo NO_CONFIGURE; fi\nNO_CONFIGURE\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The source tree has autotools metadata but no generated `configure` script. I will install the autotools and likely GMP development dependencies, then regenerate the build system with `autoreconf`.\nAction: Shell\nAction Input: apt-get update && apt-get install -y autoconf automake libtool libtool-bin pkg-config libgmp-dev && autoreconf -fi"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf automake libtool libtool-bin pkg-config libgmp-dev && autoreconf -fi\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm InRelease [151 kB]\n\n0% [1 InRelease 10.7 kB/151 kB 7%]\n                                  \n0% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]\n\n0% [2 InRelease 12.4 kB/55.4 kB 22%]\n                                    \n0% [Waiting for headers]\n                        \nGet:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]\n\n0% [3 InRelease 7770 B/34.8 kB 22%]\n                                   \n0% [Working]\n0% [Working]\n            \nGet:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]\n\n0% [4 Packages 9221 B/8790 kB 0%]\n0% [4 Packages 20.2 kB/8790 kB 0%]\n17% [4 Packages 248 kB/8790 kB 3%]\n                                  \n90% [Working]\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]\n\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [376 kB]\n\n90% [4 Packages store 0 B] [6 Packages 3502 B/376 kB 1%]\n                                                        \n93% [4 Packages store 0 B]\n                          \n96% [Working]\n96% [5 Packages store 0 B]\n                          \n98% [Working]\n98% [6 Packages store 0 B]\n                          \n100% [Working]\n              \nFetched 9415 kB in 1s (7420 kB/s)\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... Done\n\n\nReading state information... 0% \n\nReading state information... 0%\n\nReading state information... Done\n\nautoconf is already the newest version (2.71-3).\nautomake is already the newest version (1:1.16.5-1.3).\nlibtool is already the newest version (2.4.7-7~deb12u1).\npkg-config is already the newest version (1.8.1-1).\nlibgmp-dev is already the newest version (2:6.2.1+dfsg1-1.1).\nThe following NEW packages will be installed:\n  libtool-bin\n0 upgraded, 1 newly installed, 0 to remove and 183 not upgraded.\nNeed to get 436 kB of archives.\nAfter this operation, 752 kB of additional disk space will be used.\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm/main amd64 libtool-bin amd64 2.4.7-7~deb12u1 [436 kB]\n\n0% [1 libtool-bin 2029 B/436 kB 0%]\n                                   \n100% [Working]\n              \nFetched 436 kB in 0s (3136 kB/s)\ndebconf: delaying package configuration, since apt-utils is not installed\nSelecting previously unselected package libtool-bin.\n(Reading database ... \n(Reading database ... 5%\n(Reading database ... 10%\n(Reading database ... 15%\n(Reading database ... 20%\n(Reading database ... 25%\n(Reading database ... 30%\n(Reading database ... 35%\n(Reading database ... 40%\n(Reading database ... 45%\n(Reading database ... 50%\n(Reading database ... 55%\n(Reading database ... 60%\n(Reading database ... 65%\n(Reading database ... 70%\n(Reading database ... 75%\n(Reading database ... 80%\n(Reading database ... 85%\n(Reading database ... 90%\n(Reading database ... 95%\n(Reading database ... 100%\n(Reading database ... 31639 files and directories currently installed.)\nPreparing to unpack .../libtool-bin_2.4.7-7~deb12u1_amd64.deb ...\nUnpacking libtool-bin (2.4.7-7~deb12u1) ...\nSetting up libtool-bin (2.4.7-7~deb12u1) ...\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Early stop: loop detected"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CONTRIBUTING.md\n|-- COPYING.LESSERv3\n|-- COPYINGv2\n|-- COPYINGv3\n|-- ChangeLog\n|-- INSTALL\n|-- Makefile.in\n|-- NEWS\n|-- README\n|-- aclocal.m4\n|-- aes-decrypt-internal.c\n|-- aes-decrypt-table.c\n|-- aes-encrypt-internal.c\n|-- aes-encrypt-table.c\n|-- aes-internal.h\n|-- aes-invert-internal.c\n|-- aes-set-key-internal.c\n|-- aes.h\n|-- aes128-decrypt.c\n|-- aes128-encrypt.c\n|-- aes128-meta.c\n|-- aes128-set-decrypt-key.c\n|-- aes128-set-encrypt-key.c\n|-- aes192-decrypt.c\n|-- aes192-encrypt.c\n|-- aes192-meta.c\n|-- aes192-set-decrypt-key.c\n|-- aes192-set-encrypt-key.c\n|-- aes256-decrypt.c\n|-- aes256-encrypt.c\n|-- aes256-meta.c\n|-- aes256-set-decrypt-key.c\n|-- aes256-set-encrypt-key.c\n|-- aesdata.c\n|-- arcfour.c\n|-- arcfour.h\n|-- arctwo-meta.c\n|-- arctwo.c\n|-- arctwo.h\n|-- arm\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- neon\n|   `-- v6\n|-- arm64\n|   |-- README\n|   |-- chacha-2core.asm\n|   |-- chacha-4core.asm\n|   |-- chacha-core-internal.asm\n|   |-- crypto\n|   |-- fat\n|   `-- machine.m4\n|-- asm.m4\n|-- asn1.h\n|-- balloon-sha1.c\n|-- balloon-sha256.c\n|-- balloon-sha384.c\n|-- balloon-sha512.c\n|-- balloon.c\n|-- balloon.h\n|-- base16-decode.c\n|-- base16-encode.c\n|-- base16.h\n|-- base64-decode.c\n|-- base64-encode.c\n|-- base64.h\n|-- base64url-decode.c\n|-- base64url-encode.c\n|-- bignum-random-prime.c\n|-- bignum-random.c\n|-- bignum.c\n|-- bignum.h\n|-- block-internal.h\n|-- blowfish-bcrypt.c\n|-- blowfish-internal.h\n|-- blowfish.c\n|-- blowfish.h\n|-- bswap-internal.h\n|-- buffer-init.c\n|-- buffer.c\n|-- buffer.h\n|-- camellia-absorb.c\n|-- camellia-crypt-internal.c\n|-- camellia-internal.h\n|-- camellia-invert-key.c\n|-- camellia-table.c\n|-- camellia.h\n|-- camellia128-crypt.c\n|-- camellia128-meta.c\n|-- camellia128-set-decrypt-key.c\n|-- camellia128-set-encrypt-key.c\n|-- camellia192-meta.c\n|-- camellia256-crypt.c\n|-- camellia256-meta.c\n|-- camellia256-set-decrypt-key.c\n|-- camellia256-set-encrypt-key.c\n|-- cast128-meta.c\n|-- cast128.c\n|-- cast128.h\n|-- cast128_sboxes.h\n|-- cbc-aes128-encrypt.c\n|-- cbc-aes192-encrypt.c\n|-- cbc-aes256-encrypt.c\n|-- cbc.c\n|-- cbc.h\n|-- ccm-aes128.c\n|-- ccm-aes192.c\n|-- ccm-aes256.c\n|-- ccm.c\n|-- ccm.h\n|-- cfb.c\n|-- cfb.h\n|-- chacha-core-internal.c\n|-- chacha-crypt.c\n|-- chacha-internal.h\n|-- chacha-poly1305-meta.c\n|-- chacha-poly1305.c\n|-- chacha-poly1305.h\n|-- chacha-set-key.c\n|-- chacha-set-nonce.c\n|-- chacha.h\n|-- cmac-aes128-meta.c\n|-- cmac-aes128.c\n|-- cmac-aes256-meta.c\n|-- cmac-aes256.c\n|-- cmac-des3-meta.c\n|-- cmac-des3.c\n|-- cmac.c\n|-- cmac.h\n|-- cmac64.c\n|-- cnd-copy.c\n|-- cnd-memcpy.c\n|-- config.guess\n|-- config.m4.in\n|-- config.make.in\n|-- config.sub\n|-- configure.ac\n|-- ctr-internal.h\n|-- ctr.c\n|-- ctr.h\n|-- ctr16.c\n|-- curve25519-eh-to-x.c\n|-- curve25519-mul-g.c\n|-- curve25519-mul.c\n|-- curve25519.h\n|-- curve448-eh-to-x.c\n|-- curve448-mul-g.c\n|-- curve448-mul.c\n|-- curve448.h\n|-- der-iterator.c\n|-- der2dsa.c\n|-- der2rsa.c\n|-- des.c\n|-- des.h\n|-- des3.c\n|-- desCode.h\n|-- descore.README\n|-- desdata.c\n|-- desinfo.h\n|-- drbg-ctr-aes256.c\n|-- drbg-ctr.h\n|-- dsa-gen-params.c\n|-- dsa-hash.c\n|-- dsa-internal.h\n|-- dsa-keygen.c\n|-- dsa-sign.c\n|-- dsa-verify.c\n|-- dsa.c\n|-- dsa.h\n|-- dsa2sexp.c\n|-- eax-aes128-meta.c\n|-- eax-aes128.c\n|-- eax.c\n|-- eax.h\n|-- ecc-a-to-j.c\n|-- ecc-add-eh.c\n|-- ecc-add-ehh.c\n|-- ecc-add-jja.c\n|-- ecc-add-jjj.c\n|-- ecc-add-th.c\n|-- ecc-add-thh.c\n|-- ecc-curve.h\n|-- ecc-curve25519.c\n|-- ecc-curve448.c\n|-- ecc-dup-eh.c\n|-- ecc-dup-jj.c\n|-- ecc-dup-th.c\n|-- ecc-ecdsa-sign.c\n|-- ecc-ecdsa-verify.c\n|-- ecc-eh-to-a.c\n|-- ecc-gost-gc256b.c\n|-- ecc-gost-gc512a.c\n|-- ecc-gostdsa-sign.c\n|-- ecc-gostdsa-verify.c\n|-- ecc-internal.h\n|-- ecc-j-to-a.c\n|-- ecc-mod-arith.c\n|-- ecc-mod-inv.c\n|-- ecc-mod.c\n|-- ecc-mul-a-eh.c\n|-- ecc-mul-a.c\n|-- ecc-mul-g-eh.c\n|-- ecc-mul-g.c\n|-- ecc-mul-m.c\n|-- ecc-nonsec-add-jjj.c\n|-- ecc-pm1-redc.c\n|-- ecc-point-mul-g.c\n|-- ecc-point-mul.c\n|-- ecc-point.c\n|-- ecc-pp1-redc.c\n|-- ecc-random.c\n|-- ecc-scalar.c\n|-- ecc-secp192r1.c\n|-- ecc-secp224r1.c\n|-- ecc-secp256r1.c\n|-- ecc-secp384r1.c\n|-- ecc-secp521r1.c\n|-- ecc-size.c\n|-- ecc.h\n|-- eccdata.c\n|-- eccparams.c\n|-- ecdsa-keygen.c\n|-- ecdsa-sign.c\n|-- ecdsa-verify.c\n|-- ecdsa.h\n|-- ed25519-sha512-pubkey.c\n|-- ed25519-sha512-sign.c\n|-- ed25519-sha512-verify.c\n|-- ed25519-sha512.c\n|-- ed448-shake256-pubkey.c\n|-- ed448-shake256-sign.c\n|-- ed448-shake256-verify.c\n|-- ed448-shake256.c\n|-- eddsa-compress.c\n|-- eddsa-decompress.c\n|-- eddsa-expand.c\n|-- eddsa-hash.c\n|-- eddsa-internal.h\n|-- eddsa-pubkey.c\n|-- eddsa-sign.c\n|-- eddsa-verify.c\n|-- eddsa.h\n|-- examples\n|   |-- Makefile.in\n|   |-- base16dec.c\n|   |-- base16enc.c\n|   |-- base64dec.c\n|   |-- base64enc.c\n|   |-- ecc-benchmark.c\n|   |-- hogweed-benchmark.c\n|   |-- io.c\n|   |-- io.h\n|   |-- nettle-benchmark.c\n|   |-- nettle-openssl.c\n|   |-- random-prime.c\n|   |-- read_rsa_key.c\n|   |-- rsa-decrypt.c\n|   |-- rsa-encrypt-test\n|   |-- rsa-encrypt.c\n|   |-- rsa-keygen.c\n|   |-- rsa-session.h\n|   |-- rsa-sign-test\n|   |-- rsa-sign.c\n|   |-- rsa-verify-test\n|   |-- rsa-verify.c\n|   |-- setup-env\n|   |-- teardown-env\n|   |-- timing.c\n|   `-- timing.h\n|-- fat-arm.c\n|-- fat-arm64.c\n|-- fat-ppc.c\n|-- fat-s390x.c\n|-- fat-setup.h\n|-- fat-x86_64.c\n|-- gcm-aes128-meta.c\n|-- gcm-aes128.c\n|-- gcm-aes192-meta.c\n|-- gcm-aes192.c\n|-- gcm-aes256-meta.c\n|-- gcm-aes256.c\n|-- gcm-camellia128-meta.c\n|-- gcm-camellia128.c\n|-- gcm-camellia256-meta.c\n|-- gcm-camellia256.c\n|-- gcm-internal.h\n|-- gcm-sm4-meta.c\n|-- gcm-sm4.c\n|-- gcm.c\n|-- gcm.h\n|-- getopt.c\n|-- getopt.h\n|-- getopt1.c\n|-- ghash-internal.h\n|-- ghash-set-key.c\n|-- ghash-update.c\n|-- gmp-glue.c\n|-- gmp-glue.h\n|-- gost28147-internal.h\n|-- gost28147.c\n|-- gostdsa-sign.c\n|-- gostdsa-verify.c\n|-- gostdsa-vko.c\n|-- gostdsa.h\n|-- gosthash94-meta.c\n|-- gosthash94.c\n|-- gosthash94.h\n|-- hkdf.c\n|-- hkdf.h\n|-- hmac-gosthash94-meta.c\n|-- hmac-gosthash94.c\n|-- hmac-internal.c\n|-- hmac-internal.h\n|-- hmac-md5-meta.c\n|-- hmac-md5.c\n|-- hmac-ripemd160-meta.c\n|-- hmac-ripemd160.c\n|-- hmac-sha1-meta.c\n|-- hmac-sha1.c\n|-- hmac-sha224-meta.c\n|-- hmac-sha224.c\n|-- hmac-sha256-meta.c\n|-- hmac-sha256.c\n|-- hmac-sha384-meta.c\n|-- hmac-sha384.c\n|-- hmac-sha512-meta.c\n|-- hmac-sha512.c\n|-- hmac-sm3-meta.c\n|-- hmac-sm3.c\n|-- hmac-streebog-meta.c\n|-- hmac-streebog.c\n|-- hmac.h\n|-- hogweed-internal.h\n|-- hogweed.pc.in\n|-- index.html\n|-- install-sh\n|-- knuth-lfib.c\n|-- knuth-lfib.h\n|-- lib\n|   |-- getopt-core.h\n|   |-- getopt-ext.h\n|   |-- getopt.c\n|   |-- getopt1.c\n|   `-- getopt_int.h\n|-- libhogweed.map.in\n|-- libnettle.map.in\n|-- list-obj-sizes.awk\n|-- m4-utils.m4\n|-- macros.h\n|-- md-internal.h\n|-- md2-meta.c\n|-- md2.c\n|-- md2.h\n|-- md4-meta.c\n|-- md4.c\n|-- md4.h\n|-- md5-meta.c\n|-- md5.c\n|-- md5.h\n|-- memeql-sec.c\n|-- memops.h\n|-- memxor-internal.h\n|-- memxor.c\n|-- memxor.h\n|-- memxor3.c\n|-- mini-gmp.c\n|-- mini-gmp.h\n|-- misc\n|   |-- Makefile\n|   |-- c89\n|   |-- c99\n|   |-- ecc-formulas.tex\n|   |-- ecc-ref.gp\n|   |-- nettle-2.0.tar.gz.directive\n|   |-- nettle-2.1.tar.gz.directive\n|   |-- nettle-2.2.tar.gz.directive\n|   |-- nettle-2.3.tar.gz.directive\n|   |-- nettle-2.4.tar.gz.directive\n|   |-- nettle-2.5.tar.gz.directive\n|   |-- nettle-3.1.1.tar.gz.directive\n|   |-- nettle-3.1.tar.gz.directive\n|   |-- nettle-3.2.tar.gz.directive\n|   |-- plan.html\n|   |-- poly1305-gen-example.pike\n|   |-- serpent-sbox0i.dot\n|   |-- serpent-sbox1i.dot\n|   |-- serpent-sbox2i.dot\n|   |-- serpent-sbox3.dot\n|   |-- serpent-sbox3i.dot\n|   |-- serpent-sbox4.dot\n|   |-- serpent-sbox4i.dot\n|   |-- serpent-sbox5.dot\n|   |-- serpent-sbox5i.dot\n|   |-- serpent-sbox6.dot\n|   |-- serpent-sbox6i.dot\n|   |-- serpent-sbox7.dot\n|   |-- serpent-sbox7i.dot\n|   |-- todo.css\n|   |-- umac\n|   `-- xenofarm.sh\n|-- ml-kem-1024.c\n|-- ml-kem-768.c\n|-- ml-kem-internal.c\n|-- ml-kem-internal.h\n|-- ml-kem.h\n|-- mlkemdata.c\n|-- nettle-internal.h\n|-- nettle-lookup-hash.c\n|-- nettle-meta-aeads.c\n|-- nettle-meta-ciphers.c\n|-- nettle-meta-hashes.c\n|-- nettle-meta-macs.c\n|-- nettle-meta.h\n|-- nettle-types.h\n|-- nettle-write.h\n|-- nettle.pc.in\n|-- nettle.texinfo\n|-- nist-keywrap.c\n|-- nist-keywrap.h\n|-- non-nettle.c\n|-- non-nettle.h\n|-- oaep.c\n|-- oaep.h\n|-- ocb-aes128.c\n|-- ocb.c\n|-- ocb.h\n|-- pbkdf2-hmac-gosthash94.c\n|-- pbkdf2-hmac-sha1.c\n|-- pbkdf2-hmac-sha256.c\n|-- pbkdf2-hmac-sha384.c\n|-- pbkdf2-hmac-sha512.c\n|-- pbkdf2.c\n|-- pbkdf2.h\n|-- pkcs1-decrypt.c\n|-- pkcs1-encrypt.c\n|-- pkcs1-internal.h\n|-- pkcs1-rsa-digest.c\n|-- pkcs1-rsa-md5.c\n|-- pkcs1-rsa-sha1.c\n|-- pkcs1-rsa-sha256.c\n|-- pkcs1-rsa-sha512.c\n|-- pkcs1-sec-decrypt.c\n|-- pkcs1.c\n|-- pkcs1.h\n|-- poly1305-aes.c\n|-- poly1305-internal.c\n|-- poly1305-internal.h\n|-- poly1305-update.c\n|-- poly1305.h\n|-- powerpc64\n|   |-- README\n|   |-- ecc-curve25519-modp.asm\n|   |-- ecc-curve448-modp.asm\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- machine.m4\n|   |-- p7\n|   |-- p8\n|   `-- p9\n|-- pss-mgf1.c\n|-- pss-mgf1.h\n|-- pss.c\n|-- pss.h\n|-- realloc.c\n|-- realloc.h\n|-- ripemd160-compress.c\n|-- ripemd160-internal.h\n|-- ripemd160-meta.c\n|-- ripemd160.c\n|-- ripemd160.h\n|-- rsa-decrypt-tr.c\n|-- rsa-decrypt.c\n|-- rsa-encrypt.c\n|-- rsa-internal.h\n|-- rsa-keygen.c\n|-- rsa-md5-sign-tr.c\n|-- rsa-md5-sign.c\n|-- rsa-md5-verify.c\n|-- rsa-oaep-decrypt.c\n|-- rsa-oaep-encrypt.c\n|-- rsa-pkcs1-sign-tr.c\n|-- rsa-pkcs1-sign.c\n|-- rsa-pkcs1-verify.c\n|-- rsa-pss-sha256-sign-tr.c\n|-- rsa-pss-sha256-verify.c\n|-- rsa-pss-sha512-sign-tr.c\n|-- rsa-pss-sha512-verify.c\n|-- rsa-sec-compute-root.c\n|-- rsa-sec-decrypt.c\n|-- rsa-sha1-sign-tr.c\n|-- rsa-sha1-sign.c\n|-- rsa-sha1-verify.c\n|-- rsa-sha256-sign-tr.c\n|-- rsa-sha256-sign.c\n|-- rsa-sha256-verify.c\n|-- rsa-sha512-sign-tr.c\n|-- rsa-sha512-sign.c\n|-- rsa-sha512-verify.c\n|-- rsa-sign-tr.c\n|-- rsa-sign.c\n|-- rsa-verify.c\n|-- rsa.c\n|-- rsa.h\n|-- rsa2sexp.c\n|-- run-tests\n|-- s390x\n|   |-- README\n|   |-- fat\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- msa\n|   |-- msa_x1\n|   |-- msa_x2\n|   |-- msa_x4\n|   `-- vf\n|-- salsa20-128-set-key.c\n|-- salsa20-256-set-key.c\n|-- salsa20-core-internal.c\n|-- salsa20-crypt-internal.c\n|-- salsa20-crypt.c\n|-- salsa20-internal.h\n|-- salsa20-set-key.c\n|-- salsa20-set-nonce.c\n|-- salsa20.h\n|-- salsa20r12-crypt.c\n|-- sec-add-1.c\n|-- sec-sub-1.c\n|-- serpent-decrypt.c\n|-- serpent-encrypt.c\n|-- serpent-internal.h\n|-- serpent-meta.c\n|-- serpent-set-key.c\n|-- serpent.h\n|-- sexp-format.c\n|-- sexp-transport-format.c\n|-- sexp-transport.c\n|-- sexp.c\n|-- sexp.h\n|-- sexp2bignum.c\n|-- sexp2dsa.c\n|-- sexp2rsa.c\n|-- sha-example.c\n|-- sha1-compress.c\n|-- sha1-meta.c\n|-- sha1.c\n|-- sha1.h\n|-- sha2-internal.h\n|-- sha2.h\n|-- sha224-meta.c\n|-- sha256-compress-n.c\n|-- sha256-meta.c\n|-- sha256.c\n|-- sha3-224-meta.c\n|-- sha3-224.c\n|-- sha3-256-meta.c\n|-- sha3-256.c\n|-- sha3-384-meta.c\n|-- sha3-384.c\n|-- sha3-512-meta.c\n|-- sha3-512.c\n|-- sha3-internal.h\n|-- sha3-permute.c\n|-- sha3-shake.c\n|-- sha3.c\n|-- sha3.h\n|-- sha384-meta.c\n|-- sha512-224-meta.c\n|-- sha512-256-meta.c\n|-- sha512-compress.c\n|-- sha512-meta.c\n|-- sha512.c\n|-- shadata.c\n|-- shake128.c\n|-- shake256.c\n|-- siv-cmac-aes128.c\n|-- siv-cmac-aes256.c\n|-- siv-cmac.c\n|-- siv-cmac.h\n|-- siv-gcm-aes128.c\n|-- siv-gcm-aes256.c\n|-- siv-gcm.c\n|-- siv-gcm.h\n|-- siv-ghash-set-key.c\n|-- siv-ghash-update.c\n|-- slh-dsa-128f.c\n|-- slh-dsa-128s.c\n|-- slh-dsa-internal.h\n|-- slh-dsa-sha2-128f.c\n|-- slh-dsa-sha2-128s.c\n|-- slh-dsa-shake-128f.c\n|-- slh-dsa-shake-128s.c\n|-- slh-dsa.c\n|-- slh-dsa.h\n|-- slh-fors.c\n|-- slh-merkle.c\n|-- slh-sha256.c\n|-- slh-shake.c\n|-- slh-wots.c\n|-- slh-xmss.c\n|-- sm3-meta.c\n|-- sm3.c\n|-- sm3.h\n|-- sm4-meta.c\n|-- sm4.c\n|-- sm4.h\n|-- sntrup-internal.h\n|-- sntrup.h\n|-- sntrup761-decap.c\n|-- sntrup761-encap.c\n|-- sntrup761-keygen.c\n|-- sntrup761.c\n|-- sntrupdata.c\n|-- sparc64\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   `-- machine.m4\n|-- streebog-meta.c\n|-- streebog.c\n|-- streebog.h\n|-- testsuite\n|   |-- Makefile.in\n|   |-- aes-keywrap-test.c\n|   |-- aes-test.c\n|   |-- aes-test.out\n|   |-- arcfour-test.c\n|   |-- arctwo-test.c\n|   |-- balloon-test.c\n|   |-- base16-test.c\n|   |-- base64-test.c\n|   |-- bcrypt-test.c\n|   |-- bignum-test.c\n|   |-- blowfish-test.c\n|   |-- buffer-test.c\n|   |-- camellia-test.c\n|   |-- cast128-test.c\n|   |-- cbc-test.c\n|   |-- ccm-test.c\n|   |-- cfb-test.c\n|   |-- chacha-poly1305-test.c\n|   |-- chacha-test.c\n|   |-- cmac-test.c\n|   |-- cnd-memcpy-test.c\n|   |-- ctr-test.c\n|   |-- curve25519-dh-test.c\n|   |-- curve448-dh-test.c\n|   |-- cxx-test.cxx\n|   |-- des-test.c\n|   |-- des3-test.c\n|   |-- dlopen-test.c\n|   |-- drbg-ctr-aes256-test.c\n|   |-- dsa-keygen-test.c\n|   |-- dsa-test.c\n|   |-- eax-test.c\n|   |-- ecc-add-test.c\n|   |-- ecc-dup-test.c\n|   |-- ecc-mod-arith-test.c\n|   |-- ecc-mod-test.c\n|   |-- ecc-modinv-test.c\n|   |-- ecc-mul-a-test.c\n|   |-- ecc-mul-g-test.c\n|   |-- ecc-redc-test.c\n|   |-- ecc-sqrt-test.c\n|   |-- ecdh-test.c\n|   |-- ecdsa-keygen-test.c\n|   |-- ecdsa-sign-test.c\n|   |-- ecdsa-verify-test.c\n|   |-- ed25519-test.c\n|   |-- ed448-test.c\n|   |-- eddsa-compress-test.c\n|   |-- eddsa-sign-test.c\n|   |-- eddsa-verify-test.c\n|   |-- gcm-test.c\n|   |-- gold-bug.txt\n|   |-- gostdsa-keygen-test.c\n|   |-- gostdsa-sign-test.c\n|   |-- gostdsa-verify-test.c\n|   |-- gostdsa-vko-test.c\n|   |-- gosthash94-test.c\n|   |-- hkdf-test.c\n|   |-- hmac-test.c\n|   |-- knuth-lfib-test.c\n|   |-- md2-test.c\n|   |-- md4-test.c\n|   |-- md5-test.c\n|   |-- memeql-test.c\n|   |-- memxor-test.c\n|   |-- meta-aead-test.c\n|   |-- meta-cipher-test.c\n|   |-- meta-hash-test.c\n|   |-- meta-mac-test.c\n|   |-- ml-kem-1024-decap-tc142.ct\n|   |-- ml-kem-1024-decap-tc152.ct\n|   |-- ml-kem-1024-decap-tc202.ct\n|   |-- ml-kem-1024-encapdecap-tc51.ct\n|   |-- ml-kem-1024-encapdecap-tc51.pk\n|   |-- ml-kem-1024-encapdecap-tc51.sk\n|   |-- ml-kem-1024-keygen-tc51.pk\n|   |-- ml-kem-1024-keygen-tc51.sk\n|   |-- ml-kem-768-decap-tc142.ct\n|   |-- ml-kem-768-decap-tc161.ct\n|   |-- ml-kem-768-decap-tc201.ct\n|   |-- ml-kem-768-encapdecap-tc26.ct\n|   |-- ml-kem-768-encapdecap-tc26.pk\n|   |-- ml-kem-768-encapdecap-tc26.sk\n|   |-- ml-kem-768-keygen-tc26.pk\n|   |-- ml-kem-768-keygen-tc26.sk\n|   |-- ml-kem-test.c\n|   |-- ocb-test.c\n|   |-- pbkdf2-test.c\n|   |-- pkcs1-sec-decrypt-test.c\n|   |-- pkcs1-test.c\n|   |-- poly1305-test.c\n|   |-- pss-mgf1-test.c\n|   |-- pss-test.c\n|   |-- random-prime-test.c\n|   |-- ripemd160-test.c\n|   |-- rsa-compute-root-test.c\n|   |-- rsa-encrypt-test.c\n|   |-- rsa-keygen-test.c\n|   |-- rsa-oaep-encrypt-test.c\n|   |-- rsa-pss-sign-tr-test.c\n|   |-- rsa-sec-decrypt-test.c\n|   |-- rsa-sign-tr-test.c\n|   |-- rsa-test.c\n|   |-- rsa2sexp-test.c\n|   |-- salsa20-test.c\n|   |-- sc-cnd-memcpy-test\n|   |-- sc-curve25519-dh-test\n|   |-- sc-curve448-dh-test\n|   |-- sc-ecdsa-sign-test\n|   |-- sc-ed25519-test\n|   |-- sc-ed448-test\n|   |-- sc-gcm-test\n|   |-- sc-memeql-test\n|   |-- sc-ml-kem-test\n|   |-- sc-pkcs1-sec-decrypt-test\n|   |-- sc-rsa-oaep-encrypt-test\n|   |-- sc-rsa-sec-decrypt-test\n|   |-- sc-slh-dsa-test\n|   |-- sc-sntrup761-test\n|   |-- sc-valgrind.sh\n|   |-- serpent-test.c\n|   |-- sexp-format-test.c\n|   |-- sexp-test.c\n|   |-- sexp2rsa-test.c\n|   |-- sha1-huge-test.c\n|   |-- sha1-test.c\n|   |-- sha224-test.c\n|   |-- sha256-test.c\n|   |-- sha3-224-test.c\n|   |-- sha3-256-test.c\n|   |-- sha3-384-test.c\n|   |-- sha3-512-test.c\n|   |-- sha3-permute-test.c\n|   |-- sha3.awk\n|   |-- sha384-test.c\n|   |-- sha512-224-test.c\n|   |-- sha512-256-test.c\n|   |-- sha512-test.c\n|   |-- shake.awk\n|   |-- shake128-test.c\n|   |-- shake256-test.c\n|   |-- siv-cmac-test.c\n|   |-- siv-gcm-test.c\n|   |-- slh-dsa-sha2-128f-tc7.msg\n|   |-- slh-dsa-sha2-128f-tc7.sig\n|   |-- slh-dsa-sha2-128s-tc162.msg\n|   |-- slh-dsa-sha2-128s-tc162.sig\n|   |-- slh-dsa-shake-128f-tc64.msg\n|   |-- slh-dsa-shake-128f-tc64.sig\n|   |-- slh-dsa-shake-128f.ref\n|   |-- slh-dsa-shake-128s-tc215.msg\n|   |-- slh-dsa-shake-128s-tc215.sig\n|   |-- slh-dsa-shake-128s.ref\n|   |-- slh-dsa-test.c\n|   |-- sm3-test.c\n|   |-- sm4-test.c\n|   |-- sntrup761-tc0.ct\n|   |-- sntrup761-tc0.pk\n|   |-- sntrup761-tc0.sk\n|   |-- sntrup761-tc1.ct\n|   |-- sntrup761-tc1.pk\n|   |-- sntrup761-tc1.sk\n|   |-- sntrup761-test.c\n|   |-- streebog-test.c\n|   |-- symbols-test\n|   |-- test-rules.stamp\n|   |-- testutils.c\n|   |-- testutils.h\n|   |-- twofish-test.c\n|   |-- umac-test.c\n|   |-- version-test.c\n|   |-- x86-ibt-test.c\n|   |-- xts-test.c\n|   |-- yarrow-test.c\n|   `-- yarrow-test.out\n|-- tools\n|   |-- Makefile.in\n|   |-- input.c\n|   |-- input.h\n|   |-- misc.c\n|   |-- misc.h\n|   |-- nettle-hash.c\n|   |-- nettle-lfib-stream.c\n|   |-- nettle-pbkdf2-test\n|   |-- nettle-pbkdf2.c\n|   |-- output.c\n|   |-- output.h\n|   |-- parse.c\n|   |-- parse.h\n|   |-- pkcs1-conv-test\n|   |-- pkcs1-conv.c\n|   |-- sexp-conv-test\n|   `-- sexp-conv.c\n|-- twofish-meta.c\n|-- twofish.c\n|-- twofish.h\n|-- twofishdata.c\n|-- umac-internal.h\n|-- umac-l2.c\n|-- umac-l3.c\n|-- umac-nh-n.c\n|-- umac-nh.c\n|-- umac-poly128.c\n|-- umac-poly64.c\n|-- umac-set-key.c\n|-- umac.h\n|-- umac128.c\n|-- umac32.c\n|-- umac64.c\n|-- umac96.c\n|-- version.c\n|-- version.h.in\n|-- write-be32.c\n|-- write-le32.c\n|-- write-le64.c\n|-- x86\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- camellia-crypt-internal.asm\n|   |-- machine.m4\n|   |-- sha1-compress.asm\n|   |-- sha1-compress.nlms\n|   |-- sha1-f1-noexp.nlms\n|   `-- sha1-f2.nlms\n|-- x86_64\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- aesni\n|   |-- camellia-crypt-internal.asm\n|   |-- chacha-core-internal.asm\n|   |-- ecc-curve25519-modp.asm\n|   |-- ecc-curve448-modp.asm\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- ghash-update.asm\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- pclmul\n|   |-- poly1305-blocks.asm\n|   |-- poly1305-internal.asm\n|   |-- salsa20-2core.asm\n|   |-- salsa20-core-internal.asm\n|   |-- salsa20.m4\n|   |-- serpent-decrypt.asm\n|   |-- serpent-encrypt.asm\n|   |-- serpent.m4\n|   |-- sha1-compress.asm\n|   |-- sha256-compress-n.asm\n|   |-- sha3-permute.asm\n|   |-- sha512-compress.asm\n|   |-- sha_ni\n|   |-- umac-nh-n.asm\n|   `-- umac-nh.asm\n|-- xts-aes128.c\n|-- xts-aes256.c\n|-- xts.c\n|-- xts.h\n|-- yarrow.h\n|-- yarrow256.c\n`-- yarrow_key_event.c\n\n33 directories, 874 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				2.1182684898376465
+			],
+			[
+				"ls -l configure bootstrap 2>/dev/null; if [ -x ./configure ]; then echo HAVE_CONFIGURE; else echo NO_CONFIGURE; fi",
+				"root@c0mpi1er-c0nta1ner:/work# { ls -l configure bootstrap 2>/dev/null; if [ -x ./configure ]; then echo HAVE_CONFIGURE; else echo NO_CONFIGURE; fi\nNO_CONFIGURE\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15115141868591309
+			],
+			[
+				"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf automake libtool libtool-bin pkg-config libgmp-dev && autoreconf -fi",
+				"root@c0mpi1er-c0nta1ner:/work# { apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf automake libtool libtool-bin pkg-config libgmp-dev && autoreconf -fi\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm InRelease [151 kB]\n\n0% [1 InRelease 10.7 kB/151 kB 7%]\n                                  \n0% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]\n\n0% [2 InRelease 12.4 kB/55.4 kB 22%]\n                                    \n0% [Waiting for headers]\n                        \nGet:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]\n\n0% [3 InRelease 7770 B/34.8 kB 22%]\n                                   \n0% [Working]\n0% [Working]\n            \nGet:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]\n\n0% [4 Packages 9221 B/8790 kB 0%]\n0% [4 Packages 20.2 kB/8790 kB 0%]\n17% [4 Packages 248 kB/8790 kB 3%]\n                                  \n90% [Working]\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]\n\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [376 kB]\n\n90% [4 Packages store 0 B] [6 Packages 3502 B/376 kB 1%]\n                                                        \n93% [4 Packages store 0 B]\n                          \n96% [Working]\n96% [5 Packages store 0 B]\n                          \n98% [Working]\n98% [6 Packages store 0 B]\n                          \n100% [Working]\n              \nFetched 9415 kB in 1s (7420 kB/s)\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... Done\n\n\nReading state information... 0% \n\nReading state information... 0%\n\nReading state information... Done\n\nautoconf is already the newest version (2.71-3).\nautomake is already the newest version (1:1.16.5-1.3).\nlibtool is already the newest version (2.4.7-7~deb12u1).\npkg-config is already the newest version (1.8.1-1).\nlibgmp-dev is already the newest version (2:6.2.1+dfsg1-1.1).\nThe following NEW packages will be installed:\n  libtool-bin\n0 upgraded, 1 newly installed, 0 to remove and 183 not upgraded.\nNeed to get 436 kB of archives.\nAfter this operation, 752 kB of additional disk space will be used.\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm/main amd64 libtool-bin amd64 2.4.7-7~deb12u1 [436 kB]\n\n0% [1 libtool-bin 2029 B/436 kB 0%]\n                                   \n100% [Working]\n              \nFetched 436 kB in 0s (3136 kB/s)\ndebconf: delaying package configuration, since apt-utils is not installed\nSelecting previously unselected package libtool-bin.\n(Reading database ... \n(Reading database ... 5%\n(Reading database ... 10%\n(Reading database ... 15%\n(Reading database ... 20%\n(Reading database ... 25%\n(Reading database ... 30%\n(Reading database ... 35%\n(Reading database ... 40%\n(Reading database ... 45%\n(Reading database ... 50%\n(Reading database ... 55%\n(Reading database ... 60%\n(Reading database ... 65%\n(Reading database ... 70%\n(Reading database ... 75%\n(Reading database ... 80%\n(Reading database ... 85%\n(Reading database ... 90%\n(Reading database ... 95%\n(Reading database ... 100%\n(Reading database ... 31639 files and directories currently installed.)\nPreparing to unpack .../libtool-bin_2.4.7-7~deb12u1_amd64.deb ...\nUnpacking libtool-bin (2.4.7-7~deb12u1) ...\nSetting up libtool-bin (2.4.7-7~deb12u1) ...\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				3.981846809387207
+			]
+		],
+		"CompileNavigator": [
+			[
+				"/work/ is a Nettle source tree (autotools-based C library). Top-level files include configure.ac, Makefile.in, config.guess, config.sub, aclocal.m4, README, INSTALL, and many .c/.h crypto source files. Subdirectories include arm, arm64, x86, x86_64, tests, tools, and likely libnettle/libhogweed. The goal is to compile the main library targets (shared/static libraries), not install or test.\n\nProject directory structure:\nroot@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CONTRIBUTING.md\n|-- COPYING.LESSERv3\n|-- COPYINGv2\n|-- COPYINGv3\n|-- ChangeLog\n|-- INSTALL\n|-- Makefile.in\n|-- NEWS\n|-- README\n|-- aclocal.m4\n|-- aes-decrypt-internal.c\n|-- aes-decrypt-table.c\n|-- aes-encrypt-internal.c\n|-- aes-encrypt-table.c\n|-- aes-internal.h\n|-- aes-invert-internal.c\n|-- aes-set-key-internal.c\n|-- aes.h\n|-- aes128-decrypt.c\n|-- aes128-encrypt.c\n|-- aes128-meta.c\n|-- aes128-set-decrypt-key.c\n|-- aes128-set-encrypt-key.c\n|-- aes192-decrypt.c\n|-- aes192-encrypt.c\n|-- aes192-meta.c\n|-- aes192-set-decrypt-key.c\n|-- aes192-set-encrypt-key.c\n|-- aes256-decrypt.c\n|-- aes256-encrypt.c\n|-- aes256-meta.c\n|-- aes256-set-decrypt-key.c\n|-- aes256-set-encrypt-key.c\n|-- aesdata.c\n|-- arcfour.c\n|-- arcfour.h\n|-- arctwo-meta.c\n|-- arctwo.c\n|-- arctwo.h\n|-- arm\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- neon\n|   `-- v6\n|-- arm64\n|   |-- README\n|   |-- chacha-2core.asm\n|   |-- chacha-4core.asm\n|   |-- chacha-core-internal.asm\n|   |-- crypto\n|   |-- fat\n|   `-- machine.m4\n|-- asm.m4\n|-- asn1.h\n|-- balloon-sha1.c\n|-- balloon-sha256.c\n|-- balloon-sha384.c\n|-- balloon-sha512.c\n|-- balloon.c\n|-- balloon.h\n|-- base16-decode.c\n|-- base16-encode.c\n|-- base16.h\n|-- base64-decode.c\n|-- base64-encode.c\n|-- base64.h\n|-- base64url-decode.c\n|-- base64url-encode.c\n|-- bignum-random-prime.c\n|-- bignum-random.c\n|-- bignum.c\n|-- bignum.h\n|-- block-internal.h\n|-- blowfish-bcrypt.c\n|-- blowfish-internal.h\n|-- blowfish.c\n|-- blowfish.h\n|-- bswap-internal.h\n|-- buffer-init.c\n|-- buffer.c\n|-- buffer.h\n|-- camellia-absorb.c\n|-- camellia-crypt-internal.c\n|-- camellia-internal.h\n|-- camellia-invert-key.c\n|-- camellia-table.c\n|-- camellia.h\n|-- camellia128-crypt.c\n|-- camellia128-meta.c\n|-- camellia128-set-decrypt-key.c\n|-- camellia128-set-encrypt-key.c\n|-- camellia192-meta.c\n|-- camellia256-crypt.c\n|-- camellia256-meta.c\n|-- camellia256-set-decrypt-key.c\n|-- camellia256-set-encrypt-key.c\n|-- cast128-meta.c\n|-- cast128.c\n|-- cast128.h\n|-- cast128_sboxes.h\n|-- cbc-aes128-encrypt.c\n|-- cbc-aes192-encrypt.c\n|-- cbc-aes256-encrypt.c\n|-- cbc.c\n|-- cbc.h\n|-- ccm-aes128.c\n|-- ccm-aes192.c\n|-- ccm-aes256.c\n|-- ccm.c\n|-- ccm.h\n|-- cfb.c\n|-- cfb.h\n|-- chacha-core-internal.c\n|-- chacha-crypt.c\n|-- chacha-internal.h\n|-- chacha-poly1305-meta.c\n|-- chacha-poly1305.c\n|-- chacha-poly1305.h\n|-- chacha-set-key.c\n|-- chacha-set-nonce.c\n|-- chacha.h\n|-- cmac-aes128-meta.c\n|-- cmac-aes128.c\n|-- cmac-aes256-meta.c\n|-- cmac-aes256.c\n|-- cmac-des3-meta.c\n|-- cmac-des3.c\n|-- cmac.c\n|-- cmac.h\n|-- cmac64.c\n|-- cnd-copy.c\n|-- cnd-memcpy.c\n|-- config.guess\n|-- config.m4.in\n|-- config.make.in\n|-- config.sub\n|-- configure.ac\n|-- ctr-internal.h\n|-- ctr.c\n|-- ctr.h\n|-- ctr16.c\n|-- curve25519-eh-to-x.c\n|-- curve25519-mul-g.c\n|-- curve25519-mul.c\n|-- curve25519.h\n|-- curve448-eh-to-x.c\n|-- curve448-mul-g.c\n|-- curve448-mul.c\n|-- curve448.h\n|-- der-iterator.c\n|-- der2dsa.c\n|-- der2rsa.c\n|-- des.c\n|-- des.h\n|-- des3.c\n|-- desCode.h\n|-- descore.README\n|-- desdata.c\n|-- desinfo.h\n|-- drbg-ctr-aes256.c\n|-- drbg-ctr.h\n|-- dsa-gen-params.c\n|-- dsa-hash.c\n|-- dsa-internal.h\n|-- dsa-keygen.c\n|-- dsa-sign.c\n|-- dsa-verify.c\n|-- dsa.c\n|-- dsa.h\n|-- dsa2sexp.c\n|-- eax-aes128-meta.c\n|-- eax-aes128.c\n|-- eax.c\n|-- eax.h\n|-- ecc-a-to-j.c\n|-- ecc-add-eh.c\n|-- ecc-add-ehh.c\n|-- ecc-add-jja.c\n|-- ecc-add-jjj.c\n|-- ecc-add-th.c\n|-- ecc-add-thh.c\n|-- ecc-curve.h\n|-- ecc-curve25519.c\n|-- ecc-curve448.c\n|-- ecc-dup-eh.c\n|-- ecc-dup-jj.c\n|-- ecc-dup-th.c\n|-- ecc-ecdsa-sign.c\n|-- ecc-ecdsa-verify.c\n|-- ecc-eh-to-a.c\n|-- ecc-gost-gc256b.c\n|-- ecc-gost-gc512a.c\n|-- ecc-gostdsa-sign.c\n|-- ecc-gostdsa-verify.c\n|-- ecc-internal.h\n|-- ecc-j-to-a.c\n|-- ecc-mod-arith.c\n|-- e\n......\nrypt-test.c\n|   |-- rsa-keygen-test.c\n|   |-- rsa-oaep-encrypt-test.c\n|   |-- rsa-pss-sign-tr-test.c\n|   |-- rsa-sec-decrypt-test.c\n|   |-- rsa-sign-tr-test.c\n|   |-- rsa-test.c\n|   |-- rsa2sexp-test.c\n|   |-- salsa20-test.c\n|   |-- sc-cnd-memcpy-test\n|   |-- sc-curve25519-dh-test\n|   |-- sc-curve448-dh-test\n|   |-- sc-ecdsa-sign-test\n|   |-- sc-ed25519-test\n|   |-- sc-ed448-test\n|   |-- sc-gcm-test\n|   |-- sc-memeql-test\n|   |-- sc-ml-kem-test\n|   |-- sc-pkcs1-sec-decrypt-test\n|   |-- sc-rsa-oaep-encrypt-test\n|   |-- sc-rsa-sec-decrypt-test\n|   |-- sc-slh-dsa-test\n|   |-- sc-sntrup761-test\n|   |-- sc-valgrind.sh\n|   |-- serpent-test.c\n|   |-- sexp-format-test.c\n|   |-- sexp-test.c\n|   |-- sexp2rsa-test.c\n|   |-- sha1-huge-test.c\n|   |-- sha1-test.c\n|   |-- sha224-test.c\n|   |-- sha256-test.c\n|   |-- sha3-224-test.c\n|   |-- sha3-256-test.c\n|   |-- sha3-384-test.c\n|   |-- sha3-512-test.c\n|   |-- sha3-permute-test.c\n|   |-- sha3.awk\n|   |-- sha384-test.c\n|   |-- sha512-224-test.c\n|   |-- sha512-256-test.c\n|   |-- sha512-test.c\n|   |-- shake.awk\n|   |-- shake128-test.c\n|   |-- shake256-test.c\n|   |-- siv-cmac-test.c\n|   |-- siv-gcm-test.c\n|   |-- slh-dsa-sha2-128f-tc7.msg\n|   |-- slh-dsa-sha2-128f-tc7.sig\n|   |-- slh-dsa-sha2-128s-tc162.msg\n|   |-- slh-dsa-sha2-128s-tc162.sig\n|   |-- slh-dsa-shake-128f-tc64.msg\n|   |-- slh-dsa-shake-128f-tc64.sig\n|   |-- slh-dsa-shake-128f.ref\n|   |-- slh-dsa-shake-128s-tc215.msg\n|   |-- slh-dsa-shake-128s-tc215.sig\n|   |-- slh-dsa-shake-128s.ref\n|   |-- slh-dsa-test.c\n|   |-- sm3-test.c\n|   |-- sm4-test.c\n|   |-- sntrup761-tc0.ct\n|   |-- sntrup761-tc0.pk\n|   |-- sntrup761-tc0.sk\n|   |-- sntrup761-tc1.ct\n|   |-- sntrup761-tc1.pk\n|   |-- sntrup761-tc1.sk\n|   |-- sntrup761-test.c\n|   |-- streebog-test.c\n|   |-- symbols-test\n|   |-- test-rules.stamp\n|   |-- testutils.c\n|   |-- testutils.h\n|   |-- twofish-test.c\n|   |-- umac-test.c\n|   |-- version-test.c\n|   |-- x86-ibt-test.c\n|   |-- xts-test.c\n|   |-- yarrow-test.c\n|   `-- yarrow-test.out\n|-- tools\n|   |-- Makefile.in\n|   |-- input.c\n|   |-- input.h\n|   |-- misc.c\n|   |-- misc.h\n|   |-- nettle-hash.c\n|   |-- nettle-lfib-stream.c\n|   |-- nettle-pbkdf2-test\n|   |-- nettle-pbkdf2.c\n|   |-- output.c\n|   |-- output.h\n|   |-- parse.c\n|   |-- parse.h\n|   |-- pkcs1-conv-test\n|   |-- pkcs1-conv.c\n|   |-- sexp-conv-test\n|   `-- sexp-conv.c\n|-- twofish-meta.c\n|-- twofish.c\n|-- twofish.h\n|-- twofishdata.c\n|-- umac-internal.h\n|-- umac-l2.c\n|-- umac-l3.c\n|-- umac-nh-n.c\n|-- umac-nh.c\n|-- umac-poly128.c\n|-- umac-poly64.c\n|-- umac-set-key.c\n|-- umac.h\n|-- umac128.c\n|-- umac32.c\n|-- umac64.c\n|-- umac96.c\n|-- version.c\n|-- version.h.in\n|-- write-be32.c\n|-- write-le32.c\n|-- write-le64.c\n|-- x86\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- camellia-crypt-internal.asm\n|   |-- machine.m4\n|   |-- sha1-compress.asm\n|   |-- sha1-compress.nlms\n|   |-- sha1-f1-noexp.nlms\n|   `-- sha1-f2.nlms\n|-- x86_64\n|   |-- README\n|   |-- aes-decrypt-internal.asm\n|   |-- aes-encrypt-internal.asm\n|   |-- aes.m4\n|   |-- aesni\n|   |-- camellia-crypt-internal.asm\n|   |-- chacha-core-internal.asm\n|   |-- ecc-curve25519-modp.asm\n|   |-- ecc-curve448-modp.asm\n|   |-- ecc-secp192r1-modp.asm\n|   |-- ecc-secp224r1-modp.asm\n|   |-- ecc-secp256r1-redc.asm\n|   |-- ecc-secp384r1-modp.asm\n|   |-- ecc-secp521r1-modp.asm\n|   |-- fat\n|   |-- ghash-update.asm\n|   |-- machine.m4\n|   |-- memxor.asm\n|   |-- memxor3.asm\n|   |-- pclmul\n|   |-- poly1305-blocks.asm\n|   |-- poly1305-internal.asm\n|   |-- salsa20-2core.asm\n|   |-- salsa20-core-internal.asm\n|   |-- salsa20.m4\n|   |-- serpent-decrypt.asm\n|   |-- serpent-encrypt.asm\n|   |-- serpent.m4\n|   |-- sha1-compress.asm\n|   |-- sha256-compress-n.asm\n|   |-- sha3-permute.asm\n|   |-- sha512-compress.asm\n|   |-- sha_ni\n|   |-- umac-nh-n.asm\n|   `-- umac-nh.asm\n|-- xts-aes128.c\n|-- xts-aes256.c\n|-- xts.c\n|-- xts.h\n|-- yarrow.h\n|-- yarrow256.c\n`-- yarrow_key_event.c\n\n33 directories, 874 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+				"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+				[]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "nettle",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 424.27,
+		"iterations": 9,
+		"tool_calls": {
+			"Shell": 3,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "make",
+			"workdir": "/work/misc",
+			"clean_cmd": "find . -maxdepth 4 \\( -name '*.o' -o -name '*.lo' -o -name '*.obj' -o -path '*/_o/*.o' \\) -delete",
+			"build_cmd": "make -j4",
+			"compile_db_cmd": "",
+			"test_cmd": ""
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\nettle.semgrep.json",
+				"total_findings": 4,
+				"by_severity": {
+					"ERROR": 4
+				},
+				"by_rule": {
+					"c-unsafe-string-copy": 1,
+					"c-format-string-vuln": 3
+				},
+				"errors_count": 20,
+				"findings": [
+					{
+						"check_id": "opt.rules.c-unsafe-string-copy",
+						"rule": "c-unsafe-string-copy",
+						"severity": "ERROR",
+						"path": "examples/rsa-keygen.c",
+						"line": 141,
+						"col": 3,
+						"message": "Unbounded string or buffer operation detected (CWE-120). Functions such as strcpy, strcat, sprintf, vsprintf, and gets do not enforce destination buffer bounds and can cause stack/heap buffer overflows. Prefer bounded alternatives such as snprintf, vsnprintf, strlcpy, or fgets.",
+						"cwe": "CWE-120: Buffer Copy without Checking Size of Input"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "tools/pkcs1-conv.c",
+						"line": 648,
+						"col": 4,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "tools/sexp-conv.c",
+						"line": 328,
+						"col": 2,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "tools/sexp-conv.c",
+						"line": 349,
+						"col": 2,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					}
+				]
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\nettle.cppcheck.json",
+				"total_findings": 129,
+				"by_severity": {
+					"style": 64,
+					"warning": 43,
+					"portability": 17,
+					"error": 5
+				},
+				"findings": [
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "aes-set-key-internal.c",
+						"line": 54
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'si' can be reduced.",
+						"verbose": "The scope of the variable 'si' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "arcfour.c",
+						"line": 79
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sj' can be reduced.",
+						"verbose": "The scope of the variable 'sj' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "arcfour.c",
+						"line": 79
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x' can be reduced.",
+						"verbose": "The scope of the variable 'x' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "arctwo.c",
+						"line": 192
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'data' can be reduced.",
+						"verbose": "The scope of the variable 'data' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "blowfish.c",
+						"line": 382
+					},
+					{
+						"id": "pointerSize",
+						"severity": "warning",
+						"msg": "Size of pointer 'test_hash' used instead of size of its data.",
+						"verbose": "Size of pointer 'test_hash' used instead of size of its data. This is likely to lead to a buffer overflow. You probably intend to write 'sizeof(*test_hash)'.",
+						"cwe": "467",
+						"file": "blowfish-bcrypt.c",
+						"line": 504
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "cnd-memcpy.c",
+						"line": 43
+					},
+					{
+						"id": "unassignedVariable",
+						"severity": "style",
+						"msg": "Variable 'zero_block' is not assigned a value.",
+						"verbose": "Variable 'zero_block' is not assigned a value.",
+						"cwe": "665",
+						"file": "block-internal.h",
+						"line": 49
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 's' can be reduced.",
+						"verbose": "The scope of the variable 's' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "desdata.c",
+						"line": 64
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p0_bits' can be reduced.",
+						"verbose": "The scope of the variable 'p0_bits' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "dsa-gen-params.c",
+						"line": 57
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+192' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+192' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+128' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+128' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+64' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+64' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+448' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+448' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+384' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+384' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+320' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+320' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+256' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+256' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 62
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+448' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+448' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+384' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+384' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+320' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+320' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+256' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+256' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+192' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+192' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+128' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+128' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "pointerOutOfBounds",
+						"severity": "portability",
+						"msg": "Undefined behaviour, pointer arithmetic 'des_keymap+64' is out of bounds.",
+						"verbose": "Undefined behaviour, pointer arithmetic 'des_keymap+64' is out of bounds.",
+						"cwe": "758",
+						"file": "des.c",
+						"line": 63
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'length>0' is redundant or the array 'state->b[16]' is accessed at index 16, which is out of bounds.",
+						"verbose": "Either the condition 'length>0' is redundant or the array 'state->b[16]' is accessed at index 16, which is out of bounds.",
+						"cwe": "788",
+						"file": "eax.c",
+						"line": 70
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error Broken curve25519 parameters",
+						"verbose": "#error Broken curve25519 parameters",
+						"cwe": "",
+						"file": "ecc-curve25519.c",
+						"line": 198
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error Unsupported limb size",
+						"verbose": "#error Unsupported limb size",
+						"cwe": "",
+						"file": "ecc-curve448.c",
+						"line": 160
+					},
+					{
+						"id": "clarifyCondition",
+						"severity": "style",
+						"msg": "Boolean result is used in bitwise operation. Clarify expression with parentheses.",
+						"verbose": "Suspicious expression. Boolean result is used in bitwise operation. The operator '!' and the comparison operators have higher precedence than bitwise operators. It is recommended that the expression is clarified with parentheses.",
+						"cwe": "398",
+						"file": "ecc-random.c",
+						"line": 50
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error Unsupported limb size",
+						"verbose": "#error Unsupported limb size",
+						"cwe": "",
+						"file": "ecc-secp192r1.c",
+						"line": 193
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error Unsupported parameters",
+						"verbose": "#error Unsupported parameters",
+						"cwe": "",
+						"file": "ecc-secp256r1.c",
+						"line": 225
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error Unsupported limb size",
+						"verbose": "#error Unsupported limb size",
+						"cwe": "",
+						"file": "ecc-secp384r1.c",
+						"line": 255
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'tp' is always false",
+						"verbose": "Condition 'tp' is always false",
+						"cwe": "570",
+						"file": "mini-gmp.c",
+						"line": 1172
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'vx' is always true",
+						"verbose": "Condition 'vx' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 3886
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'rx' is always true",
+						"verbose": "Condition 'rx' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 3923
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'vx' is always true",
+						"verbose": "Condition 'vx' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 3959
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'rx' is always true",
+						"verbose": "Condition 'rx' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 3996
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'rx' is always true",
+						"verbose": "Condition 'rx' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 4065
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'ux' is always true",
+						"verbose": "Condition 'ux' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 4217
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'ux==0' is always true",
+						"verbose": "Condition 'ux==0' is always true",
+						"cwe": "571",
+						"file": "mini-gmp.c",
+						"line": 4222
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "eccdata.c",
+						"line": 879
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "eccdata.c",
+						"line": 1105
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ul' can be reduced.",
+						"verbose": "The scope of the variable 'ul' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 556
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ul' can be reduced.",
+						"verbose": "The scope of the variable 'ul' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 579
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'rl' can be reduced.",
+						"verbose": "The scope of the variable 'rl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 579
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ul' can be reduced.",
+						"verbose": "The scope of the variable 'ul' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 605
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'rl' can be reduced.",
+						"verbose": "The scope of the variable 'rl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 605
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'B' can be reduced.",
+						"verbose": "The scope of the variable 'B' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 1814
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'Bi' can be reduced.",
+						"verbose": "The scope of the variable 'Bi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 1814
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 1815
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'qp' can be reduced.",
+						"verbose": "The scope of the variable 'qp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 2378
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'vl' can be reduced.",
+						"verbose": "The scope of the variable 'vl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 3934
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'vl' can be reduced.",
+						"verbose": "The scope of the variable 'vl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 4007
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'vl' can be reduced.",
+						"verbose": "The scope of the variable 'vl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "mini-gmp.c",
+						"line": 4119
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'shift' shadows outer variable",
+						"verbose": "Local variable 'shift' shadows outer variable",
+						"cwe": "398",
+						"file": "eccdata.c",
+						"line": 1209
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'i' shadows outer variable",
+						"verbose": "Local variable 'i' shadows outer variable",
+						"cwe": "398",
+						"file": "eccdata.c",
+						"line": 1334
+					},
+					{
+						"id": "shadowFunction",
+						"severity": "style",
+						"msg": "Local variable 'modinv_gcd' shadows outer function",
+						"verbose": "Local variable 'modinv_gcd' shadows outer function",
+						"cwe": "398",
+						"file": "examples/ecc-benchmark.c",
+						"line": 248
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 157
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 167
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 170
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 196
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 206
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'rsa1024' can be reduced.",
+						"verbose": "The scope of the variable 'rsa1024' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "examples/hogweed-benchmark.c",
+						"line": 222
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 's' is always false",
+						"verbose": "Condition 's' is always false",
+						"cwe": "570",
+						"file": "fat-arm64.c",
+						"line": 118
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 's' is always false",
+						"verbose": "Condition 's' is always false",
+						"cwe": "570",
+						"file": "fat-arm.c",
+						"line": 73
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "fat-arm.c",
+						"line": 194
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 's' is always false",
+						"verbose": "Condition 's' is always false",
+						"cwe": "570",
+						"file": "fat-ppc.c",
+						"line": 104
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 's' is always false",
+						"verbose": "Condition 's' is always false",
+						"cwe": "570",
+						"file": "fat-s390x.c",
+						"line": 116
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 's' is always false",
+						"verbose": "Condition 's' is always false",
+						"cwe": "570",
+						"file": "fat-x86_64.c",
+						"line": 76
+					},
+					{
+						"id": "objectIndex",
+						"severity": "warning",
+						"msg": "The address of local variable 'ambig_fallback' might be accessed at non-zero index.",
+						"verbose": "The address of local variable 'ambig_fallback' might be accessed at non-zero index.",
+						"cwe": "758",
+						"file": "lib/getopt.c",
+						"line": 274
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "The comparison 'priv->ecc == ecc' is always true because 'priv->ecc' and 'ecc' represent the same value.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "gostdsa-vko.c",
+						"line": 72
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 78
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 78
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 78
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 85
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 85
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "mlkemdata.c",
+						"line": 85
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'size' can be reduced.",
+						"verbose": "The scope of the variable 'size' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "ocb.c",
+						"line": 222
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'block' shadows outer variable",
+						"verbose": "Local variable 'block' shadows outer variable",
+						"cwe": "398",
+						"file": "ocb.c",
+						"line": 206
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'ap' can be declared as pointer to const",
+						"verbose": "Parameter 'ap' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "sec-add-1.c",
+						"line": 41
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'ap' can be declared as pointer to const",
+						"verbose": "Parameter 'ap' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "sec-sub-1.c",
+						"line": 41
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967296, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967296, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 500
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967295, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967295, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 502
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967294, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967294, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 503
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967293, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967293, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 504
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967292, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967292, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 505
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967291, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967291, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 506
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967290, which is out of bounds.",
+						"verbose": "Either the condition 'k>0' is redundant or the array 'ctx->keys[33][4]' is accessed at index 4294967290, which is out of bounds.",
+						"cwe": "788",
+						"file": "serpent-decrypt.c",
+						"line": 507
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'T' can be reduced.",
+						"verbose": "The scope of the variable 'T' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sha3-permute.c",
+						"line": 117
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'X' can be reduced.",
+						"verbose": "The scope of the variable 'X' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sha3-permute.c",
+						"line": 117
+					},
+					{
+						"id": "pointerOutOfBoundsCond",
+						"severity": "portability",
+						"msg": "Undefined behaviour, when 'length' is 17 the pointer arithmetic 'block+length' is out of bounds.",
+						"verbose": "Undefined behaviour, when 'length' is 17 the pointer arithmetic 'block+length' is out of bounds.",
+						"cwe": "758",
+						"file": "siv-gcm.c",
+						"line": 116
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'swap' can be reduced.",
+						"verbose": "The scope of the variable 'swap' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sntrup761-keygen.c",
+						"line": 113
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'swap' can be reduced.",
+						"verbose": "The scope of the variable 'swap' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sntrup761-keygen.c",
+						"line": 190
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'f0' can be reduced.",
+						"verbose": "The scope of the variable 'f0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sntrup761-keygen.c",
+						"line": 191
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'g0' can be reduced.",
+						"verbose": "The scope of the variable 'g0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "sntrup761-keygen.c",
+						"line": 191
+					},
+					{
+						"id": "unusedVariable",
+						"severity": "style",
+						"msg": "Unused variable: c",
+						"verbose": "Unused variable: c",
+						"cwe": "563",
+						"file": "sntrupdata.c",
+						"line": 16
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'length' can be reduced.",
+						"verbose": "The scope of the variable 'length' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "testsuite/base64-test.c",
+						"line": 103
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/ecc-sqrt-test.c",
+						"line": 114
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/ecc-sqrt-test.c",
+						"line": 224
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/memxor-test.c",
+						"line": 59
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/memxor-test.c",
+						"line": 59
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/memxor-test.c",
+						"line": 92
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 3) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/memxor-test.c",
+						"line": 92
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/memxor-test.c",
+						"line": 92
+					},
+					{
+						"id": "redundantInitialization",
+						"severity": "style",
+						"msg": "Redundant initialization for 'end_count'. The initialized value is overwritten before it is read.",
+						"verbose": "Redundant initialization for 'end_count'. The initialized value is overwritten before it is read.",
+						"cwe": "563",
+						"file": "testsuite/ml-kem-test.c",
+						"line": 264
+					},
+					{
+						"id": "arrayIndexOutOfBoundsCond",
+						"severity": "warning",
+						"msg": "Either the condition 'length>0' is redundant or the array 'block[16]' is accessed at index 16, which is out of bounds.",
+						"verbose": "Either the condition 'length>0' is redundant or the array 'block[16]' is accessed at index 16, which is out of bounds.",
+						"cwe": "788",
+						"file": "testsuite/poly1305-test.c",
+						"line": 59
+					},
+					{
+						"id": "pointerOutOfBoundsCond",
+						"severity": "portability",
+						"msg": "Undefined behaviour, when 'length' is 17 the pointer arithmetic 'block+length' is out of bounds.",
+						"verbose": "Undefined behaviour, when 'length' is 17 the pointer arithmetic 'block+length' is out of bounds.",
+						"cwe": "758",
+						"file": "testsuite/poly1305-test.c",
+						"line": 60
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/random-prime-test.c",
+						"line": 18
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "portability",
+						"msg": "%zd in format string (no. 2) requires 'ssize_t' but the argument type is 'size_t {aka unsigned long}'.",
+						"verbose": "%zd in format string (no. 2) requires 'ssize_t' but the argument type is 'size_t {aka unsigned long}'.",
+						"cwe": "686",
+						"file": "testsuite/slh-dsa-test.c",
+						"line": 324
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/yarrow-test.c",
+						"line": 112
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/yarrow-test.c",
+						"line": 136
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/yarrow-test.c",
+						"line": 141
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/yarrow-test.c",
+						"line": 167
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "testsuite/yarrow-test.c",
+						"line": 69
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'buf' shadows outer variable",
+						"verbose": "Local variable 'buf' shadows outer variable",
+						"cwe": "398",
+						"file": "testsuite/yarrow-test.c",
+						"line": 109
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/testutils.c",
+						"line": 279
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "testsuite/testutils.c",
+						"line": 293
+					},
+					{
+						"id": "funcArgOrderDifferent",
+						"severity": "warning",
+						"msg": "Function 'test_aead_message' argument order different: declaration 'aead, key, adata, nonce, clear, cipher' definition 'aead, key, nonce, adata, clear, cipher'",
+						"verbose": "Function 'test_aead_message' argument order different: declaration 'aead, key, adata, nonce, clear, cipher' definition 'aead, key, nonce, adata, clear, cipher'",
+						"cwe": "683",
+						"file": "testsuite/testutils.c",
+						"line": 1030
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition '!f' is redundant or there is possible null pointer dereference: f.",
+						"verbose": "Either the condition '!f' is redundant or there is possible null pointer dereference: f.",
+						"cwe": "476",
+						"file": "tools/nettle-hash.c",
+						"line": 70
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition '!f' is redundant or there is possible null pointer dereference: f.",
+						"verbose": "Either the condition '!f' is redundant or there is possible null pointer dereference: f.",
+						"cwe": "476",
+						"file": "tools/nettle-hash.c",
+						"line": 71
+					},
+					{
+						"id": "clarifyCondition",
+						"severity": "style",
+						"msg": "Boolean result is used in bitwise operation. Clarify expression with parentheses.",
+						"verbose": "Suspicious expression. Boolean result is used in bitwise operation. The operator '!' and the comparison operators have higher precedence than bitwise operators. It is recommended that the expression is clarified with parentheses.",
+						"cwe": "398",
+						"file": "tools/output.c",
+						"line": 241
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'escape' is always false",
+						"verbose": "Condition 'escape' is always false",
+						"cwe": "570",
+						"file": "tools/output.c",
+						"line": 275
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "twofish.c",
+						"line": 286
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't0' can be reduced.",
+						"verbose": "The scope of the variable 't0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "twofish.c",
+						"line": 371
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't1' can be reduced.",
+						"verbose": "The scope of the variable 't1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "twofish.c",
+						"line": 371
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't0' can be reduced.",
+						"verbose": "The scope of the variable 't0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "twofish.c",
+						"line": 434
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't1' can be reduced.",
+						"verbose": "The scope of the variable 't1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "twofish.c",
+						"line": 434
+					},
+					{
+						"id": "uninitvar",
+						"severity": "warning",
+						"msg": "Uninitialized variable: s",
+						"verbose": "Uninitialized variable: s",
+						"cwe": "457",
+						"file": "twofish.c",
+						"line": 328
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'pad' shadows outer variable",
+						"verbose": "Local variable 'pad' shadows outer variable",
+						"cwe": "398",
+						"file": "umac32.c",
+						"line": 98
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'pad' shadows outer variable",
+						"verbose": "Local variable 'pad' shadows outer variable",
+						"cwe": "398",
+						"file": "umac64.c",
+						"line": 101
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\nettle.security.json"
+	}
+}

@@ -1,0 +1,1991 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project libsodium from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			"Action: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AI-POLICY.md\n|-- AUTHORS\n|-- CITATION.cff\n|-- ChangeLog\n|-- LICENSE\n|-- Makefile.am\n|-- README.markdown\n|-- THANKS\n|-- appveyor.yml\n|-- autogen.sh\n|-- azure-pipelines.yml\n|-- build.zig\n|-- builds\n|   |-- Makefile.am\n|   |-- msvc\n|   `-- wasm32-freestanding\n|-- ci\n|   `-- appveyor\n|-- configure.ac\n|-- dist-build\n|   |-- Makefile.am\n|   |-- android-aar.sh\n|   |-- android-armv7-a.sh\n|   |-- android-armv8-a.sh\n|   |-- android-build.sh\n|   |-- android-x86.sh\n|   |-- android-x86_64.sh\n|   |-- apple-xcframework.sh\n|   |-- emscripten-symbols.def\n|   |-- emscripten.sh\n|   |-- generate-emscripten-symbols.sh\n|   |-- macos.sh\n|   |-- msys2-win32.sh\n|   `-- msys2-win64.sh\n|-- lgtm.yml\n|-- libsodium-uninstalled.pc.in\n|-- libsodium.pc.in\n|-- logo.png\n|-- m4\n|   |-- ax_add_fortify_source.m4\n|   |-- ax_check_catchable_abrt.m4\n|   |-- ax_check_catchable_segv.m4\n|   |-- ax_check_compile_flag.m4\n|   |-- ax_check_define.m4\n|   |-- ax_check_gnu_make.m4\n|   |-- ax_check_link_flag.m4\n|   |-- ax_pthread.m4\n|   |-- ax_tls.m4\n|   |-- ax_valgrind_check.m4\n|   `-- ld-output-def.m4\n|-- packaging\n|   `-- dotnet-core\n|-- regen-msvc\n|   |-- libsodium.vcxproj\n|   |-- libsodium.vcxproj.filters\n|   |-- libsodium.vcxproj.filters.tpl\n|   |-- libsodium.vcxproj.tpl\n|   |-- regen-msvc.py\n|   |-- tl_libsodium.vcxproj.filters.tpl\n|   `-- tl_libsodium.vcxproj.tpl\n|-- src\n|   |-- Makefile.am\n|   `-- libsodium\n`-- test\n    |-- Makefile.am\n    |-- check-version-consistency.sh\n    |-- constcheck.sh\n    |-- default\n    |-- quirks\n    |-- rename-globals.sh\n    |-- symbols\n    `-- vectors\n\n18 directories, 55 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Action: CompileNavigator\nAction Input: .\n|-- AI-POLICY.md\n|-- AUTHORS\n|-- CITATION.cff\n|-- ChangeLog\n|-- LICENSE\n|-- Makefile.am\n|-- README.markdown\n|-- THANKS\n|-- appveyor.yml\n|-- autogen.sh\n|-- azure-pipelines.yml\n|-- build.zig\n|-- builds\n|   |-- Makefile.am\n|   |-- msvc\n|   `-- wasm32-freestanding\n|-- ci\n|   `-- appveyor\n|-- configure.ac\n|-- dist-build\n|   |-- Makefile.am\n|   |-- android-aar.sh\n|   |-- android-armv7-a.sh\n|   |-- android-armv8-a.sh\n|   |-- android-build.sh\n|   |-- android-x86.sh\n|   |-- android-x86_64.sh\n|   |-- apple-xcframework.sh\n|   |-- emscripten-symbols.def\n|   |-- emscripten.sh\n|   |-- generate-emscripten-symbols.sh\n|   |-- macos.sh\n|   |-- msys2-win32.sh\n|   `-- msys2-win64.sh\n|-- lgtm.yml\n|-- libsodium-uninstalled.pc.in\n|-- libsodium.pc.in\n|-- logo.png\n|-- m4\n|   |-- ax_add_fortify_source.m4\n|   |-- ax_check_catchable_abrt.m4\n|   |-- ax_check_catchable_segv.m4\n|   |-- ax_check_compile_flag.m4\n|   |-- ax_check_define.m4\n|   |-- ax_check_gnu_make.m4\n|   |-- ax_check_link_flag.m4\n|   |-- ax_pthread.m4\n|   |-- ax_tls.m4\n|   |-- ax_valgrind_check.m4\n|   `-- ld-output-def.m4\n|-- packaging\n|   `-- dotnet-core\n|-- regen-msvc\n|   |-- libsodium.vcxproj\n|   |-- libsodium.vcxproj.filters\n|   |-- libsodium.vcxproj.filters.tpl\n|   |-- libsodium.vcxproj.tpl\n|   |-- regen-msvc.py\n|   |-- tl_libsodium.vcxproj.filters.tpl\n|   `-- tl_libsodium.vcxproj.tpl\n|-- src\n|   |-- Makefile.am\n|   `-- libsodium\n`-- test\n    |-- Makefile.am\n    |-- check-version-consistency.sh\n    |-- constcheck.sh\n    |-- default\n    |-- quirks\n    |-- rename-globals.sh\n    |-- symbols\n    `-- vectors"
+		],
+		[
+			"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Early stop: loop detected"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AI-POLICY.md\n|-- AUTHORS\n|-- CITATION.cff\n|-- ChangeLog\n|-- LICENSE\n|-- Makefile.am\n|-- README.markdown\n|-- THANKS\n|-- appveyor.yml\n|-- autogen.sh\n|-- azure-pipelines.yml\n|-- build.zig\n|-- builds\n|   |-- Makefile.am\n|   |-- msvc\n|   `-- wasm32-freestanding\n|-- ci\n|   `-- appveyor\n|-- configure.ac\n|-- dist-build\n|   |-- Makefile.am\n|   |-- android-aar.sh\n|   |-- android-armv7-a.sh\n|   |-- android-armv8-a.sh\n|   |-- android-build.sh\n|   |-- android-x86.sh\n|   |-- android-x86_64.sh\n|   |-- apple-xcframework.sh\n|   |-- emscripten-symbols.def\n|   |-- emscripten.sh\n|   |-- generate-emscripten-symbols.sh\n|   |-- macos.sh\n|   |-- msys2-win32.sh\n|   `-- msys2-win64.sh\n|-- lgtm.yml\n|-- libsodium-uninstalled.pc.in\n|-- libsodium.pc.in\n|-- logo.png\n|-- m4\n|   |-- ax_add_fortify_source.m4\n|   |-- ax_check_catchable_abrt.m4\n|   |-- ax_check_catchable_segv.m4\n|   |-- ax_check_compile_flag.m4\n|   |-- ax_check_define.m4\n|   |-- ax_check_gnu_make.m4\n|   |-- ax_check_link_flag.m4\n|   |-- ax_pthread.m4\n|   |-- ax_tls.m4\n|   |-- ax_valgrind_check.m4\n|   `-- ld-output-def.m4\n|-- packaging\n|   `-- dotnet-core\n|-- regen-msvc\n|   |-- libsodium.vcxproj\n|   |-- libsodium.vcxproj.filters\n|   |-- libsodium.vcxproj.filters.tpl\n|   |-- libsodium.vcxproj.tpl\n|   |-- regen-msvc.py\n|   |-- tl_libsodium.vcxproj.filters.tpl\n|   `-- tl_libsodium.vcxproj.tpl\n|-- src\n|   |-- Makefile.am\n|   `-- libsodium\n`-- test\n    |-- Makefile.am\n    |-- check-version-consistency.sh\n    |-- constcheck.sh\n    |-- default\n    |-- quirks\n    |-- rename-globals.sh\n    |-- symbols\n    `-- vectors\n\n18 directories, 55 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.3526294231414795
+			]
+		],
+		"CompileNavigator": [
+			[
+				".\n|-- AI-POLICY.md\n|-- AUTHORS\n|-- CITATION.cff\n|-- ChangeLog\n|-- LICENSE\n|-- Makefile.am\n|-- README.markdown\n|-- THANKS\n|-- appveyor.yml\n|-- autogen.sh\n|-- azure-pipelines.yml\n|-- build.zig\n|-- builds\n|   |-- Makefile.am\n|   |-- msvc\n|   `-- wasm32-freestanding\n|-- ci\n|   `-- appveyor\n|-- configure.ac\n|-- dist-build\n|   |-- Makefile.am\n|   |-- android-aar.sh\n|   |-- android-armv7-a.sh\n|   |-- android-armv8-a.sh\n|   |-- android-build.sh\n|   |-- android-x86.sh\n|   |-- android-x86_64.sh\n|   |-- apple-xcframework.sh\n|   |-- emscripten-symbols.def\n|   |-- emscripten.sh\n|   |-- generate-emscripten-symbols.sh\n|   |-- macos.sh\n|   |-- msys2-win32.sh\n|   `-- msys2-win64.sh\n|-- lgtm.yml\n|-- libsodium-uninstalled.pc.in\n|-- libsodium.pc.in\n|-- logo.png\n|-- m4\n|   |-- ax_add_fortify_source.m4\n|   |-- ax_check_catchable_abrt.m4\n|   |-- ax_check_catchable_segv.m4\n|   |-- ax_check_compile_flag.m4\n|   |-- ax_check_define.m4\n|   |-- ax_check_gnu_make.m4\n|   |-- ax_check_link_flag.m4\n|   |-- ax_pthread.m4\n|   |-- ax_tls.m4\n|   |-- ax_valgrind_check.m4\n|   `-- ld-output-def.m4\n|-- packaging\n|   `-- dotnet-core\n|-- regen-msvc\n|   |-- libsodium.vcxproj\n|   |-- libsodium.vcxproj.filters\n|   |-- libsodium.vcxproj.filters.tpl\n|   |-- libsodium.vcxproj.tpl\n|   |-- regen-msvc.py\n|   |-- tl_libsodium.vcxproj.filters.tpl\n|   `-- tl_libsodium.vcxproj.tpl\n|-- src\n|   |-- Makefile.am\n|   `-- libsodium\n`-- test\n    |-- Makefile.am\n    |-- check-version-consistency.sh\n    |-- constcheck.sh\n    |-- default\n    |-- quirks\n    |-- rename-globals.sh\n    |-- symbols\n    `-- vectors",
+				"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+				[]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "libsodium",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 216.19,
+		"iterations": 6,
+		"tool_calls": {
+			"Shell": 1,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "unknown",
+			"workdir": "/work",
+			"clean_cmd": "",
+			"build_cmd": "",
+			"compile_db_cmd": "",
+			"test_cmd": ""
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\libsodium.semgrep.json",
+				"total_findings": 2,
+				"by_severity": {
+					"WARNING": 2
+				},
+				"by_rule": {
+					"c-integer-overflow-alloc": 2
+				},
+				"errors_count": 9,
+				"findings": [
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "builds/wasm32-freestanding/libc.c",
+						"line": 47,
+						"col": 16,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "src/libsodium/crypto_pwhash/argon2/argon2-core.c",
+						"line": 472,
+						"col": 10,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					}
+				]
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\libsodium.cppcheck.json",
+				"total_findings": 250,
+				"by_severity": {
+					"style": 207,
+					"error": 35,
+					"warning": 6,
+					"portability": 2
+				},
+				"findings": [
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'clen' can be reduced.",
+						"verbose": "The scope of the variable 'clen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/aegis128l/aead_aegis128l.c",
+						"line": 66
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/aegis128l/aead_aegis128l.c",
+						"line": 89
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . encrypt_detached",
+						"verbose": "syntax error: ( . encrypt_detached",
+						"cwe": "",
+						"file": "src/libsodium/crypto_aead/aegis128l/aegis128l_soft.c",
+						"line": 54
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'clen' can be reduced.",
+						"verbose": "The scope of the variable 'clen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/aegis256/aead_aegis256.c",
+						"line": 66
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/aegis256/aead_aegis256.c",
+						"line": 89
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . encrypt_detached",
+						"verbose": "syntax error: ( . encrypt_detached",
+						"cwe": "",
+						"file": "src/libsodium/crypto_aead/aegis256/aegis256_soft.c",
+						"line": 49
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'clen' can be reduced.",
+						"verbose": "The scope of the variable 'clen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c",
+						"line": 86
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'clen' can be reduced.",
+						"verbose": "The scope of the variable 'clen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c",
+						"line": 174
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c",
+						"line": 256
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/chacha20poly1305/aead_chacha20poly1305.c",
+						"line": 341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'clen' can be reduced.",
+						"verbose": "The scope of the variable 'clen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/xchacha20poly1305/aead_xchacha20poly1305.c",
+						"line": 182
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_aead/xchacha20poly1305/aead_xchacha20poly1305.c",
+						"line": 234
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"verbose": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"cwe": "476",
+						"file": "src/libsodium/crypto_auth/hmacsha256/auth_hmacsha256.c",
+						"line": 59
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"verbose": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"cwe": "476",
+						"file": "src/libsodium/crypto_auth/hmacsha256/auth_hmacsha256.c",
+						"line": 66
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"verbose": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"cwe": "476",
+						"file": "src/libsodium/crypto_auth/hmacsha512/auth_hmacsha512.c",
+						"line": 59
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"verbose": "Either the condition 'key==NULL' is redundant or there is possible null pointer dereference: key.",
+						"cwe": "476",
+						"file": "src/libsodium/crypto_auth/hmacsha512/auth_hmacsha512.c",
+						"line": 66
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If CRYPTO_ALIGN is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If CRYPTO_ALIGN is a macro then please configure it.",
+						"cwe": "",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/blake2b-compress-ref.c",
+						"line": 8
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'outlen' is less than zero.",
+						"verbose": "The unsigned expression 'outlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 16
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'outlen' is less than zero.",
+						"verbose": "The unsigned expression 'outlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 33
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'outlen' is less than zero.",
+						"verbose": "The unsigned expression 'outlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 50
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'keylen' is less than zero.",
+						"verbose": "The unsigned expression 'keylen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 57
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'outlen' is less than zero.",
+						"verbose": "The unsigned expression 'outlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 74
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'keylen' is less than zero.",
+						"verbose": "The unsigned expression 'keylen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/generichash_blake2b.c",
+						"line": 80
+					},
+					{
+						"id": "duplicateExpression",
+						"severity": "style",
+						"msg": "Same expression on both sides of '-='.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_generichash/blake2b/ref/blake2b-ref.c",
+						"line": 284
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'inlen' is less than zero.",
+						"verbose": "The unsigned expression 'inlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_hash/sha256/cp/hash_sha256_cp.c",
+						"line": 357
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/keccak1600/ref/keccak1600_ref.c",
+						"line": 434
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'inlen' is less than zero.",
+						"verbose": "The unsigned expression 'inlen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/crypto_hash/sha512/cp/hash_sha512_cp.c",
+						"line": 351
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . encrypt",
+						"verbose": "syntax error: ( . encrypt",
+						"cwe": "",
+						"file": "src/libsodium/crypto_ipcrypt/ipcrypt_soft.c",
+						"line": 478
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kdf/hkdf/kdf_hkdf_sha256.c",
+						"line": 60
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kdf/hkdf/kdf_hkdf_sha512.c",
+						"line": 60
+					},
+					{
+						"id": "duplicateExpression",
+						"severity": "style",
+						"msg": "Same expression on both sides of '-'.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 895
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x' can be reduced.",
+						"verbose": "The scope of the variable 'x' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 225
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y' can be reduced.",
+						"verbose": "The scope of the variable 'y' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 225
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'z' can be reduced.",
+						"verbose": "The scope of the variable 'z' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 225
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c1' can be reduced.",
+						"verbose": "The scope of the variable 'c1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 226
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c3' can be reduced.",
+						"verbose": "The scope of the variable 'c3' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 226
+					},
+					{
+						"id": "shiftNegativeLHS",
+						"severity": "portability",
+						"msg": "Shifting a negative value is technically undefined behaviour",
+						"verbose": "Shifting a negative value is technically undefined behaviour",
+						"cwe": "758",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 68
+					},
+					{
+						"id": "shiftTooManyBitsSigned",
+						"severity": "portability",
+						"msg": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"verbose": "Shifting signed 32-bit value by 31 bits is implementation-defined behaviour",
+						"cwe": "758",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/safegcd.h",
+						"line": 68
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: t",
+						"verbose": "Uninitialized variable: t",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/fe_25_5/fe.h",
+						"line": 189
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: e",
+						"verbose": "Uninitialized variable: e",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 156
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: e",
+						"verbose": "Uninitialized variable: e",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 189
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: recip",
+						"verbose": "Uninitialized variable: recip",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 538
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: recip",
+						"verbose": "Uninitialized variable: recip",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 566
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: recip",
+						"verbose": "Uninitialized variable: recip",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 769
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: wp",
+						"verbose": "Uninitialized variable: wp",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 1113
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: wh",
+						"verbose": "Uninitialized variable: wh",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 1120
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: r_fe",
+						"verbose": "Uninitialized variable: r_fe",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2633
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: x",
+						"verbose": "Uninitialized variable: x",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2635
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: y",
+						"verbose": "Uninitialized variable: y",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2635
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: fe_g",
+						"verbose": "Uninitialized variable: fe_g",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2660
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: fe_f",
+						"verbose": "Uninitialized variable: fe_f",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2679
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: x",
+						"verbose": "Uninitialized variable: x",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2680
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: y",
+						"verbose": "Uninitialized variable: y",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2680
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: s_",
+						"verbose": "Uninitialized variable: s_",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2768
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: inv_sqrt",
+						"verbose": "Uninitialized variable: inv_sqrt",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2786
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: inv_sqrt",
+						"verbose": "Uninitialized variable: inv_sqrt",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2831
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: s",
+						"verbose": "Uninitialized variable: s",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2889
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: r0",
+						"verbose": "Uninitialized variable: r0",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2922
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: r1",
+						"verbose": "Uninitialized variable: r1",
+						"cwe": "457",
+						"file": "src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c",
+						"line": 2923
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'zeta' can be reduced.",
+						"verbose": "The scope of the variable 'zeta' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 123
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 204
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'd' can be reduced.",
+						"verbose": "The scope of the variable 'd' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 204
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't0' can be reduced.",
+						"verbose": "The scope of the variable 't0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 253
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't1' can be reduced.",
+						"verbose": "The scope of the variable 't1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 253
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'val0' can be reduced.",
+						"verbose": "The scope of the variable 'val0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 497
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'val1' can be reduced.",
+						"verbose": "The scope of the variable 'val1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_kem/mlkem768/ref/kem_mlkem768_ref.c",
+						"line": 497
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . onetimeauth",
+						"verbose": "syntax error: ( . onetimeauth",
+						"cwe": "",
+						"file": "src/libsodium/crypto_onetimeauth/poly1305/donna/poly1305_donna.c",
+						"line": 117
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_pwhash/scryptsalsa208sha256/nosse/pwhash_scryptsalsa208sha256_nosse.c",
+						"line": 180
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'maxrp' can be reduced.",
+						"verbose": "The scope of the variable 'maxrp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_pwhash/scryptsalsa208sha256/pwhash_scryptsalsa208sha256.c",
+						"line": 23
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . mult",
+						"verbose": "syntax error: ( . mult",
+						"cwe": "",
+						"file": "src/libsodium/crypto_scalarmult/curve25519/ref10/x25519_ref10.c",
+						"line": 199
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_pwhash/argon2/argon2-fill-block-ref.c",
+						"line": 116
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ref_index' can be reduced.",
+						"verbose": "The scope of the variable 'ref_index' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_pwhash/argon2/argon2-fill-block-ref.c",
+						"line": 150
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ref_lane' can be reduced.",
+						"verbose": "The scope of the variable 'ref_lane' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_pwhash/argon2/argon2-fill-block-ref.c",
+						"line": 150
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'm' can be reduced.",
+						"verbose": "The scope of the variable 'm' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_shorthash/siphash24/ref/shorthash_siphash24_ref.c",
+						"line": 17
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'm' can be reduced.",
+						"verbose": "The scope of the variable 'm' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_shorthash/siphash24/ref/shorthash_siphashx24_ref.c",
+						"line": 16
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . stream",
+						"verbose": "syntax error: ( . stream",
+						"cwe": "",
+						"file": "src/libsodium/crypto_stream/chacha20/ref/chacha20_ref.c",
+						"line": 308
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_sign/mldsa44/ref/sign_mldsa44_ref.c",
+						"line": 230
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't0' can be reduced.",
+						"verbose": "The scope of the variable 't0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_sign/mldsa44/ref/sign_mldsa44_ref.c",
+						"line": 348
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't1' can be reduced.",
+						"verbose": "The scope of the variable 't1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_sign/mldsa44/ref/sign_mldsa44_ref.c",
+						"line": 348
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 't' can be reduced.",
+						"verbose": "The scope of the variable 't' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_sign/mldsa44/ref/sign_mldsa44_ref.c",
+						"line": 933
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . stream",
+						"verbose": "syntax error: ( . stream",
+						"cwe": "",
+						"file": "src/libsodium/crypto_stream/salsa20/ref/salsa20_ref.c",
+						"line": 116
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'u' can be reduced.",
+						"verbose": "The scope of the variable 'u' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_stream/salsa2012/ref/stream_salsa2012_ref.c",
+						"line": 21
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'u' can be reduced.",
+						"verbose": "The scope of the variable 'u' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_stream/salsa2012/ref/stream_salsa2012_ref.c",
+						"line": 67
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'u' can be reduced.",
+						"verbose": "The scope of the variable 'u' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_stream/salsa208/ref/stream_salsa208_ref.c",
+						"line": 23
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'u' can be reduced.",
+						"verbose": "The scope of the variable 'u' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/crypto_stream/salsa208/ref/stream_salsa208_ref.c",
+						"line": 69
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . initialized",
+						"verbose": "syntax error: ( . initialized",
+						"cwe": "",
+						"file": "src/libsodium/randombytes/internal/randombytes_internal_random.c",
+						"line": 140
+					},
+					{
+						"id": "syntaxError",
+						"severity": "error",
+						"msg": "syntax error: ( . random_data_source_fd",
+						"verbose": "syntax error: ( . random_data_source_fd",
+						"cwe": "",
+						"file": "src/libsodium/randombytes/sysrandom/randombytes_sysrandom.c",
+						"line": 136
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_enter()!=0' is always false",
+						"verbose": "Condition 'sodium_crit_enter()!=0' is always false",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 30
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_leave()!=0' is always false",
+						"verbose": "Condition 'sodium_crit_leave()!=0' is always false",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 34
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_leave()!=0' is always false",
+						"verbose": "Condition 'sodium_crit_leave()!=0' is always false",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 52
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_enter()==0' is always true",
+						"verbose": "Condition 'sodium_crit_enter()==0' is always true",
+						"cwe": "571",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 197
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_leave()==0' is always true",
+						"verbose": "Condition 'sodium_crit_leave()==0' is always true",
+						"cwe": "571",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 199
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_enter()!=0' is always false",
+						"verbose": "Condition 'sodium_crit_enter()!=0' is always false",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 211
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'sodium_crit_leave()!=0' is always false",
+						"verbose": "Condition 'sodium_crit_leave()!=0' is always false",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 215
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'handler' can be reduced.",
+						"verbose": "The scope of the variable 'handler' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/core.c",
+						"line": 194
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'blocksize' is less than zero.",
+						"verbose": "The unsigned expression 'blocksize' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/utils.c",
+						"line": 765
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'blocksize' is less than zero.",
+						"verbose": "The unsigned expression 'blocksize' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "src/libsodium/sodium/utils.c",
+						"line": 809
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad' can be reduced.",
+						"verbose": "The scope of the variable 'ad' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 503
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 504
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'decrypted' can be reduced.",
+						"verbose": "The scope of the variable 'decrypted' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 505
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 506
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'expected_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'expected_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 507
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 509
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad_len' can be reduced.",
+						"verbose": "The scope of the variable 'ad_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 516
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 517
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 518
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis128l.c",
+						"line": 520
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad' can be reduced.",
+						"verbose": "The scope of the variable 'ad' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 584
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 585
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'decrypted' can be reduced.",
+						"verbose": "The scope of the variable 'decrypted' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 586
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 587
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'expected_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'expected_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 588
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 590
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad_len' can be reduced.",
+						"verbose": "The scope of the variable 'ad_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 597
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 598
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 599
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aegis256.c",
+						"line": 601
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad' can be reduced.",
+						"verbose": "The scope of the variable 'ad' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 185
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'decrypted' can be reduced.",
+						"verbose": "The scope of the variable 'decrypted' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 186
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 187
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 189
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad_len' can be reduced.",
+						"verbose": "The scope of the variable 'ad_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 192
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 193
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm2.c",
+						"line": 194
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x' can be reduced.",
+						"verbose": "The scope of the variable 'x' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 19
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'b' can be reduced.",
+						"verbose": "The scope of the variable 'b' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 20
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 21
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 50
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c_alpha0' can be reduced.",
+						"verbose": "The scope of the variable 'c_alpha0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 52
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c_num0' can be reduced.",
+						"verbose": "The scope of the variable 'c_num0' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 53
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 255
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 288
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ch' can be reduced.",
+						"verbose": "The scope of the variable 'ch' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 403
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'z' can be reduced.",
+						"verbose": "The scope of the variable 'z' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 491
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression ''0'-52'.",
+						"verbose": "Signed integer overflow for expression ''0'-52'.",
+						"cwe": "190",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 122
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression ''0'-52'.",
+						"verbose": "Signed integer overflow for expression ''0'-52'.",
+						"cwe": "190",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 133
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression ''0'-52'.",
+						"verbose": "Signed integer overflow for expression ''0'-52'.",
+						"cwe": "190",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 144
+					},
+					{
+						"id": "integerOverflow",
+						"severity": "error",
+						"msg": "Signed integer overflow for expression ''0'-52'.",
+						"verbose": "Signed integer overflow for expression ''0'-52'.",
+						"cwe": "190",
+						"file": "src/libsodium/sodium/codecs.c",
+						"line": 155
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad' can be reduced.",
+						"verbose": "The scope of the variable 'ad' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3082
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3083
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext2' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3084
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'decrypted' can be reduced.",
+						"verbose": "The scope of the variable 'decrypted' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3085
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3086
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'expected_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'expected_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3087
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3089
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad_len' can be reduced.",
+						"verbose": "The scope of the variable 'ad_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3096
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3097
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3098
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3100
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'res' can be reduced.",
+						"verbose": "The scope of the variable 'res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3101
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3273
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3274
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message2' can be reduced.",
+						"verbose": "The scope of the variable 'message2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3275
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'nonce' can be reduced.",
+						"verbose": "The scope of the variable 'nonce' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3276
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'key' can be reduced.",
+						"verbose": "The scope of the variable 'key' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3277
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3278
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_aes256gcm.c",
+						"line": 3279
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'c' shadows outer variable",
+						"verbose": "Local variable 'c' shadows outer variable",
+						"cwe": "398",
+						"file": "test/default/cmptest.h",
+						"line": 179
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad' can be reduced.",
+						"verbose": "The scope of the variable 'ad' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 950
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'decrypted' can be reduced.",
+						"verbose": "The scope of the variable 'decrypted' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 951
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 952
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message' can be reduced.",
+						"verbose": "The scope of the variable 'message' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 954
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ad_len' can be reduced.",
+						"verbose": "The scope of the variable 'ad_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 957
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'detached_ciphertext_len' can be reduced.",
+						"verbose": "The scope of the variable 'detached_ciphertext_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'message_len' can be reduced.",
+						"verbose": "The scope of the variable 'message_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/aead_chacha20poly13052.c",
+						"line": 959
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ret' can be reduced.",
+						"verbose": "The scope of the variable 'ret' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/box7.c",
+						"line": 20
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'x' can be declared as pointer to const",
+						"verbose": "Parameter 'x' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "test/default/core6.c",
+						"line": 21
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'y' can be declared as pointer to const",
+						"verbose": "Parameter 'y' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "test/default/core6.c",
+						"line": 21
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'expected_x_sign' can be reduced.",
+						"verbose": "The scope of the variable 'expected_x_sign' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/core_ed25519_h2c.c",
+						"line": 167
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sentinel' can be reduced.",
+						"verbose": "The scope of the variable 'sentinel' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/core_keccak1600.c",
+						"line": 46
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'input_len' can be reduced.",
+						"verbose": "The scope of the variable 'input_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/core_ristretto255_h2c.c",
+						"line": 137
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'in' can be reduced.",
+						"verbose": "The scope of the variable 'in' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/generichash.c",
+						"line": 1298
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'in_len' can be reduced.",
+						"verbose": "The scope of the variable 'in_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/generichash.c",
+						"line": 1302
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ret' can be reduced.",
+						"verbose": "The scope of the variable 'ret' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/kdf.c",
+						"line": 13
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'b64_' can be reduced.",
+						"verbose": "The scope of the variable 'b64_' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/codecs.c",
+						"line": 11
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'bin' can be reduced.",
+						"verbose": "The scope of the variable 'bin' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/codecs.c",
+						"line": 13
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'b64_len' can be reduced.",
+						"verbose": "The scope of the variable 'b64_len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/codecs.c",
+						"line": 16
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'ip_bytes' shadows outer variable",
+						"verbose": "Local variable 'ip_bytes' shadows outer variable",
+						"cwe": "398",
+						"file": "test/default/codecs.c",
+						"line": 468
+					},
+					{
+						"id": "shadowVariable",
+						"severity": "style",
+						"msg": "Local variable 'ip_expected' shadows outer variable",
+						"verbose": "Local variable 'ip_expected' shadows outer variable",
+						"cwe": "398",
+						"file": "test/default/codecs.c",
+						"line": 468
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tv' can be reduced.",
+						"verbose": "The scope of the variable 'tv' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/keygen.c",
+						"line": 38
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'key' can be reduced.",
+						"verbose": "The scope of the variable 'key' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/keygen.c",
+						"line": 39
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'xmain()!=0' is always false",
+						"verbose": "Condition 'xmain()!=0' is always false",
+						"cwe": "570",
+						"file": "test/default/cmptest.h",
+						"line": 197
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h' can be reduced.",
+						"verbose": "The scope of the variable 'h' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 12
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h2' can be reduced.",
+						"verbose": "The scope of the variable 'h2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 12
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 13
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'm' can be reduced.",
+						"verbose": "The scope of the variable 'm' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 14
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'hlen' can be reduced.",
+						"verbose": "The scope of the variable 'hlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 15
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'klen' can be reduced.",
+						"verbose": "The scope of the variable 'klen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 16
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 17
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l1' can be reduced.",
+						"verbose": "The scope of the variable 'l1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 18
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l2' can be reduced.",
+						"verbose": "The scope of the variable 'l2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 18
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h' can be reduced.",
+						"verbose": "The scope of the variable 'h' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 60
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h2' can be reduced.",
+						"verbose": "The scope of the variable 'h2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 60
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 61
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'm' can be reduced.",
+						"verbose": "The scope of the variable 'm' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 62
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mlen' can be reduced.",
+						"verbose": "The scope of the variable 'mlen' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 63
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l1' can be reduced.",
+						"verbose": "The scope of the variable 'l1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 64
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l2' can be reduced.",
+						"verbose": "The scope of the variable 'l2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 64
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h' can be reduced.",
+						"verbose": "The scope of the variable 'h' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 100
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'h2' can be reduced.",
+						"verbose": "The scope of the variable 'h2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "test/default/metamorphic.c",
+						"line": 100
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\libsodium.security.json"
+	}
+}

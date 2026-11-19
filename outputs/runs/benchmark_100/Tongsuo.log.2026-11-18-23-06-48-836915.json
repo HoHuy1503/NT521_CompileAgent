@@ -1,0 +1,1951 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project Tongsuo from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I need to inspect the project structure in /work to understand the Tongsuo source layout before determining build commands.\nAction: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- ACKNOWLEDGEMENTS.md\n|-- AUTHORS.md\n|-- CHANGES.md\n|-- CODE-OF-CONDUCT.md\n|-- CONTRIBUTING.md\n|-- Configurations\n|   |-- 00-base-templates.conf\n|   |-- 10-main.conf\n|   |-- 15-android.conf\n|   |-- 15-ios.conf\n|   |-- 50-cppbuilder.conf\n|   |-- 50-masm.conf\n|   |-- 50-nonstop.conf\n|   |-- 50-os390.conf\n|   |-- 50-win-clang-cl.conf\n|   |-- 50-win-hybridcrt.conf\n|   |-- 50-win-onecore.conf\n|   |-- INTERNALS.Configure\n|   |-- README-design.md\n|   |-- README.md\n|   |-- common0.tmpl\n|   |-- gentemplate.pm\n|   |-- platform\n|   |-- platform.pm\n|   |-- shared-info.pl\n|   |-- unix-Makefile.tmpl\n|   |-- unix-checker.pm\n|   |-- windows-checker.pm\n|   `-- windows-makefile.tmpl\n|-- Configure\n|-- HACKING.md\n|-- INSTALL.md\n|-- LICENSE.txt\n|-- NOTES-ANDROID.md\n|-- NOTES-ANSI.md\n|-- NOTES-DJGPP.md\n|-- NOTES-NONSTOP.md\n|-- NOTES-PERL.md\n|-- NOTES-POSIX.md\n|-- NOTES-UNIX.md\n|-- NOTES-VALGRIND.md\n|-- NOTES-WINDOWS.md\n|-- NOTICE\n|-- README-ENGINES.md\n|-- README-FIPS.md\n|-- README-PROVIDERS.md\n|-- README-QUIC.md\n|-- README.en.md\n|-- README.md\n|-- VERSION.dat\n|-- apps\n|   |-- CA.pl.in\n|   |-- asn1parse.c\n|   |-- build.info\n|   |-- bulletproofs.c\n|   |-- ca-cert.srl\n|   |-- ca-key.pem\n|   |-- ca-req.pem\n|   |-- ca.c\n|   |-- cert.pem\n|   |-- ciphers.c\n|   |-- client.pem\n|   |-- cmp.c\n|   |-- cms.c\n|   |-- crl.c\n|   |-- crl2pkcs7.c\n|   |-- ct_log_list.cnf\n|   |-- delecred.c\n|   |-- dgst.c\n|   |-- dhparam.c\n|   |-- dsa-ca.pem\n|   |-- dsa-pca.pem\n|   |-- dsa.c\n|   |-- dsa1024.pem\n|   |-- dsa512.pem\n|   |-- dsap.pem\n|   |-- dsaparam.c\n|   |-- ec.c\n|   |-- ec_elgamal.c\n|   |-- ecparam.c\n|   |-- enc.c\n|   |-- engine.c\n|   |-- errstr.c\n|   |-- fipsinstall.c\n|   |-- gendsa.c\n|   |-- genpkey.c\n|   |-- genrsa.c\n|   |-- include\n|   |-- info.c\n|   |-- insta.ca.crt\n|   |-- kdf.c\n|   |-- lib\n|   |-- list.c\n|   |-- mac.c\n|   |-- mod.c\n|   |-- nseq.c\n|   |-- ocsp.c\n|   |-- openssl-vms.cnf\n|   |-- openssl.c\n|   |-- openssl.cnf\n|   |-- paillier.c\n|   |-- passwd.c\n|   |-- pca-cert.srl\n|   |-- pca-key.pem\n|   |-- pca-req.pem\n|   |-- pkcs12.c\n|   |-- pkcs7.c\n|   |-- pkcs8.c\n|   |-- pkey.c\n|   |-- pkeyparam.c\n|   |-- pkeyutl.c\n|   |-- prime.c\n|   |-- privkey.pem\n|   |-- progs.pl\n|   |-- rand.c\n|   |-- rehash.c\n|   |-- req.c\n|   |-- req.pem\n|   |-- rsa.c\n|   |-- rsa8192.pem\n|   |-- rsautl.c\n|   |-- s1024key.pem\n|   |-- s1024req.pem\n|   |-- s512-key.pem\n|   |-- s512-req.pem\n|   |-- s_client.c\n|   |-- s_server.c\n|   |-- s_time.c\n|   |-- sdf.c\n|   |-- server.pem\n|   |-- server.srl\n|   |-- server2.pem\n|   |-- sess_id.c\n|   |-- skeyutl.c\n|   |-- sm2_threshold.c\n|   |-- smime.c\n|   |-- speed.c\n|   |-- spkac.c\n|   |-- srp.c\n|   |-- storeutl.c\n|   |-- testCA.pem\n|   |-- testdsa.h\n|   |-- testrsa.h\n|   |-- timeouts.h\n|   |-- ts.c\n|   |-- tsget.in\n|   |-- verify.c\n|   |-- version.c\n|   `-- x509.c\n|-- atom-logo.svg\n|-- build.info\n|-- config\n|-- configdata.pm.in\n|-- crypto\n|   |-- LPdir_unix.c\n|   |-- README-sparse_array.md\n|   |-- aes\n|   |-- alphacpuid.pl\n|   |-- arm64cpuid.pl\n|   |-- arm_arch.h\n|   |-- armcap.c\n|   |-- armv4cpuid.pl\n|   |-- asn1\n|   |-- asn1_dsa.c\n|   |-- async\n|   |-- bf\n|   |-- bio\n|   |-- bn\n|   |-- bsearch.c\n|   |-- buffer\n|   |-- build.info\n|   |-- c64xpluscpuid.pl\n|   |-- chacha\n|   |-- cmac\n|   |-- cmp\n|   |-- cms\n|   |-- comp\n|   |-- comp_methods.c\n|   |-- conf\n|   |-- context.c\n|   |-- core_algorithm.c\n|   |-- core_fetch.c\n|   |-- core_namemap.c\n|   |-- cpt_err.c\n|   |-- cpuid.c\n|   |-- crmf\n|   |-- cryptlib.c\n|   |-- ct\n|   |-- ctype.c\n|   |-- cversion.c\n|   |-- defaults.c\n|   |-- der_writer.c\n|   |-- des\n|   |-- deterministic_nonce.c\n|   |-- dh\n|   |-- dllmain.c\n|   |-- dsa\n|   |-- dso\n|   |-- ebcdic.c\n|   |-- ec\n|   |-- eia3\n|   |-- encode_decode\n|   |-- engine\n|   |-- err\n|   |-- ess\n|   |-- evp\n|   |-- ex_data.c\n|   |-- ffc\n|   |-- getenv.c\n|   |-- hashtable\n|   |-- hmac\n|   |-- hpke\n|   |-- http\n|   |-- ia64cpuid.S\n|   |-- indicator_core.c\n|   |-- info.c\n|   |-- init.c\n|   |-- initthread.c\n|   |-- kdf\n|\n......\n.c\n|   |-- rdcpu_sanitytest.c\n|   |-- recipes\n|   |-- recordlentest.c\n|   |-- recursive.cnf\n|   |-- rpktest.c\n|   |-- rsa_complex.c\n|   |-- rsa_mp_test.c\n|   |-- rsa_sp800_56b_test.c\n|   |-- rsa_test.c\n|   |-- rsa_x931_test.c\n|   |-- run_tests.pl\n|   |-- safe_math_test.c\n|   |-- sanitytest.c\n|   |-- secmemtest.c\n|   |-- serverinfo.pem\n|   |-- serverinfo2.pem\n|   |-- servername_test.c\n|   |-- sha_test.c\n|   |-- shibboleth.pfx\n|   |-- shlibloadtest.c\n|   |-- simpledynamic.c\n|   |-- simpledynamic.h\n|   |-- siphash_internal_test.c\n|   |-- slh_dsa.inc\n|   |-- slh_dsa_test.c\n|   |-- slhdsa_parse.py\n|   |-- sm2_internal_test.c\n|   |-- sm2_mod_test.c\n|   |-- sm2_threshold_test.c\n|   |-- sm3_internal_test.c\n|   |-- sm4_internal_test.c\n|   |-- smcont.bin\n|   |-- smcont.txt\n|   |-- smcont_zero.txt\n|   |-- smime-certs\n|   |-- smime-eml\n|   |-- smtc.cnf\n|   |-- smtc_rand_self_test.c\n|   |-- smtc_rand_self_test.h\n|   |-- sparse_array_test.c\n|   |-- srptest.c\n|   |-- ssl-tests\n|   |-- ssl_cert_table_internal_test.c\n|   |-- ssl_ctx_test.c\n|   |-- ssl_handshake_rtt_test.c\n|   |-- ssl_ntls_api_test.c\n|   |-- ssl_old_test.c\n|   |-- ssl_test.c\n|   |-- ssl_test.tmpl\n|   |-- ssl_test_ctx_test.c\n|   |-- ssl_test_ctx_test.cnf\n|   |-- sslapitest.c\n|   |-- sslbuffertest.c\n|   |-- sslcorrupttest.c\n|   |-- stack_test.c\n|   |-- strtoultest.c\n|   |-- sysdefaulttest.c\n|   |-- test.cnf\n|   |-- test_asn1_parse.cnf\n|   |-- test_test.c\n|   |-- testcrl.pem\n|   |-- testdsa.pem\n|   |-- testdsapub.pem\n|   |-- testec-p112r1.pem\n|   |-- testec-p256.pem\n|   |-- testec-sm2.pem\n|   |-- testecpub-p256.pem\n|   |-- tested25519.pem\n|   |-- tested25519pub.pem\n|   |-- tested448.pem\n|   |-- tested448pub.pem\n|   |-- testmldsa44.pem\n|   |-- testmldsa44pub.pem\n|   |-- testmldsa65.pem\n|   |-- testmldsa65pub.pem\n|   |-- testmldsa87.pem\n|   |-- testmldsa87pub.pem\n|   |-- testp7.pem\n|   |-- testreq2.pem\n|   |-- testrsa.pem\n|   |-- testrsa2048.pem\n|   |-- testrsa2048pub.pem\n|   |-- testrsa_withattrs.der\n|   |-- testrsa_withattrs.pem\n|   |-- testrsapss.pem\n|   |-- testrsapssmandatory.pem\n|   |-- testrsapub.pem\n|   |-- testsid.pem\n|   |-- testutil\n|   |-- testutil.h\n|   |-- testx509.pem\n|   |-- threadpool_test.c\n|   |-- threadstest.c\n|   |-- threadstest.h\n|   |-- threadstest_fips.c\n|   |-- time_offset_test.c\n|   |-- time_test.c\n|   |-- timing_load_creds.c\n|   |-- tls-provider.c\n|   |-- tls13ccstest.c\n|   |-- tls13encryptiontest.c\n|   |-- tls13groupselection_test.c\n|   |-- tls13secretstest.c\n|   |-- trace_api_test.c\n|   |-- tsapi_test.c\n|   |-- uitest.c\n|   |-- upcallstest.c\n|   |-- user_property_test.c\n|   |-- v3-cert1.pem\n|   |-- v3-cert2.pem\n|   |-- v3_ca_exts.cnf\n|   |-- v3ext.c\n|   |-- v3nametest.c\n|   |-- verify_extra_test.c\n|   |-- versions.c\n|   |-- wbsm4_internal_test.c\n|   |-- wpackettest.c\n|   |-- x509_acert_test.c\n|   |-- x509_check_cert_pkey_test.c\n|   |-- x509_dup_cert_test.c\n|   |-- x509_internal_test.c\n|   |-- x509_load_cert_file_test.c\n|   |-- x509_req_test.c\n|   |-- x509_test.c\n|   |-- x509_time_test.c\n|   |-- x509aux.c\n|   |-- zkp_gadget_test.c\n|   `-- zuc_internal_test.c\n|-- tongsuo-public-qr.jpg\n|-- tongsuo.png\n|-- util\n|   |-- add-depends.pl\n|   |-- build.info\n|   |-- c-compress-test.pl\n|   |-- check-format-commit.sh\n|   |-- checkplatformsyms.pl\n|   |-- ck_errf.pl\n|   |-- copy.pl\n|   |-- ctags.sh\n|   |-- dofile.pl\n|   |-- echo.pl\n|   |-- engines.num\n|   |-- fips-checksums.sh\n|   |-- help.pl\n|   |-- indent.pro\n|   |-- lang-compress.pl\n|   |-- libcrypto.num\n|   |-- libssl.num\n|   |-- mk-fipsmodule-cnf.pl\n|   |-- mk_symbol_prefix.pl\n|   |-- mkbuildinf.pl\n|   |-- mkdef.pl\n|   |-- mkdir-p.pl\n|   |-- mkerr.pl\n|   |-- mkinstallvars.pl\n|   |-- mknum.pl\n|   |-- mkrc.pl\n|   |-- opensslwrap.sh\n|   |-- other-internal.syms\n|   |-- other.syms\n|   |-- perl\n|   |-- platform_symbols\n|   |-- providers.num\n|   |-- shlib_wrap.sh.in\n|   |-- update_abi_check.sh\n|   |-- withlibctx.pl\n|   `-- wrap.pl.in\n`-- validation-android.png\n\n125 directories, 773 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The tree shows an OpenSSL-style Tongsuo source with Configure, build.info, apps, crypto, ssl, test, and util. I should ask CompileNavigator for the build commands before running any build.\nAction: CompileNavigator\nAction Input: Project root /work (Tongsuo) contains: Configure, config, build.info, VERSION.dat, apps/, crypto/, ssl/, test/, util/, Configurations/. It is an OpenSSL-compatible cryptographic library/tool project; likely needs Configure then make. Please provide the compilation instructions for building the main libraries and apps."
+		],
+		[
+			"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+			"Thought: I now know the final answer\nFinal Answer: COMPILATION-UNCERTAIN"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- ACKNOWLEDGEMENTS.md\n|-- AUTHORS.md\n|-- CHANGES.md\n|-- CODE-OF-CONDUCT.md\n|-- CONTRIBUTING.md\n|-- Configurations\n|   |-- 00-base-templates.conf\n|   |-- 10-main.conf\n|   |-- 15-android.conf\n|   |-- 15-ios.conf\n|   |-- 50-cppbuilder.conf\n|   |-- 50-masm.conf\n|   |-- 50-nonstop.conf\n|   |-- 50-os390.conf\n|   |-- 50-win-clang-cl.conf\n|   |-- 50-win-hybridcrt.conf\n|   |-- 50-win-onecore.conf\n|   |-- INTERNALS.Configure\n|   |-- README-design.md\n|   |-- README.md\n|   |-- common0.tmpl\n|   |-- gentemplate.pm\n|   |-- platform\n|   |-- platform.pm\n|   |-- shared-info.pl\n|   |-- unix-Makefile.tmpl\n|   |-- unix-checker.pm\n|   |-- windows-checker.pm\n|   `-- windows-makefile.tmpl\n|-- Configure\n|-- HACKING.md\n|-- INSTALL.md\n|-- LICENSE.txt\n|-- NOTES-ANDROID.md\n|-- NOTES-ANSI.md\n|-- NOTES-DJGPP.md\n|-- NOTES-NONSTOP.md\n|-- NOTES-PERL.md\n|-- NOTES-POSIX.md\n|-- NOTES-UNIX.md\n|-- NOTES-VALGRIND.md\n|-- NOTES-WINDOWS.md\n|-- NOTICE\n|-- README-ENGINES.md\n|-- README-FIPS.md\n|-- README-PROVIDERS.md\n|-- README-QUIC.md\n|-- README.en.md\n|-- README.md\n|-- VERSION.dat\n|-- apps\n|   |-- CA.pl.in\n|   |-- asn1parse.c\n|   |-- build.info\n|   |-- bulletproofs.c\n|   |-- ca-cert.srl\n|   |-- ca-key.pem\n|   |-- ca-req.pem\n|   |-- ca.c\n|   |-- cert.pem\n|   |-- ciphers.c\n|   |-- client.pem\n|   |-- cmp.c\n|   |-- cms.c\n|   |-- crl.c\n|   |-- crl2pkcs7.c\n|   |-- ct_log_list.cnf\n|   |-- delecred.c\n|   |-- dgst.c\n|   |-- dhparam.c\n|   |-- dsa-ca.pem\n|   |-- dsa-pca.pem\n|   |-- dsa.c\n|   |-- dsa1024.pem\n|   |-- dsa512.pem\n|   |-- dsap.pem\n|   |-- dsaparam.c\n|   |-- ec.c\n|   |-- ec_elgamal.c\n|   |-- ecparam.c\n|   |-- enc.c\n|   |-- engine.c\n|   |-- errstr.c\n|   |-- fipsinstall.c\n|   |-- gendsa.c\n|   |-- genpkey.c\n|   |-- genrsa.c\n|   |-- include\n|   |-- info.c\n|   |-- insta.ca.crt\n|   |-- kdf.c\n|   |-- lib\n|   |-- list.c\n|   |-- mac.c\n|   |-- mod.c\n|   |-- nseq.c\n|   |-- ocsp.c\n|   |-- openssl-vms.cnf\n|   |-- openssl.c\n|   |-- openssl.cnf\n|   |-- paillier.c\n|   |-- passwd.c\n|   |-- pca-cert.srl\n|   |-- pca-key.pem\n|   |-- pca-req.pem\n|   |-- pkcs12.c\n|   |-- pkcs7.c\n|   |-- pkcs8.c\n|   |-- pkey.c\n|   |-- pkeyparam.c\n|   |-- pkeyutl.c\n|   |-- prime.c\n|   |-- privkey.pem\n|   |-- progs.pl\n|   |-- rand.c\n|   |-- rehash.c\n|   |-- req.c\n|   |-- req.pem\n|   |-- rsa.c\n|   |-- rsa8192.pem\n|   |-- rsautl.c\n|   |-- s1024key.pem\n|   |-- s1024req.pem\n|   |-- s512-key.pem\n|   |-- s512-req.pem\n|   |-- s_client.c\n|   |-- s_server.c\n|   |-- s_time.c\n|   |-- sdf.c\n|   |-- server.pem\n|   |-- server.srl\n|   |-- server2.pem\n|   |-- sess_id.c\n|   |-- skeyutl.c\n|   |-- sm2_threshold.c\n|   |-- smime.c\n|   |-- speed.c\n|   |-- spkac.c\n|   |-- srp.c\n|   |-- storeutl.c\n|   |-- testCA.pem\n|   |-- testdsa.h\n|   |-- testrsa.h\n|   |-- timeouts.h\n|   |-- ts.c\n|   |-- tsget.in\n|   |-- verify.c\n|   |-- version.c\n|   `-- x509.c\n|-- atom-logo.svg\n|-- build.info\n|-- config\n|-- configdata.pm.in\n|-- crypto\n|   |-- LPdir_unix.c\n|   |-- README-sparse_array.md\n|   |-- aes\n|   |-- alphacpuid.pl\n|   |-- arm64cpuid.pl\n|   |-- arm_arch.h\n|   |-- armcap.c\n|   |-- armv4cpuid.pl\n|   |-- asn1\n|   |-- asn1_dsa.c\n|   |-- async\n|   |-- bf\n|   |-- bio\n|   |-- bn\n|   |-- bsearch.c\n|   |-- buffer\n|   |-- build.info\n|   |-- c64xpluscpuid.pl\n|   |-- chacha\n|   |-- cmac\n|   |-- cmp\n|   |-- cms\n|   |-- comp\n|   |-- comp_methods.c\n|   |-- conf\n|   |-- context.c\n|   |-- core_algorithm.c\n|   |-- core_fetch.c\n|   |-- core_namemap.c\n|   |-- cpt_err.c\n|   |-- cpuid.c\n|   |-- crmf\n|   |-- cryptlib.c\n|   |-- ct\n|   |-- ctype.c\n|   |-- cversion.c\n|   |-- defaults.c\n|   |-- der_writer.c\n|   |-- des\n|   |-- deterministic_nonce.c\n|   |-- dh\n|   |-- dllmain.c\n|   |-- dsa\n|   |-- dso\n|   |-- ebcdic.c\n|   |-- ec\n|   |-- eia3\n|   |-- encode_decode\n|   |-- engine\n|   |-- err\n|   |-- ess\n|   |-- evp\n|   |-- ex_data.c\n|   |-- ffc\n|   |-- getenv.c\n|   |-- hashtable\n|   |-- hmac\n|   |-- hpke\n|   |-- http\n|   |-- ia64cpuid.S\n|   |-- indicator_core.c\n|   |-- info.c\n|   |-- init.c\n|   |-- initthread.c\n|   |-- kdf\n|   |-- lhash\n|   |-- local.h\n|   |-- loongarch64cpuid.pl\n|   |-- loongarch_arch.h\n|   |-- loongarchcap.c\n|   |-- md5\n|   |-- mem.c\n|   |-- mem_clr.c\n|   |-- mem_sec.c\n|   |-- mips_arch.h\n|   |-- ml_dsa\n|   |-- ml_kem\n|   |-- modes\n|   |-- o_dir.c\n|   |-- o_fopen.c\n|   |-- o_init.c\n|   |-- o_str.c\n|   |-- o_syslog.c\n|   |-- o_time.c\n|   |-- objects\n|   |-- ocsp\n|   |-- packet.c\n|   |-- paillier\n|   |-- param_build.c\n|   |-- param_build_set.c\n|   |-- params.c\n|   |-- params_dup.c\n|   |-- params_from_text.c\n|   |-- params_idx.c.in\n|   |-- passphrase.c\n|   |-- pem\n|   |-- perlasm\n|   |-- pkcs12\n|   |-- pkcs7\n|   |-- poly1305\n|   |-- ppccap.c\n|   |-- ppccpuid.pl\n|   |-- property\n|   |-- provider.c\n|   |-- provider_child.c\n|   |-- provider_conf.c\n|   |-- provider_core.c\n|   |-- provider_local.h\n|   |-- provider_predefined.c\n|   |-- punycode.c\n|   |-- quic_vlint.c\n|   |-- rand\n|   |-- rbtree\n|   |-- rc4\n|   |-- rc5\n|   |-- rcu_internal.h\n|   |-- riscv32cpuid.pl\n|   |-- riscv64cpuid.pl\n|   |-- riscvcap.c\n|   |-- rsa\n|   |-- s390x_arch.h\n|   |-- s390xcap.c\n|   |-- s390xcpuid.pl\n|   |-- sdf\n|   |-- self_test_core.c\n|   |-- sha\n|   |-- siphash\n|   |-- sleep.c\n|   |-- slh_dsa\n|   |-- sm2\n|   |-- sm3\n|   |-- sm4\n|   |-- sparse_array.c\n|   |-- srp\n|   |-- ssl_err.c\n|   |-- sslerr.h\n|   |-- stack\n|   |-- store\n|   |-- thread\n|   |-- threads_lib.c\n|   |-- threads_none.c\n|   |-- threads_pthread.c\n|   |-- threads_win.c\n|   |-- time.c\n|   |-- trace.c\n|   |-- ts\n|   |-- tsapi\n|   |-- txt_db\n|   |-- ui\n|   |-- uid.c\n|   |-- x509\n|   |-- x86_64cpuid.pl\n|   |-- x86cpuid.pl\n|   |-- zkp\n|   `-- zuc\n|-- engines\n|   |-- asm\n|   |-- build.info\n|   |-- e_afalg.c\n|   |-- e_afalg.ec\n|   |-- e_afalg.h\n|   |-- e_afalg.txt\n|   |-- e_afalg_err.c\n|   |-- e_afalg_err.h\n|   |-- e_bnsoft.c\n|   |-- e_bntest.c\n|   |-- e_capi.c\n|   |-- e_capi.ec\n|   |-- e_capi.txt\n|   |-- e_capi_err.c\n|   |-- e_capi_err.h\n|   |-- e_dasync.c\n|   |-- e_dasync.ec\n|   |-- e_dasync.txt\n|   |-- e_dasync_err.c\n|   |-- e_dasync_err.h\n|   |-- e_devcrypto.c\n|   |-- e_ecptest.c\n|   |-- e_loader_attic.c\n|   |-- e_loader_attic.ec\n|   |-- e_loader_attic.txt\n|   |-- e_loader_attic_err.c\n|   |-- e_loader_attic_err.h\n|   |-- e_ossltest.c\n|   |-- e_ossltest.ec\n|   |-- e_ossltest.txt\n|   |-- e_ossltest_err.c\n|   |-- e_ossltest_err.h\n|   |-- e_padlock.c\n|   `-- local.h\n|-- examples\n|   |-- Makefile\n|   |-- perf\n|   `-- sm.c\n|-- exporters\n|   |-- build.info\n|   |-- cmake\n|   `-- pkg-config\n|-- external\n|   `-- perl\n|-- funding.json\n|-- fuzz\n|   |-- README.md\n|   |-- acert.c\n|   |-- asn1.c\n|   |-- asn1parse.c\n|   |-- bignum.c\n|   |-- bndiv.c\n|   |-- build.info\n|   |-- client.c\n|   |-- cmp.c\n|   |-- cms.c\n|   |-- conf.c\n|   |-- corpora\n|   |-- crl.c\n|   |-- ct.c\n|   |-- decoder.c\n|   |-- driver.c\n|   |-- dtlsclient.c\n|   |-- dtlsserver.c\n|   |-- fuzz_introspector_exclusion.config\n|   |-- fuzz_rand.c\n|   |-- fuzzer.h\n|   |-- hashtable.c\n|   |-- helper.py\n|   |-- mkfuzzoids.pl\n|   |-- ml-dsa.c\n|   |-- ml-kem.c\n|   |-- oids.txt\n|   |-- pem.c\n|   |-- provider.c\n|   |-- punycode.c\n|   |-- quic-client.c\n|   |-- quic-lcidm.c\n|   |-- quic-rcidm.c\n|   |-- quic-server.c\n|   |-- quic-srtm.c\n|   |-- server.c\n|   |-- slh-dsa.c\n|   |-- smime.c\n|   |-- test-corpus.c\n|   |-- v3name.c\n|   `-- x509.c\n|-- include\n|   |-- crypto\n|   |-- internal\n|   `-- openssl\n|-- ms\n|   |-- applink.c\n|   |-- cmp.pl\n|   |-- uplink-common.pl\n|   |-- uplink-ia64.pl\n|   |-- uplink-x86.pl\n|   |-- uplink-x86_64.pl\n|   |-- uplink.c\n|   `-- uplink.h\n|-- os-dep\n|   `-- Apple\n|-- providers\n|   |-- baseprov.c\n|   |-- build.info\n|   |-- common\n|   |-- decoders.inc\n|   |-- defltprov.c\n|   |-- encoders.inc\n|   |-- fips\n|   |-- fips-sources.checksums\n|   |-- fips.checksum\n|   |-- fips.module.sources\n|   |-- implementations\n|   |-- legacyprov.c\n|   |-- local.h\n|   |-- nullprov.c\n|   |-- prov_running.c\n|   |-- smtc\n|   `-- stores.inc\n|-- rpm\n|   |-- shangmi\n|   `-- tongsuo.rpm\n|-- ssl\n|   |-- bio_ssl.c\n|   |-- build.info\n|   |-- d1_lib.c\n|   |-- d1_msg.c\n|   |-- d1_srtp.c\n|   |-- methods.c\n|   |-- pqueue.c\n|   |-- priority_queue.c\n|   |-- quic\n|   |-- record\n|   |-- rio\n|   |-- s3_enc.c\n|   |-- s3_lib.c\n|   |-- s3_msg.c\n|   |-- ssl_asn1.c\n|   |-- ssl_cert.c\n|   |-- ssl_cert_comp.c\n|   |-- ssl_cert_table.h\n|   |-- ssl_ciph.c\n|   |-- ssl_conf.c\n|   |-- ssl_dc.c\n|   |-- ssl_err_legacy.c\n|   |-- ssl_init.c\n|   |-- ssl_lib.c\n|   |-- ssl_local.h\n|   |-- ssl_mcnf.c\n|   |-- ssl_rsa.c\n|   |-- ssl_rsa_legacy.c\n|   |-- ssl_sess.c\n|   |-- ssl_stat.c\n|   |-- ssl_txt.c\n|   |-- ssl_utst.c\n|   |-- statem\n|   |-- statem_ntls\n|   |-- t1_enc.c\n|   |-- t1_lib.c\n|   |-- t1_trce.c\n|   |-- tls13_enc.c\n|   |-- tls_depr.c\n|   `-- tls_srp.c\n|-- test\n|   |-- CAtsa.cnf\n|   |-- README-dev.md\n|   |-- README-external.md\n|   |-- README.md\n|   |-- README.ssltest.md\n|   |-- aborttest.c\n|   |-- acvp_test.c\n|   |-- acvp_test.inc\n|   |-- aesgcmtest.c\n|   |-- afalgtest.c\n|   |-- algorithmid_test.c\n|   |-- asn1_decode_test.c\n|   |-- asn1_dsa_internal_test.c\n|   |-- asn1_encode_test.c\n|   |-- asn1_internal_test.c\n|   |-- asn1_stable_parse_test.c\n|   |-- asn1_string_table_test.c\n|   |-- asn1_time_test.c\n|   |-- asynciotest.c\n|   |-- asynctest.c\n|   |-- babasslapitest.c\n|   |-- bad_dtls_test.c\n|   |-- bftest.c\n|   |-- bio_addr_test.c\n|   |-- bio_base64_test.c\n|   |-- bio_callback_test.c\n|   |-- bio_comp_test.c\n|   |-- bio_core_test.c\n|   |-- bio_dgram_test.c\n|   |-- bio_enc_test.c\n|   |-- bio_memleak_test.c\n|   |-- bio_meth_test.c\n|   |-- bio_prefix_text.c\n|   |-- bio_pw_callback_test.c\n|   |-- bio_readbuffer_test.c\n|   |-- bio_tfo_test.c\n|   |-- bioprinttest.c\n|   |-- bn_internal_test.c\n|   |-- bn_rand_range.h\n|   |-- bnmeth_test.c\n|   |-- bntest.c\n|   |-- bntests.pl\n|   |-- build.info\n|   |-- build_wincrypt_test.c\n|   |-- bulletproofs_test.c\n|   |-- byteorder_test.c\n|   |-- ca-and-certs.cnf\n|   |-- ca_internals_test.c\n|   |-- casttest.c\n|   |-- cc_dummy.c\n|   |-- cert_comp_test.c\n|   |-- certs\n|   |-- chacha_internal_test.c\n|   |-- cipher_overhead_test.c\n|   |-- cipherbytes_test.c\n|   |-- cipherlist_test.c\n|   |-- ciphername_test.c\n|   |-- clienthellotest.c\n|   |-- cmactest.c\n|   |-- cmp_asn_test.c\n|   |-- cmp_client_test.c\n|   |-- cmp_ctx_test.c\n|   |-- cmp_extracerts_dos_test.c\n|   |-- cmp_hdr_test.c\n|   |-- cmp_msg_test.c\n|   |-- cmp_protect_test.c\n|   |-- cmp_server_test.c\n|   |-- cmp_status_test.c\n|   |-- cmp_vfy_test.c\n|   |-- cms-examples.pl\n|   |-- cms-msg\n|   |-- cmsapitest.c\n|   |-- conf_include_test.c\n|   |-- confdump.c\n|   |-- constant_time_test.c\n|   |-- context_internal_test.c\n|   |-- crltest.c\n|   |-- ct\n|   |-- ct_test.c\n|   |-- ctype_internal_test.c\n|   |-- curve448_internal_test.c\n|   |-- d2i-tests\n|   |-- d2i_test.c\n|   |-- dane-cross.in\n|   |-- danetest.c\n|   |-- danetest.in\n|   |-- danetest.pem\n|   |-- data.bin\n|   |-- data2.bin\n|   |-- decap_out.bin\n|   |-- decoder_propq_test.c\n|   |-- default-and-fips.cnf\n|   |-- default-and-jitter.cnf\n|   |-- default-and-legacy.cnf\n|   |-- default-for-evptest.cnf\n|   |-- default.cnf\n|   |-- defltfips_test.c\n|   |-- destest.c\n|   |-- dhkem_test.inc\n|   |-- dhtest.c\n|   |-- drbgtest.c\n|   |-- dsa_no_digest_size_test.c\n|   |-- dsatest.c\n|   |-- dtls_mtu_test.c\n|   |-- dtlstest.c\n|   |-- dtlsv1listentest.c\n|   |-- ec_elgamal_internal_test.c\n|   |-- ec_internal_test.c\n|   |-- ecdsatest.c\n|   |-- ecdsatest.h\n|   |-- ecpmeth_test.c\n|   |-- ecstresstest.c\n|   |-- ectest.c\n|   |-- encap_out.bin\n|   |-- encap_secret.bin\n|   |-- endecode_test.c\n|   |-- endecoder_legacy_test.c\n|   |-- enginetest.c\n|   |-- errtest.c\n|   |-- evp_byname_test.c\n|   |-- evp_extra_test.c\n|   |-- evp_extra_test2.c\n|   |-- evp_fetch_prov_test.c\n|   |-- evp_kdf_test.c\n|   |-- evp_libctx_test.c\n|   |-- evp_pkey_ctx_new_from_name.c\n|   |-- evp_pkey_dhkem_test.c\n|   |-- evp_pkey_dparams_test.c\n|   |-- evp_pkey_provided_test.c\n|   |-- evp_skey_test.c\n|   |-- evp_test.c\n|   |-- evp_xof_test.c\n|   |-- exdatatest.c\n|   |-- exptest.c\n|   |-- ext_internal_test.c\n|   |-- fake_cipherprov.c\n|   |-- fake_cipherprov.h\n|   |-- fake_pipelineprov.c\n|   |-- fake_pipelineprov.h\n|   |-- fake_rsaprov.c\n|   |-- fake_rsaprov.h\n|   |-- fatalerrtest.c\n|   |-- ffc_internal_test.c\n|   |-- filterprov.c\n|   |-- filterprov.h\n|   |-- fips-alt.cnf\n|   |-- fips-and-base.cnf\n|   |-- fips.cnf\n|   |-- fips_version_test.c\n|   |-- generate_buildtest.pl\n|   |-- generate_ssl_tests.pl\n|   |-- gmdifftest.c\n|   |-- helpers\n|   |-- hexstr_test.c\n|   |-- hmactest.c\n|   |-- hpke_test.c\n|   |-- http_test.c\n|   |-- ideatest.c\n|   |-- igetest.c\n|   |-- insta.priv.pem\n|   |-- insta_ca.cert.pem\n|   |-- invalid-x509.cnf\n|   |-- json_test.c\n|   |-- keymgmt_internal_test.c\n|   |-- legacy.cnf\n|   |-- lhash_test.c\n|   |-- list_test.c\n|   |-- localetest.c\n|   |-- mdc2test.c\n|   |-- membio_test.c\n|   |-- memleaktest.c\n|   |-- ml_dsa.inc\n|   |-- ml_dsa_test.c\n|   |-- ml_kem_evp_extra_test.c\n|   |-- ml_kem_internal_test.c\n|   |-- mldsa_parse.py\n|   |-- mldsa_wycheproof_parse.py\n|   |-- mlkem_parse.py\n|   |-- modes_internal_test.c\n|   |-- moduleloadtest.c\n|   |-- namemap_internal_test.c\n|   |-- nizk_test.c\n|   |-- nocache-and-default.cnf\n|   |-- nodefltctxtest.c\n|   |-- ntls-tests\n|   |-- null.cnf\n|   |-- ocsp-tests\n|   |-- ocspapitest.c\n|   |-- ossl_rbtree_test.c\n|   |-- ossl_store_test.c\n|   |-- p_minimal.c\n|   |-- p_test.c\n|   |-- packettest.c\n|   |-- paillier_internal_test.c\n|   |-- pairwise_fail_test.c\n|   |-- param_build_test.c\n|   |-- params_api_test.c\n|   |-- params_conversion_test.c\n|   |-- params_test.c\n|   |-- pathed.cnf\n|   |-- pbelutest.c\n|   |-- pbetest.c\n|   |-- pem_read_depr_test.c\n|   |-- pemtest.c\n|   |-- pkcs12_api_test.c\n|   |-- pkcs12_format_test.c\n|   |-- pkcs7-1.pem\n|   |-- pkcs7.pem\n|   |-- pkcs7_test.c\n|   |-- pkey_meth_kdf_test.c\n|   |-- pkey_meth_test.c\n|   |-- pkits-test.pl\n|   |-- poly1305_internal_test.c\n|   |-- priority_queue_test.c\n|   |-- property_test.c\n|   |-- prov_config_test.c\n|   |-- provfetchtest.c\n|   |-- provider_default_search_path_test.c\n|   |-- provider_fallback_test.c\n|   |-- provider_internal_test.c\n|   |-- provider_internal_test.cnf.in\n|   |-- provider_pkey_test.c\n|   |-- provider_status_test.c\n|   |-- provider_test.c\n|   |-- proxy.cnf\n|   |-- punycode_test.c\n|   |-- quic-openssl-docker\n|   |-- quic_ackm_test.c\n|   |-- quic_cc_test.c\n|   |-- quic_cfq_test.c\n|   |-- quic_client_test.c\n|   |-- quic_fc_test.c\n|   |-- quic_fifd_test.c\n|   |-- quic_lcidm_test.c\n|   |-- quic_multistream_test.c\n|   |-- quic_newcid_test.c\n|   |-- quic_qlog_test.c\n|   |-- quic_rcidm_test.c\n|   |-- quic_record_test.c\n|   |-- quic_record_test_util.h\n|   |-- quic_srt_gen_test.c\n|   |-- quic_srtm_test.c\n|   |-- quic_stream_test.c\n|   |-- quic_tserver_test.c\n|   |-- quic_txp_test.c\n|   |-- quic_txpim_test.c\n|   |-- quic_wire_test.c\n|   |-- quicapitest.c\n|   |-- quicfaultstest.c\n|   |-- radix\n|   |-- rand_status_test.c\n|   |-- rand_test.c\n|   |-- rc4test.c\n|   |-- rc5test.c\n|   |-- rdcpu_sanitytest.c\n|   |-- recipes\n|   |-- recordlentest.c\n|   |-- recursive.cnf\n|   |-- rpktest.c\n|   |-- rsa_complex.c\n|   |-- rsa_mp_test.c\n|   |-- rsa_sp800_56b_test.c\n|   |-- rsa_test.c\n|   |-- rsa_x931_test.c\n|   |-- run_tests.pl\n|   |-- safe_math_test.c\n|   |-- sanitytest.c\n|   |-- secmemtest.c\n|   |-- serverinfo.pem\n|   |-- serverinfo2.pem\n|   |-- servername_test.c\n|   |-- sha_test.c\n|   |-- shibboleth.pfx\n|   |-- shlibloadtest.c\n|   |-- simpledynamic.c\n|   |-- simpledynamic.h\n|   |-- siphash_internal_test.c\n|   |-- slh_dsa.inc\n|   |-- slh_dsa_test.c\n|   |-- slhdsa_parse.py\n|   |-- sm2_internal_test.c\n|   |-- sm2_mod_test.c\n|   |-- sm2_threshold_test.c\n|   |-- sm3_internal_test.c\n|   |-- sm4_internal_test.c\n|   |-- smcont.bin\n|   |-- smcont.txt\n|   |-- smcont_zero.txt\n|   |-- smime-certs\n|   |-- smime-eml\n|   |-- smtc.cnf\n|   |-- smtc_rand_self_test.c\n|   |-- smtc_rand_self_test.h\n|   |-- sparse_array_test.c\n|   |-- srptest.c\n|   |-- ssl-tests\n|   |-- ssl_cert_table_internal_test.c\n|   |-- ssl_ctx_test.c\n|   |-- ssl_handshake_rtt_test.c\n|   |-- ssl_ntls_api_test.c\n|   |-- ssl_old_test.c\n|   |-- ssl_test.c\n|   |-- ssl_test.tmpl\n|   |-- ssl_test_ctx_test.c\n|   |-- ssl_test_ctx_test.cnf\n|   |-- sslapitest.c\n|   |-- sslbuffertest.c\n|   |-- sslcorrupttest.c\n|   |-- stack_test.c\n|   |-- strtoultest.c\n|   |-- sysdefaulttest.c\n|   |-- test.cnf\n|   |-- test_asn1_parse.cnf\n|   |-- test_test.c\n|   |-- testcrl.pem\n|   |-- testdsa.pem\n|   |-- testdsapub.pem\n|   |-- testec-p112r1.pem\n|   |-- testec-p256.pem\n|   |-- testec-sm2.pem\n|   |-- testecpub-p256.pem\n|   |-- tested25519.pem\n|   |-- tested25519pub.pem\n|   |-- tested448.pem\n|   |-- tested448pub.pem\n|   |-- testmldsa44.pem\n|   |-- testmldsa44pub.pem\n|   |-- testmldsa65.pem\n|   |-- testmldsa65pub.pem\n|   |-- testmldsa87.pem\n|   |-- testmldsa87pub.pem\n|   |-- testp7.pem\n|   |-- testreq2.pem\n|   |-- testrsa.pem\n|   |-- testrsa2048.pem\n|   |-- testrsa2048pub.pem\n|   |-- testrsa_withattrs.der\n|   |-- testrsa_withattrs.pem\n|   |-- testrsapss.pem\n|   |-- testrsapssmandatory.pem\n|   |-- testrsapub.pem\n|   |-- testsid.pem\n|   |-- testutil\n|   |-- testutil.h\n|   |-- testx509.pem\n|   |-- threadpool_test.c\n|   |-- threadstest.c\n|   |-- threadstest.h\n|   |-- threadstest_fips.c\n|   |-- time_offset_test.c\n|   |-- time_test.c\n|   |-- timing_load_creds.c\n|   |-- tls-provider.c\n|   |-- tls13ccstest.c\n|   |-- tls13encryptiontest.c\n|   |-- tls13groupselection_test.c\n|   |-- tls13secretstest.c\n|   |-- trace_api_test.c\n|   |-- tsapi_test.c\n|   |-- uitest.c\n|   |-- upcallstest.c\n|   |-- user_property_test.c\n|   |-- v3-cert1.pem\n|   |-- v3-cert2.pem\n|   |-- v3_ca_exts.cnf\n|   |-- v3ext.c\n|   |-- v3nametest.c\n|   |-- verify_extra_test.c\n|   |-- versions.c\n|   |-- wbsm4_internal_test.c\n|   |-- wpackettest.c\n|   |-- x509_acert_test.c\n|   |-- x509_check_cert_pkey_test.c\n|   |-- x509_dup_cert_test.c\n|   |-- x509_internal_test.c\n|   |-- x509_load_cert_file_test.c\n|   |-- x509_req_test.c\n|   |-- x509_test.c\n|   |-- x509_time_test.c\n|   |-- x509aux.c\n|   |-- zkp_gadget_test.c\n|   `-- zuc_internal_test.c\n|-- tongsuo-public-qr.jpg\n|-- tongsuo.png\n|-- util\n|   |-- add-depends.pl\n|   |-- build.info\n|   |-- c-compress-test.pl\n|   |-- check-format-commit.sh\n|   |-- checkplatformsyms.pl\n|   |-- ck_errf.pl\n|   |-- copy.pl\n|   |-- ctags.sh\n|   |-- dofile.pl\n|   |-- echo.pl\n|   |-- engines.num\n|   |-- fips-checksums.sh\n|   |-- help.pl\n|   |-- indent.pro\n|   |-- lang-compress.pl\n|   |-- libcrypto.num\n|   |-- libssl.num\n|   |-- mk-fipsmodule-cnf.pl\n|   |-- mk_symbol_prefix.pl\n|   |-- mkbuildinf.pl\n|   |-- mkdef.pl\n|   |-- mkdir-p.pl\n|   |-- mkerr.pl\n|   |-- mkinstallvars.pl\n|   |-- mknum.pl\n|   |-- mkrc.pl\n|   |-- opensslwrap.sh\n|   |-- other-internal.syms\n|   |-- other.syms\n|   |-- perl\n|   |-- platform_symbols\n|   |-- providers.num\n|   |-- shlib_wrap.sh.in\n|   |-- update_abi_check.sh\n|   |-- withlibctx.pl\n|   `-- wrap.pl.in\n`-- validation-android.png\n\n125 directories, 773 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				2.3160910606384277
+			]
+		],
+		"CompileNavigator": [
+			[
+				"Project root /work (Tongsuo) contains: Configure, config, build.info, VERSION.dat, apps/, crypto/, ssl/, test/, util/, Configurations/. It is an OpenSSL-compatible cryptographic library/tool project; likely needs Configure then make. Please provide the compilation instructions for building the main libraries and apps.\n\nProject directory structure:\nroot@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- ACKNOWLEDGEMENTS.md\n|-- AUTHORS.md\n|-- CHANGES.md\n|-- CODE-OF-CONDUCT.md\n|-- CONTRIBUTING.md\n|-- Configurations\n|   |-- 00-base-templates.conf\n|   |-- 10-main.conf\n|   |-- 15-android.conf\n|   |-- 15-ios.conf\n|   |-- 50-cppbuilder.conf\n|   |-- 50-masm.conf\n|   |-- 50-nonstop.conf\n|   |-- 50-os390.conf\n|   |-- 50-win-clang-cl.conf\n|   |-- 50-win-hybridcrt.conf\n|   |-- 50-win-onecore.conf\n|   |-- INTERNALS.Configure\n|   |-- README-design.md\n|   |-- README.md\n|   |-- common0.tmpl\n|   |-- gentemplate.pm\n|   |-- platform\n|   |-- platform.pm\n|   |-- shared-info.pl\n|   |-- unix-Makefile.tmpl\n|   |-- unix-checker.pm\n|   |-- windows-checker.pm\n|   `-- windows-makefile.tmpl\n|-- Configure\n|-- HACKING.md\n|-- INSTALL.md\n|-- LICENSE.txt\n|-- NOTES-ANDROID.md\n|-- NOTES-ANSI.md\n|-- NOTES-DJGPP.md\n|-- NOTES-NONSTOP.md\n|-- NOTES-PERL.md\n|-- NOTES-POSIX.md\n|-- NOTES-UNIX.md\n|-- NOTES-VALGRIND.md\n|-- NOTES-WINDOWS.md\n|-- NOTICE\n|-- README-ENGINES.md\n|-- README-FIPS.md\n|-- README-PROVIDERS.md\n|-- README-QUIC.md\n|-- README.en.md\n|-- README.md\n|-- VERSION.dat\n|-- apps\n|   |-- CA.pl.in\n|   |-- asn1parse.c\n|   |-- build.info\n|   |-- bulletproofs.c\n|   |-- ca-cert.srl\n|   |-- ca-key.pem\n|   |-- ca-req.pem\n|   |-- ca.c\n|   |-- cert.pem\n|   |-- ciphers.c\n|   |-- client.pem\n|   |-- cmp.c\n|   |-- cms.c\n|   |-- crl.c\n|   |-- crl2pkcs7.c\n|   |-- ct_log_list.cnf\n|   |-- delecred.c\n|   |-- dgst.c\n|   |-- dhparam.c\n|   |-- dsa-ca.pem\n|   |-- dsa-pca.pem\n|   |-- dsa.c\n|   |-- dsa1024.pem\n|   |-- dsa512.pem\n|   |-- dsap.pem\n|   |-- dsaparam.c\n|   |-- ec.c\n|   |-- ec_elgamal.c\n|   |-- ecparam.c\n|   |-- enc.c\n|   |-- engine.c\n|   |-- errstr.c\n|   |-- fipsinstall.c\n|   |-- gendsa.c\n|   |-- genpkey.c\n|   |-- genrsa.c\n|   |-- include\n|   |-- info.c\n|   |-- insta.ca.crt\n|   |-- kdf.c\n|   |-- lib\n|   |-- list.c\n|   |-- mac.c\n|   |-- mod.c\n|   |-- nseq.c\n|   |-- ocsp.c\n|   |-- openssl-vms.cnf\n|   |-- openssl.c\n|   |-- openssl.cnf\n|   |-- paillier.c\n|   |-- passwd.c\n|   |-- pca-cert.srl\n|   |-- pca-key.pem\n|   |-- pca-req.pem\n|   |-- pkcs12.c\n|   |-- pkcs7.c\n|   |-- pkcs8.c\n|   |-- pkey.c\n|   |-- pkeyparam.c\n|   |-- pkeyutl.c\n|   |-- prime.c\n|   |-- privkey.pem\n|   |-- progs.pl\n|   |-- rand.c\n|   |-- rehash.c\n|   |-- req.c\n|   |-- req.pem\n|   |-- rsa.c\n|   |-- rsa8192.pem\n|   |-- rsautl.c\n|   |-- s1024key.pem\n|   |-- s1024req.pem\n|   |-- s512-key.pem\n|   |-- s512-req.pem\n|   |-- s_client.c\n|   |-- s_server.c\n|   |-- s_time.c\n|   |-- sdf.c\n|   |-- server.pem\n|   |-- server.srl\n|   |-- server2.pem\n|   |-- sess_id.c\n|   |-- skeyutl.c\n|   |-- sm2_threshold.c\n|   |-- smime.c\n|   |-- speed.c\n|   |-- spkac.c\n|   |-- srp.c\n|   |-- storeutl.c\n|   |-- testCA.pem\n|   |-- testdsa.h\n|   |-- testrsa.h\n|   |-- timeouts.h\n|   |-- ts.c\n|   |-- tsget.in\n|   |-- verify.c\n|   |-- version.c\n|   `-- x509.c\n|-- atom-logo.svg\n|-- build.info\n|-- config\n|-- configdata.pm.in\n|-- crypto\n|   |-- LPdir_unix.c\n|   |-- README-sparse_array.md\n|   |-- aes\n|   |-- alphacpuid.pl\n|   |-- arm64cpuid.pl\n|   |-- arm_arch.h\n|   |-- armcap.c\n|   |-- armv4cpuid.pl\n|   |-- asn1\n|   |-- asn1_dsa.c\n|   |-- async\n|   |-- bf\n|   |-- bio\n|   |-- bn\n|   |-- bsearch.c\n|   |-- buffer\n|   |-- build.info\n|   |-- c64xpluscpuid.pl\n|   |-- chacha\n|   |-- cmac\n|   |-- cmp\n|   |-- cms\n|   |-- comp\n|   |-- comp_methods.c\n|   |-- conf\n|   |-- context.c\n|   |-- core_algorithm.c\n|   |-- core_fetch.c\n|   |-- core_namemap.c\n|   |-- cpt_err.c\n|   |-- cpuid.c\n|   |-- crmf\n|   |-- cryptlib.c\n|   |-- ct\n|   |-- ctype.c\n|   |-- cversion.c\n|   |-- defaults.c\n|   |-- der_writer.c\n|   |-- des\n|   |-- deterministic_nonce.c\n|   |-- dh\n|   |-- dllmain.c\n|   |-- dsa\n|   |-- dso\n|   |-- ebcdic.c\n|   |-- ec\n|   |-- eia3\n|   |-- encode_decode\n|   |-- engine\n|   |-- err\n|   |-- ess\n|   |-- evp\n|   |-- ex_data.c\n|   |-- ffc\n|   |-- getenv.c\n|   |-- hashtable\n|   |-- hmac\n|   |-- hpke\n|   |-- http\n|   |-- ia64cpuid.S\n|   |-- indicator_core.c\n|   |-- info.c\n|   |-- init.c\n|   |-- initthread.c\n|   |-- kdf\n|\n......\n.c\n|   |-- rdcpu_sanitytest.c\n|   |-- recipes\n|   |-- recordlentest.c\n|   |-- recursive.cnf\n|   |-- rpktest.c\n|   |-- rsa_complex.c\n|   |-- rsa_mp_test.c\n|   |-- rsa_sp800_56b_test.c\n|   |-- rsa_test.c\n|   |-- rsa_x931_test.c\n|   |-- run_tests.pl\n|   |-- safe_math_test.c\n|   |-- sanitytest.c\n|   |-- secmemtest.c\n|   |-- serverinfo.pem\n|   |-- serverinfo2.pem\n|   |-- servername_test.c\n|   |-- sha_test.c\n|   |-- shibboleth.pfx\n|   |-- shlibloadtest.c\n|   |-- simpledynamic.c\n|   |-- simpledynamic.h\n|   |-- siphash_internal_test.c\n|   |-- slh_dsa.inc\n|   |-- slh_dsa_test.c\n|   |-- slhdsa_parse.py\n|   |-- sm2_internal_test.c\n|   |-- sm2_mod_test.c\n|   |-- sm2_threshold_test.c\n|   |-- sm3_internal_test.c\n|   |-- sm4_internal_test.c\n|   |-- smcont.bin\n|   |-- smcont.txt\n|   |-- smcont_zero.txt\n|   |-- smime-certs\n|   |-- smime-eml\n|   |-- smtc.cnf\n|   |-- smtc_rand_self_test.c\n|   |-- smtc_rand_self_test.h\n|   |-- sparse_array_test.c\n|   |-- srptest.c\n|   |-- ssl-tests\n|   |-- ssl_cert_table_internal_test.c\n|   |-- ssl_ctx_test.c\n|   |-- ssl_handshake_rtt_test.c\n|   |-- ssl_ntls_api_test.c\n|   |-- ssl_old_test.c\n|   |-- ssl_test.c\n|   |-- ssl_test.tmpl\n|   |-- ssl_test_ctx_test.c\n|   |-- ssl_test_ctx_test.cnf\n|   |-- sslapitest.c\n|   |-- sslbuffertest.c\n|   |-- sslcorrupttest.c\n|   |-- stack_test.c\n|   |-- strtoultest.c\n|   |-- sysdefaulttest.c\n|   |-- test.cnf\n|   |-- test_asn1_parse.cnf\n|   |-- test_test.c\n|   |-- testcrl.pem\n|   |-- testdsa.pem\n|   |-- testdsapub.pem\n|   |-- testec-p112r1.pem\n|   |-- testec-p256.pem\n|   |-- testec-sm2.pem\n|   |-- testecpub-p256.pem\n|   |-- tested25519.pem\n|   |-- tested25519pub.pem\n|   |-- tested448.pem\n|   |-- tested448pub.pem\n|   |-- testmldsa44.pem\n|   |-- testmldsa44pub.pem\n|   |-- testmldsa65.pem\n|   |-- testmldsa65pub.pem\n|   |-- testmldsa87.pem\n|   |-- testmldsa87pub.pem\n|   |-- testp7.pem\n|   |-- testreq2.pem\n|   |-- testrsa.pem\n|   |-- testrsa2048.pem\n|   |-- testrsa2048pub.pem\n|   |-- testrsa_withattrs.der\n|   |-- testrsa_withattrs.pem\n|   |-- testrsapss.pem\n|   |-- testrsapssmandatory.pem\n|   |-- testrsapub.pem\n|   |-- testsid.pem\n|   |-- testutil\n|   |-- testutil.h\n|   |-- testx509.pem\n|   |-- threadpool_test.c\n|   |-- threadstest.c\n|   |-- threadstest.h\n|   |-- threadstest_fips.c\n|   |-- time_offset_test.c\n|   |-- time_test.c\n|   |-- timing_load_creds.c\n|   |-- tls-provider.c\n|   |-- tls13ccstest.c\n|   |-- tls13encryptiontest.c\n|   |-- tls13groupselection_test.c\n|   |-- tls13secretstest.c\n|   |-- trace_api_test.c\n|   |-- tsapi_test.c\n|   |-- uitest.c\n|   |-- upcallstest.c\n|   |-- user_property_test.c\n|   |-- v3-cert1.pem\n|   |-- v3-cert2.pem\n|   |-- v3_ca_exts.cnf\n|   |-- v3ext.c\n|   |-- v3nametest.c\n|   |-- verify_extra_test.c\n|   |-- versions.c\n|   |-- wbsm4_internal_test.c\n|   |-- wpackettest.c\n|   |-- x509_acert_test.c\n|   |-- x509_check_cert_pkey_test.c\n|   |-- x509_dup_cert_test.c\n|   |-- x509_internal_test.c\n|   |-- x509_load_cert_file_test.c\n|   |-- x509_req_test.c\n|   |-- x509_test.c\n|   |-- x509_time_test.c\n|   |-- x509aux.c\n|   |-- zkp_gadget_test.c\n|   `-- zuc_internal_test.c\n|-- tongsuo-public-qr.jpg\n|-- tongsuo.png\n|-- util\n|   |-- add-depends.pl\n|   |-- build.info\n|   |-- c-compress-test.pl\n|   |-- check-format-commit.sh\n|   |-- checkplatformsyms.pl\n|   |-- ck_errf.pl\n|   |-- copy.pl\n|   |-- ctags.sh\n|   |-- dofile.pl\n|   |-- echo.pl\n|   |-- engines.num\n|   |-- fips-checksums.sh\n|   |-- help.pl\n|   |-- indent.pro\n|   |-- lang-compress.pl\n|   |-- libcrypto.num\n|   |-- libssl.num\n|   |-- mk-fipsmodule-cnf.pl\n|   |-- mk_symbol_prefix.pl\n|   |-- mkbuildinf.pl\n|   |-- mkdef.pl\n|   |-- mkdir-p.pl\n|   |-- mkerr.pl\n|   |-- mkinstallvars.pl\n|   |-- mknum.pl\n|   |-- mkrc.pl\n|   |-- opensslwrap.sh\n|   |-- other-internal.syms\n|   |-- other.syms\n|   |-- perl\n|   |-- platform_symbols\n|   |-- providers.num\n|   |-- shlib_wrap.sh.in\n|   |-- update_abi_check.sh\n|   |-- withlibctx.pl\n|   `-- wrap.pl.in\n`-- validation-android.png\n\n125 directories, 773 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+				"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+				[]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "UNCERTAIN",
+		"checker_result": "False(strict=False)",
+		"project": "Tongsuo",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": false,
+		"checker_strict": false,
+		"elapsed_seconds": 349.94,
+		"iterations": 3,
+		"tool_calls": {
+			"Shell": 1,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [],
+		"all_artifacts": [],
+		"smoke_check": {
+			"checked_count": 0,
+			"passed": false,
+			"missing_libs": [],
+			"details": []
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "make",
+			"workdir": "/work/examples",
+			"clean_cmd": "make clean",
+			"build_cmd": "make -j4",
+			"compile_db_cmd": "",
+			"test_cmd": ""
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "error",
+				"configs_used": [
+					"/opt/rules/c_security.yaml"
+				],
+				"total_findings": 0,
+				"by_severity": {},
+				"by_rule": {},
+				"findings": []
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "directory_scan",
+				"compile_db_entries": 0,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\Tongsuo.cppcheck.json",
+				"total_findings": 1421,
+				"by_severity": {
+					"warning": 10,
+					"style": 1168,
+					"error": 207,
+					"portability": 36
+				},
+				"findings": [
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'key_param==NULL' is redundant or there is possible null pointer dereference: key_param.",
+						"verbose": "Either the condition 'key_param==NULL' is redundant or there is possible null pointer dereference: key_param.",
+						"cwe": "476",
+						"file": "apps/cms.c",
+						"line": 686
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'si' can be reduced.",
+						"verbose": "The scope of the variable 'si' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/cms.c",
+						"line": 1389
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'rv' can be reduced.",
+						"verbose": "The scope of the variable 'rv' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/cms.c",
+						"line": 1394
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'keyopt' can be reduced.",
+						"verbose": "The scope of the variable 'keyopt' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/cms.c",
+						"line": 1497
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'outdirlen' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'outdirlen' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "apps/ca.c",
+						"line": 1097
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'rrow' can be reduced.",
+						"verbose": "The scope of the variable 'rrow' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/ca.c",
+						"line": 2320
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'key' can be declared as pointer to const",
+						"verbose": "Parameter 'key' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "apps/dgst.c",
+						"line": 622
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'key' can be declared as pointer to const",
+						"verbose": "Parameter 'key' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "apps/dgst.c",
+						"line": 702
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'i' is assigned a value that is never used.",
+						"verbose": "Variable 'i' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "apps/dsaparam.c",
+						"line": 239
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'i' is assigned a value that is never used.",
+						"verbose": "Variable 'i' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "apps/dsaparam.c",
+						"line": 241
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'newcert!=NULL' is always true",
+						"verbose": "Condition 'newcert!=NULL' is always true",
+						"cwe": "571",
+						"file": "apps/cmp.c",
+						"line": 3844
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'res' can be reduced.",
+						"verbose": "The scope of the variable 'res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/cmp.c",
+						"line": 1547
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'req' can be reduced.",
+						"verbose": "The scope of the variable 'req' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/cmp.c",
+						"line": 3548
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If OSSL_CORE_MAKE_FUNC is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If OSSL_CORE_MAKE_FUNC is a macro then please configure it.",
+						"cwe": "",
+						"file": "ssl/record/record.h",
+						"line": 186
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "apps/ec_elgamal.c",
+						"line": 265
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "apps/ec_elgamal.c",
+						"line": 307
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'out_n' can be reduced.",
+						"verbose": "The scope of the variable 'out_n' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/ec_elgamal.c",
+						"line": 71
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'res' can be reduced.",
+						"verbose": "The scope of the variable 'res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/engine.c",
+						"line": 242
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'buf' can be reduced.",
+						"verbose": "The scope of the variable 'buf' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/engine.c",
+						"line": 249
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/enc.c",
+						"line": 888
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'dkm_len' is less than zero.",
+						"verbose": "The unsigned expression 'dkm_len' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/kdf.c",
+						"line": 179
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"cwe": "",
+						"file": "apps/lib/app_provider.c",
+						"line": 20
+					},
+					{
+						"id": "uselessAssignmentArg",
+						"severity": "style",
+						"msg": "Assignment of function parameter has no effect outside the function.",
+						"verbose": "Assignment of function parameter has no effect outside the function.",
+						"cwe": "398",
+						"file": "apps/lib/app_params.c",
+						"line": 69
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'bufsz' is assigned a value that is never used.",
+						"verbose": "Variable 'bufsz' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "apps/lib/app_params.c",
+						"line": 69
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "apps/lib/app_rand.c",
+						"line": 48
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'last' can be reduced.",
+						"verbose": "The scope of the variable 'last' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/app_rand.c",
+						"line": 43
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p' can be reduced.",
+						"verbose": "The scope of the variable 'p' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/app_rand.c",
+						"line": 68
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"cwe": "",
+						"file": "apps/lib/apps.c",
+						"line": 65
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ossl_store_loader_ctx_st::e' is never used.",
+						"verbose": "struct member 'ossl_store_loader_ctx_st::e' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/engine_loader.c",
+						"line": 39
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ossl_store_loader_ctx_st::keyid' is never used.",
+						"verbose": "struct member 'ossl_store_loader_ctx_st::keyid' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/engine_loader.c",
+						"line": 40
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ossl_store_loader_ctx_st::expected' is never used.",
+						"verbose": "struct member 'ossl_store_loader_ctx_st::expected' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/engine_loader.c",
+						"line": 41
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ossl_store_loader_ctx_st::loaded' is never used.",
+						"verbose": "struct member 'ossl_store_loader_ctx_st::loaded' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/engine_loader.c",
+						"line": 42
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'str' can be reduced.",
+						"verbose": "The scope of the variable 'str' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/cmp_mock_srv.c",
+						"line": 331
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'data' can be reduced.",
+						"verbose": "The scope of the variable 'data' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/cmp_mock_srv.c",
+						"line": 332
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'buf' can be reduced.",
+						"verbose": "The scope of the variable 'buf' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/cmp_mock_srv.c",
+						"line": 615
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sibuf' can be reduced.",
+						"verbose": "The scope of the variable 'sibuf' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/cmp_mock_srv.c",
+						"line": 616
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/cmp_mock_srv.c",
+						"line": 617
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "apps/lib/opt.c",
+						"line": 1031
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mode' can be reduced.",
+						"verbose": "The scope of the variable 'mode' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/opt.c",
+						"line": 397
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'flags' can be reduced.",
+						"verbose": "The scope of the variable 'flags' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/opt.c",
+						"line": 398
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'ilen<0' is always false",
+						"verbose": "Condition 'ilen<0' is always false",
+						"cwe": "570",
+						"file": "apps/lib/s_cb.c",
+						"line": 1350
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'curr' can be reduced.",
+						"verbose": "The scope of the variable 'curr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/s_cb.c",
+						"line": 1191
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'crl' can be reduced.",
+						"verbose": "The scope of the variable 'crl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/lib/s_cb.c",
+						"line": 1482
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"cwe": "",
+						"file": "apps/list.c",
+						"line": 94
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::certform' is never used.",
+						"verbose": "struct member 'ssl_excert_st::certform' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1059
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::certfile' is never used.",
+						"verbose": "struct member 'ssl_excert_st::certfile' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1060
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::keyform' is never used.",
+						"verbose": "struct member 'ssl_excert_st::keyform' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1061
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::keyfile' is never used.",
+						"verbose": "struct member 'ssl_excert_st::keyfile' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1062
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::chainfile' is never used.",
+						"verbose": "struct member 'ssl_excert_st::chainfile' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1063
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::cert' is never used.",
+						"verbose": "struct member 'ssl_excert_st::cert' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1064
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::key' is never used.",
+						"verbose": "struct member 'ssl_excert_st::key' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1065
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::build_chain' is never used.",
+						"verbose": "struct member 'ssl_excert_st::build_chain' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1067
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::next' is never used.",
+						"verbose": "struct member 'ssl_excert_st::next' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1068
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ssl_excert_st::prev' is never used.",
+						"verbose": "struct member 'ssl_excert_st::prev' is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1068
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'mdpth' is assigned a value that is never used.",
+						"verbose": "Variable 'mdpth' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "apps/lib/s_cb.c",
+						"line": 1383
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If DEFINE_STACK_OF is a macro then please configure it.",
+						"cwe": "",
+						"file": "apps/openssl.c",
+						"line": 155
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "apps/paillier.c",
+						"line": 381
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "apps/paillier.c",
+						"line": 423
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'out_n' can be reduced.",
+						"verbose": "The scope of the variable 'out_n' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/paillier.c",
+						"line": 78
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x' can be reduced.",
+						"verbose": "The scope of the variable 'x' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/pkcs7.c",
+						"line": 173
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'crl' can be reduced.",
+						"verbose": "The scope of the variable 'crl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/pkcs7.c",
+						"line": 188
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'id' can be reduced.",
+						"verbose": "The scope of the variable 'id' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/ocsp.c",
+						"line": 968
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'name' can be reduced.",
+						"verbose": "The scope of the variable 'name' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/ocsp.c",
+						"line": 969
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'req' can be declared as pointer to const",
+						"verbose": "Parameter 'req' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "apps/ocsp.c",
+						"line": 963
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'in==NULL' is always true",
+						"verbose": "Condition 'in==NULL' is always true",
+						"cwe": "571",
+						"file": "apps/passwd.c",
+						"line": 242
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'attr' can be reduced.",
+						"verbose": "The scope of the variable 'attr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/pkcs12.c",
+						"line": 1292
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'attr_nid' can be reduced.",
+						"verbose": "The scope of the variable 'attr_nid' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/pkcs12.c",
+						"line": 1294
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ctmp' can be reduced.",
+						"verbose": "The scope of the variable 'ctmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/pkeyutl.c",
+						"line": 531
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ctmp' can be reduced.",
+						"verbose": "The scope of the variable 'ctmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/rsautl.c",
+						"line": 231
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "apps/s_time.c",
+						"line": 343
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'siglen' is less than zero.",
+						"verbose": "The unsigned expression 'siglen' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/sm2_threshold.c",
+						"line": 548
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'buf_len' is less than zero.",
+						"verbose": "The unsigned expression 'buf_len' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/sm2_threshold.c",
+						"line": 804
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'buf_len' is less than zero.",
+						"verbose": "The unsigned expression 'buf_len' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/sm2_threshold.c",
+						"line": 886
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'buf_len' is less than zero.",
+						"verbose": "The unsigned expression 'buf_len' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/sm2_threshold.c",
+						"line": 908
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wbio' can be reduced.",
+						"verbose": "The scope of the variable 'wbio' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/s_server.c",
+						"line": 3341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tsess' can be reduced.",
+						"verbose": "The scope of the variable 'tsess' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/s_server.c",
+						"line": 4314
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'filesize' is less than zero.",
+						"verbose": "The unsigned expression 'filesize' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "apps/s_server.c",
+						"line": 3951
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error \"SIGALRM not defined and the platform is not Windows\"",
+						"verbose": "#error \"SIGALRM not defined and the platform is not Windows\"",
+						"cwe": "",
+						"file": "apps/speed.c",
+						"line": 266
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "apps/ts.c",
+						"line": 571
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'LP_dir_context_st::dir' is never used.",
+						"verbose": "struct member 'LP_dir_context_st::dir' is never used.",
+						"cwe": "563",
+						"file": "crypto/LPdir_unix.c",
+						"line": 74
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'LP_dir_context_st::entry_name' is never used.",
+						"verbose": "struct member 'LP_dir_context_st::entry_name' is never used.",
+						"cwe": "563",
+						"file": "crypto/LPdir_unix.c",
+						"line": 75
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "apps/s_client.c",
+						"line": 397
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/aes/aes_ige.c",
+						"line": 89
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/aes/aes_ige.c",
+						"line": 142
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp2' can be reduced.",
+						"verbose": "The scope of the variable 'tmp2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/aes/aes_ige.c",
+						"line": 142
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp2' can be reduced.",
+						"verbose": "The scope of the variable 'tmp2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/aes/aes_ige.c",
+						"line": 194
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'in' is assigned a value that is never used.",
+						"verbose": "Variable 'in' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/aes/aes_ige.c",
+						"line": 297
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'temp' can be reduced.",
+						"verbose": "The scope of the variable 'temp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/aes/aes_core.c",
+						"line": 1386
+					},
+					{
+						"id": "preprocessorErrorDirective",
+						"severity": "error",
+						"msg": "#error \"unsupported ARM architecture\"",
+						"verbose": "#error \"unsupported ARM architecture\"",
+						"cwe": "",
+						"file": "crypto/arm_arch.h",
+						"line": 50
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If SKM_DEFINE_STACK_OF is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If SKM_DEFINE_STACK_OF is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/asn1_local.h",
+						"line": 15
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err_cert' can be reduced.",
+						"verbose": "The scope of the variable 'err_cert' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/x509.c",
+						"line": 1240
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'idret' can be reduced.",
+						"verbose": "The scope of the variable 'idret' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "apps/x509.c",
+						"line": 1265
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_i2d_fp.c",
+						"line": 38
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_i2d_fp.c",
+						"line": 88
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_print.c",
+						"line": 17
+					},
+					{
+						"id": "clarifyCalculation",
+						"severity": "style",
+						"msg": "Clarify calculation precedence for '&' and '?'.",
+						"verbose": "Suspicious calculation. Please use parentheses to clarify the code. The code ''a&b?c:d'' should be written as either ''(a&b)?c:d'' or ''a&(b?c:d)''.",
+						"cwe": "783",
+						"file": "crypto/asn1/a_sign.c",
+						"line": 246
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mask' can be reduced.",
+						"verbose": "The scope of the variable 'mask' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strnid.c",
+						"line": 85
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p' can be reduced.",
+						"verbose": "The scope of the variable 'p' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 240
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'q' can be reduced.",
+						"verbose": "The scope of the variable 'q' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 240
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'hextmp' can be reduced.",
+						"verbose": "The scope of the variable 'hextmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 241
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'fn_nid' can be reduced.",
+						"verbose": "The scope of the variable 'fn_nid' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 430
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'fn' can be reduced.",
+						"verbose": "The scope of the variable 'fn' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 431
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'val' can be reduced.",
+						"verbose": "The scope of the variable 'val' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 432
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'len' can be reduced.",
+						"verbose": "The scope of the variable 'len' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/a_strex.c",
+						"line": 436
+					},
+					{
+						"id": "redundantAssignment",
+						"severity": "style",
+						"msg": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"verbose": "Variable 'ret' is reassigned a value before the old one has been used.",
+						"cwe": "563",
+						"file": "crypto/asn1/a_verify.c",
+						"line": 79
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'oval' can be reduced.",
+						"verbose": "The scope of the variable 'oval' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/asn_moid.c",
+						"line": 28
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mval' can be reduced.",
+						"verbose": "The scope of the variable 'mval' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/asn1/asn_mstbl.c",
+						"line": 25
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition '!nl' is always true",
+						"verbose": "Condition '!nl' is always true",
+						"cwe": "571",
+						"file": "crypto/asn1/asn1_parse.c",
+						"line": 314
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If static_ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If static_ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/evp_asn1.c",
+						"line": 96
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If static_ASN1_SEQUENCE_END_ref is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If static_ASN1_SEQUENCE_END_ref is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/n_pkey.c",
+						"line": 44
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END_cb is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END_cb is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/nsseq.c",
+						"line": 32
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/p5_pbe.c",
+						"line": 22
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/p5_pbev2.c",
+						"line": 41
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/p5_scrypt.c",
+						"line": 29
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END_cb is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END_cb is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/p8_pkey.c",
+						"line": 49
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If IMPLEMENT_ASN1_TYPE is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If IMPLEMENT_ASN1_TYPE is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/tasn_typ.c",
+						"line": 28
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_ITEM_end is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_ITEM_end is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_bignum.c",
+						"line": 59
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_algor.c",
+						"line": 21
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_ITEM_end is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_ITEM_end is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_long.c",
+						"line": 43
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_sig.c",
+						"line": 19
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_spki.c",
+						"line": 18
+					},
+					{
+						"id": "unknownMacro",
+						"severity": "error",
+						"msg": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"verbose": "There is an unknown macro here somewhere. Configuration is required. If ASN1_SEQUENCE_END is a macro then please configure it.",
+						"cwe": "",
+						"file": "crypto/asn1/x_val.c",
+						"line": 18
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 130
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 148
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 197
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 219
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 457
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ip' can be reduced.",
+						"verbose": "The scope of the variable 'ip' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bf_buff.c",
+						"line": 241
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_lbuf.c",
+						"line": 160
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'i==0' is always true",
+						"verbose": "Condition 'i==0' is always true",
+						"cwe": "571",
+						"file": "crypto/bio/bf_lbuf.c",
+						"line": 178
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "crypto/bio/bf_prefix.c",
+						"line": 127
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bf_readbuff.c",
+						"line": 108
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'num_chars' can be reduced.",
+						"verbose": "The scope of the variable 'num_chars' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bf_readbuff.c",
+						"line": 221
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'found_newline' can be reduced.",
+						"verbose": "The scope of the variable 'found_newline' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bf_readbuff.c",
+						"line": 221
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bf_readbuff.c",
+						"line": 223
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'processed' can be declared as pointer to const",
+						"verbose": "Parameter 'processed' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "crypto/bio/bio_cb.c",
+						"line": 20
+					},
+					{
+						"id": "literalWithCharPtrCompare",
+						"severity": "warning",
+						"msg": "String literal compared with variable 'NULL'. Did you intend to use strcmp() instead?",
+						"verbose": "String literal compared with variable 'NULL'. Did you intend to use strcmp() instead?",
+						"cwe": "595",
+						"file": "crypto/bio/bio_addr.c",
+						"line": 817
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'BIO_sock_init()!=1' is always false",
+						"verbose": "Condition 'BIO_sock_init()!=1' is always false",
+						"cwe": "570",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 48
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'BIO_sock_init()!=1' is always false",
+						"verbose": "Condition 'BIO_sock_init()!=1' is always false",
+						"cwe": "570",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 82
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'BIO_sock_init()!=1' is always false",
+						"verbose": "Condition 'BIO_sock_init()!=1' is always false",
+						"cwe": "570",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 231
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Return value 'ret==0' is always false",
+						"verbose": "Return value 'ret==0' is always false",
+						"cwe": "570",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 363
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "The comparison 'ret == 0' is always true.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 317
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'l' is assigned a value that is never used.",
+						"verbose": "Variable 'l' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bio_sock.c",
+						"line": 325
+					},
+					{
+						"id": "redundantInitialization",
+						"severity": "style",
+						"msg": "Redundant initialization for 'ret'. The initialized value is overwritten before it is read.",
+						"verbose": "Redundant initialization for 'ret'. The initialized value is overwritten before it is read.",
+						"cwe": "563",
+						"file": "crypto/bio/bio_lib.c",
+						"line": 71
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'ret' is less than zero.",
+						"verbose": "The unsigned expression 'ret' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "crypto/bio/bio_lib.c",
+						"line": 422
+					},
+					{
+						"id": "unsignedLessThanZero",
+						"severity": "style",
+						"msg": "Checking if unsigned expression 'ret' is less than zero.",
+						"verbose": "The unsigned expression 'ret' will never be negative so it is either pointless or an error to check if it is.",
+						"cwe": "570",
+						"file": "crypto/bio/bio_lib.c",
+						"line": 469
+					},
+					{
+						"id": "uninitvar",
+						"severity": "error",
+						"msg": "Uninitialized variable: &locaddr",
+						"verbose": "Uninitialized variable: &locaddr",
+						"cwe": "457",
+						"file": "crypto/bio/bio_sock2.c",
+						"line": 421
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ret' can be reduced.",
+						"verbose": "The scope of the variable 'ret' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_conn.c",
+						"line": 819
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ret' can be reduced.",
+						"verbose": "The scope of the variable 'ret' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_conn.c",
+						"line": 850
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ip' can be reduced.",
+						"verbose": "The scope of the variable 'ip' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_fd.c",
+						"line": 147
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err' can be reduced.",
+						"verbose": "The scope of the variable 'err' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_fd.c",
+						"line": 228
+					},
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'spadlen<0' is always false",
+						"verbose": "Condition 'spadlen<0' is always false",
+						"cwe": "570",
+						"file": "crypto/bio/bio_print.c",
+						"line": 480
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmpvalue' can be reduced.",
+						"verbose": "The scope of the variable 'tmpvalue' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bio_print.c",
+						"line": 573
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'peerb' can be reduced.",
+						"verbose": "The scope of the variable 'peerb' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram_pair.c",
+						"line": 629
+					},
+					{
+						"id": "uselessAssignmentArg",
+						"severity": "style",
+						"msg": "Assignment of function parameter has no effect outside the function.",
+						"verbose": "Assignment of function parameter has no effect outside the function.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1348
+					},
+					{
+						"id": "uselessAssignmentArg",
+						"severity": "style",
+						"msg": "Assignment of function parameter has no effect outside the function.",
+						"verbose": "Assignment of function parameter has no effect outside the function.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1550
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'flags' can be reduced.",
+						"verbose": "The scope of the variable 'flags' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 412
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ip' can be reduced.",
+						"verbose": "The scope of the variable 'ip' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 551
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'n' can be reduced.",
+						"verbose": "The scope of the variable 'n' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1946
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'i' can be reduced.",
+						"verbose": "The scope of the variable 'i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1946
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cmsg' can be reduced.",
+						"verbose": "The scope of the variable 'cmsg' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1951
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'p' can be reduced.",
+						"verbose": "The scope of the variable 'p' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 2129
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sockflags' can be reduced.",
+						"verbose": "The scope of the variable 'sockflags' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 2718
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err' can be reduced.",
+						"verbose": "The scope of the variable 'err' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 2787
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bio_dgram_sctp_save_message_st::bio' is never used.",
+						"verbose": "struct member 'bio_dgram_sctp_save_message_st::bio' is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 223
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bio_dgram_sctp_save_message_st::data' is never used.",
+						"verbose": "struct member 'bio_dgram_sctp_save_message_st::data' is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 224
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bio_dgram_sctp_save_message_st::length' is never used.",
+						"verbose": "struct member 'bio_dgram_sctp_save_message_st::length' is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 225
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'num' is assigned a value that is never used.",
+						"verbose": "Variable 'num' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 571
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'sockopt_val' is assigned a value that is never used.",
+						"verbose": "Variable 'sockopt_val' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 555
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'num_msg' is assigned a value that is never used.",
+						"verbose": "Variable 'num_msg' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1348
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'num_msg' is assigned a value that is never used.",
+						"verbose": "Variable 'num_msg' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1550
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'n' is assigned a value that is never used.",
+						"verbose": "Variable 'n' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/bss_dgram.c",
+						"line": 1946
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'fpp' can be reduced.",
+						"verbose": "The scope of the variable 'fpp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_file.c",
+						"line": 176
+					},
+					{
+						"id": "clarifyCalculation",
+						"severity": "style",
+						"msg": "Clarify calculation precedence for '&' and '?'.",
+						"verbose": "Suspicious calculation. Please use parentheses to clarify the code. The code ''a&b?c:d'' should be written as either ''(a&b)?c:d'' or ''a&(b?c:d)''.",
+						"cwe": "783",
+						"file": "crypto/bio/bss_file.c",
+						"line": 147
+					},
+					{
+						"id": "clarifyCalculation",
+						"severity": "style",
+						"msg": "Clarify calculation precedence for '&' and '?'.",
+						"verbose": "Suspicious calculation. Please use parentheses to clarify the code. The code ''a&b?c:d'' should be written as either ''(a&b)?c:d'' or ''a&(b?c:d)''.",
+						"cwe": "783",
+						"file": "crypto/bio/bss_file.c",
+						"line": 309
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'ossl_core_bio_st::bio' is never used.",
+						"verbose": "struct member 'ossl_core_bio_st::bio' is never used.",
+						"cwe": "563",
+						"file": "crypto/bio/ossl_core_bio.c",
+						"line": 20
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ip' can be reduced.",
+						"verbose": "The scope of the variable 'ip' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_sock.c",
+						"line": 179
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'err' can be reduced.",
+						"verbose": "The scope of the variable 'err' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bio/bss_sock.c",
+						"line": 298
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cmp_res' can be reduced.",
+						"verbose": "The scope of the variable 'cmp_res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_add.c",
+						"line": 16
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'cmp_res' can be reduced.",
+						"verbose": "The scope of the variable 'cmp_res' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_add.c",
+						"line": 47
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::A' is never used.",
+						"verbose": "struct member 'bn_blinding_st::A' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 17
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::Ai' is never used.",
+						"verbose": "struct member 'bn_blinding_st::Ai' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 18
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::e' is never used.",
+						"verbose": "struct member 'bn_blinding_st::e' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 19
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::mod' is never used.",
+						"verbose": "struct member 'bn_blinding_st::mod' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 20
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::counter' is never used.",
+						"verbose": "struct member 'bn_blinding_st::counter' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 22
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::flags' is never used.",
+						"verbose": "struct member 'bn_blinding_st::flags' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 23
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::m_ctx' is never used.",
+						"verbose": "struct member 'bn_blinding_st::m_ctx' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 24
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::bn_mod_exp' is never used.",
+						"verbose": "struct member 'bn_blinding_st::bn_mod_exp' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 25
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member 'bn_blinding_st::lock' is never used.",
+						"verbose": "struct member 'bn_blinding_st::lock' is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_blind.c",
+						"line": 27
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "crypto/bn/bn_conv.c",
+						"line": 135
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "crypto/bn/bn_conv.c",
+						"line": 211
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'm' is assigned a value that is never used.",
+						"verbose": "Variable 'm' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_conv.c",
+						"line": 162
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'bn' can be reduced.",
+						"verbose": "The scope of the variable 'bn' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_ctx.c",
+						"line": 300
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'loop' can be reduced.",
+						"verbose": "The scope of the variable 'loop' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_ctx.c",
+						"line": 301
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'rem' is assigned a value that is never used.",
+						"verbose": "Variable 'rem' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "crypto/bn/bn_div.c",
+						"line": 353
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'a' can be declared as pointer to const",
+						"verbose": "Parameter 'a' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "crypto/bn/bn_asm.c",
+						"line": 589
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'b' can be declared as pointer to const",
+						"verbose": "Parameter 'b' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "crypto/bn/bn_asm.c",
+						"line": 589
+					},
+					{
+						"id": "redundantContinue",
+						"severity": "style",
+						"msg": "'continue' is redundant since it is the last statement in a loop.",
+						"verbose": "'continue' is redundant since it is the last statement in a loop.",
+						"cwe": "561",
+						"file": "crypto/bn/bn_lib.c",
+						"line": 492
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_lib.c",
+						"line": 794
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ftl' can be reduced.",
+						"verbose": "The scope of the variable 'ftl' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "crypto/bn/bn_lib.c",
+						"line": 1176
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 0,
+			"average_score": 0.0,
+			"binaries": []
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 0.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": 0.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "skipped",
+				"reason": "No baseline ELF/archive artifacts compiled"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\Tongsuo.security.json"
+	}
+}

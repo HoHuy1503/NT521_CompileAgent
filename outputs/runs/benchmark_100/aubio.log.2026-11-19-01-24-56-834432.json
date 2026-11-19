@@ -1,0 +1,2097 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with multiple agents to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\n\nBegin!\nQuestion: I want you to help me compile the project aubio from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n\n\nThought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I should first inspect the top-level project structure to identify the build system and source layout.\nAction: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CMakeLists.txt\n|-- COPYING\n|-- ChangeLog\n|-- MANIFEST.in\n|-- Makefile\n|-- README.md\n|-- VERSION\n|-- aubio.pc.in\n|-- azure-pipelines.yml\n|-- doc\n|   |-- Makefile\n|   |-- about.rst\n|   |-- android.rst\n|   |-- aubio.txt\n|   |-- aubiocut.txt\n|   |-- aubiomfcc.txt\n|   |-- aubionotes.txt\n|   |-- aubioonset.txt\n|   |-- aubiopitch.txt\n|   |-- aubioquiet.txt\n|   |-- aubiotrack.txt\n|   |-- binaries.rst\n|   |-- building.rst\n|   |-- cli.rst\n|   |-- cli_features.rst\n|   |-- conf.py\n|   |-- debian_packages.rst\n|   |-- develop.rst\n|   |-- download.rst\n|   |-- full.cfg\n|   |-- index.rst\n|   |-- installing.rst\n|   |-- make.bat\n|   |-- py_analysis.rst\n|   |-- py_datatypes.rst\n|   |-- py_examples.rst\n|   |-- py_io.rst\n|   |-- py_spectral.rst\n|   |-- py_synth.rst\n|   |-- py_temporal.rst\n|   |-- py_utils.rst\n|   |-- python.rst\n|   |-- python_module.rst\n|   |-- requirements.rst\n|   |-- statuslinks.rst\n|   |-- web.cfg\n|   `-- xcode_frameworks.rst\n|-- examples\n|   |-- CMakeLists.txt\n|   |-- aubiomfcc.c\n|   |-- aubionotes.c\n|   |-- aubioonset.c\n|   |-- aubiopitch.c\n|   |-- aubioquiet.c\n|   |-- aubiotrack.c\n|   |-- jackio.c\n|   |-- jackio.h\n|   |-- meson.build\n|   |-- parse_args.h\n|   |-- utils.c\n|   |-- utils.h\n|   `-- wscript_build\n|-- meson.build\n|-- python\n|   |-- README.md\n|   |-- demos\n|   |-- ext\n|   |-- lib\n|   `-- tests\n|-- requirements.txt\n|-- scripts\n|   |-- apple\n|   |-- build_android\n|   |-- build_apple_frameworks\n|   |-- build_cmake\n|   |-- build_emscripten\n|   |-- build_meson\n|   |-- build_mingw\n|   |-- get_waf.sh\n|   `-- setenv_local.sh\n|-- setup.py\n|-- src\n|   |-- CMakeLists.txt\n|   |-- aubio.h\n|   |-- aubio_priv.h\n|   |-- config.h.cmake.in\n|   |-- cvec.c\n|   |-- cvec.h\n|   |-- effects\n|   |-- fmat.c\n|   |-- fmat.h\n|   |-- fvec.c\n|   |-- fvec.h\n|   |-- io\n|   |-- lvec.c\n|   |-- lvec.h\n|   |-- mathutils.c\n|   |-- mathutils.h\n|   |-- meson.build\n|   |-- musicutils.c\n|   |-- musicutils.h\n|   |-- notes\n|   |-- onset\n|   |-- pitch\n|   |-- spectral\n|   |-- synth\n|   |-- tempo\n|   |-- temporal\n|   |-- types.h\n|   |-- utils\n|   |-- vecutils.c\n|   |-- vecutils.h\n|   `-- wscript_build\n|-- tests\n|   |-- CMakeLists.txt\n|   |-- create_tests_source.py\n|   |-- meson.build\n|   |-- src\n|   |-- utils_tests.h\n|   `-- wscript_build\n|-- this_version.py\n|-- waf_gensyms.py\n`-- wscript\n\n23 directories, 102 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I have the project structure; aubio supports CMake, Meson, and Waf. I will ask CompileNavigator for the recommended compilation instructions based on this structure.\nAction: CompileNavigator\nAction Input: Project root contains CMakeLists.txt, meson.build, wscript, src/CMakeLists.txt, examples/, tests/, python/, doc/, scripts/, README.md. This is aubio, an audio analysis library with C sources and optional CLI examples."
+		],
+		[
+			"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: I will use CMake to build the main aubio library, installing common build dependencies first and disabling optional demos/tests/docs/Python to focus on the core library.\nAction: Shell\nAction Input: apt-get update && apt-get install -y cmake libfftw3-dev libsndfile1-dev pkg-config && mkdir -p build && cd build && cmake -DAUBIO_BUILD_DEMOS=OFF -DAUBIO_BUILD_TESTS=OFF -DAUBIO_BUILD_DOC=OFF -DAUBIO_ENABLE_PYTHON=OFF .. && make -j\"$(nproc)\""
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# \n<& cmake -DAUBIO_BUILD_DEMOS=OFF -DAUBIO_BUILD_TESTS=OFF -DAUBIO_BUILD_DOC=OFF -DAUBIO_ENABLE_PYTHON=OFF .. && make -j4 -j\"$(nproc)\"\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm InRelease [151 kB]\n\n0% [1 InRelease 6517 B/151 kB 4%]\n                                 \n0% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]\n\n0% [2 InRelease 9233 B/55.4 kB 17%]\n                                   \n0% [Waiting for headers]\n                        \nGet:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]\n\n0% [3 InRelease 13.1 kB/34.8 kB 38%]\n0% [3 InRelease 34.8 kB/34.8 kB 100%]\n                                     \n0% [Working]\n            \nGet:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]\n\n0% [4 Packages 0 B/8790 kB 0%]\n0% [4 Packages 47.5 kB/8790 kB 1%]\n18% [4 Packages 260 kB/8790 kB 3%]\n                                  \n90% [Working]\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]\n\n90% [4 Packages store 0 B] [5 Packages 6389 B/6924 B 92%]\n                                                         \nGet:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [376 kB]\n\n                                                         \n90% [4 Packages store 0 B] [6 Packages 4923 B/376 kB 1%]\n                                                        \n93% [4 Packages store 0 B]\n                          \n96% [Working]\n96% [5 Packages store 0 B]\n                          \n98% [Working]\n98% [6 Packages store 0 B]\n                          \n100% [Working]\n              \nFetched 9415 kB in 1s (7649 kB/s)\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... Done\n\n\nReading state information... 0% \n\nReading state information... 0%\n\nReading state information... Done\n\ncmake is already the newest version (3.25.1-1).\npkg-config is already the newest version (1.8.1-1).\nThe following additional packages will be installed:\n  libfftw3-bin libfftw3-long3 libfftw3-quad3 libfftw3-single3 libflac-dev libflac12 libmp3lame0 libmpg123-0 libmpg123-dev libogg-dev libogg0 libopus-dev libopus0 libout123-0 libsndfile1 libsyn123-0\n  libvorbis-dev libvorbis0a libvorbisenc2 libvorbisfile3\nSuggested packages:\n  libfftw3-doc opus-tools\nThe following NEW packages will be installed:\n  libfftw3-bin libfftw3-dev libfftw3-long3 libfftw3-quad3 libfftw3-single3 libflac-dev libflac12 libmp3lame0 libmpg123-0 libmpg123-dev libogg-dev libogg0 libopus-dev libopus0 libout123-0 libsndfile1\n  libsndfile1-dev libsyn123-0 libvorbis-dev libvorbis0a libvorbisenc2 libvorbisfile3\n0 upgraded, 22 newly installed, 0 to remove and 183 not upgraded.\nNeed to get 6782 kB of archives.\nAfter this operation, 31.9 MB of additional disk space will be used.\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm/main amd64 libfftw3-long3 amd64 3.3.10-1 [337 kB]\n\n0% [1 libfftw3-long3 4356 B/337 kB 1%]\n                                      \n5% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm/main amd64 libfftw3-quad3 amd64 3.3.10-1 [603 kB]\n\n5% [2 l\n......\n/source.c.o\n[  9%] Building C object src/CMakeFiles/aubio.dir/io/sink_wavwrite.c.o\n[ 10%] Building C object src/CMakeFiles/aubio.dir/io/source_apple_audio.c.o\n[ 10%] Building C object src/CMakeFiles/aubio.dir/io/source_avcodec.c.o\n[ 11%] Building C object src/CMakeFiles/aubio.dir/io/source_sndfile.c.o\n[ 11%] Building C object src/CMakeFiles/aubio.dir/io/source_wavread.c.o\n[ 12%] Building C object src/CMakeFiles/aubio.dir/io/utils_apple_audio.c.o\n[ 12%] Building C object src/CMakeFiles/aubio.dir/utils/log.c.o\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/windll.c.o\n[ 13%] Built target progutils\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/hist.c.o\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/parameter.c.o\n[ 14%] Building C object src/CMakeFiles/aubio.dir/utils/scale.c.o\n[ 15%] Building C object src/CMakeFiles/aubio.dir/utils/strutils.c.o\n[ 16%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_ooura.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/filterbank_mel.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/statistics.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/tss.c.o\n[ 18%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_fftw.c.o\n[ 18%] Building C object src/CMakeFiles/aubio.dir/spectral/specdesc.c.o\n[ 19%] Building C object src/CMakeFiles/aubio.dir/spectral/awhitening.c.o\n[ 19%] Building C object src/CMakeFiles/aubio.dir/spectral/filterbank.c.o\n[ 20%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_accelerate.c.o\n[ 20%] Building C object src/CMakeFiles/aubio.dir/spectral/fft.c.o\n[ 21%] Building C object src/CMakeFiles/aubio.dir/spectral/dct.c.o\n[ 21%] Building C object src/CMakeFiles/aubio.dir/spectral/mfcc.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/phasevoc.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_ipp.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_plain.c.o\n[ 24%] Building C object src/CMakeFiles/aubio.dir/spectral/ooura_fft8g.c.o\n[ 24%] Building C object src/CMakeFiles/aubio.dir/temporal/biquad.c.o\n[ 25%] Building C object src/CMakeFiles/aubio.dir/temporal/filter.c.o\n[ 25%] Building C object src/CMakeFiles/aubio.dir/temporal/a_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/c_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/resampler.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchspecacf.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchschmitt.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchmcomb.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfast.c.o\n[ 29%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyin.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfft.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchfcomb.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/pitch/pitch.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/synth/sampler.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/synth/wavetable.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/notes/notes.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/beattracking.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/tempo.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_dummy.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/rubberband_utils.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_rubberband.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_dummy.c.o\n[ 36%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_rubberband.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/peakpicker.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/onset.c.o\n[ 38%] Linking C shared library libaubio.so\n[ 38%] Built target aubio\nmake: *** [Makefile:101: all] Error 2\n\nroot@c0mpi1er-c0nta1ner:/work/build#\n[Exit code: 2]",
+			""
+		],
+		[
+			"Invalid Format: Missing 'Action:' after 'Thought:",
+			"Thought: The build reached the aubio library target but `make all` failed afterward; I need the actual error from the failing target to decide whether it is an optional component or a real build problem.\nAction: Shell\nAction Input: cd /work/build && make 2>&1 | tail -n 150"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work/build# { cd /work/build && make -j4 2>&1 | tail -n 150\n/bin/sh: 1: python: not found\nmake[2]: *** [tests/CMakeFiles/create_tests_source.dir/build.make:70: tests/CMakeFiles/create_tests_source] Error 127\nmake[1]: *** [CMakeFiles/Makefile2:463: tests/CMakeFiles/create_tests_source.dir/all] Error 2\nmake[1]: *** Waiting for unfinished jobs....\n[  1%] Built target progutils\n[ 38%] Built target aubio\nmake: *** [Makefile:101: all] Error 2\n\nroot@c0mpi1er-c0nta1ner:/work/build#\n[Exit code: 0]",
+			"Thought: The core library target already built, but `make all` pulled in a tests helper that needs `python`. I need to see how tests are gated in CMake so I can reconfigure cleanly or build only the library target.\nAction: Shell\nAction Input: grep -n \"AUBIO_BUILD_TESTS\\|add_subdirectory(tests)\\|option(\" /work/CMakeLists.txt /work/src/CMakeLists.txt /work/tests/CMakeLists.txt /work/build/CMakeCache.txt 2>/dev/null | head -n 100"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work/build# \n<ion(\" /work/CMakeLists.txt /work/src/CMakeLists.txt /work/tests/CMakeLists.txt /work/build/CMakeCache.txt 2>/dev/null | head -n 100\n/work/build/CMakeCache.txt:24:AUBIO_BUILD_TESTS:UNINITIALIZED=OFF\n\nroot@c0mpi1er-c0nta1ner:/work/build#\n[Exit code: 0]",
+			"Thought: The core aubio shared library target was built successfully: the log shows `Linking C shared library libaubio.so` and `[ 38%] Built target aubio`. The later `make all` failure came from an optional tests helper requiring `python`, which is not part of the main library compilation target. Since the requested compilation target for this library project is the main shared library, the compilation of the main body succeeded.\n\nFinal Answer: COMPILATION-SUCCESS"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CMakeLists.txt\n|-- COPYING\n|-- ChangeLog\n|-- MANIFEST.in\n|-- Makefile\n|-- README.md\n|-- VERSION\n|-- aubio.pc.in\n|-- azure-pipelines.yml\n|-- doc\n|   |-- Makefile\n|   |-- about.rst\n|   |-- android.rst\n|   |-- aubio.txt\n|   |-- aubiocut.txt\n|   |-- aubiomfcc.txt\n|   |-- aubionotes.txt\n|   |-- aubioonset.txt\n|   |-- aubiopitch.txt\n|   |-- aubioquiet.txt\n|   |-- aubiotrack.txt\n|   |-- binaries.rst\n|   |-- building.rst\n|   |-- cli.rst\n|   |-- cli_features.rst\n|   |-- conf.py\n|   |-- debian_packages.rst\n|   |-- develop.rst\n|   |-- download.rst\n|   |-- full.cfg\n|   |-- index.rst\n|   |-- installing.rst\n|   |-- make.bat\n|   |-- py_analysis.rst\n|   |-- py_datatypes.rst\n|   |-- py_examples.rst\n|   |-- py_io.rst\n|   |-- py_spectral.rst\n|   |-- py_synth.rst\n|   |-- py_temporal.rst\n|   |-- py_utils.rst\n|   |-- python.rst\n|   |-- python_module.rst\n|   |-- requirements.rst\n|   |-- statuslinks.rst\n|   |-- web.cfg\n|   `-- xcode_frameworks.rst\n|-- examples\n|   |-- CMakeLists.txt\n|   |-- aubiomfcc.c\n|   |-- aubionotes.c\n|   |-- aubioonset.c\n|   |-- aubiopitch.c\n|   |-- aubioquiet.c\n|   |-- aubiotrack.c\n|   |-- jackio.c\n|   |-- jackio.h\n|   |-- meson.build\n|   |-- parse_args.h\n|   |-- utils.c\n|   |-- utils.h\n|   `-- wscript_build\n|-- meson.build\n|-- python\n|   |-- README.md\n|   |-- demos\n|   |-- ext\n|   |-- lib\n|   `-- tests\n|-- requirements.txt\n|-- scripts\n|   |-- apple\n|   |-- build_android\n|   |-- build_apple_frameworks\n|   |-- build_cmake\n|   |-- build_emscripten\n|   |-- build_meson\n|   |-- build_mingw\n|   |-- get_waf.sh\n|   `-- setenv_local.sh\n|-- setup.py\n|-- src\n|   |-- CMakeLists.txt\n|   |-- aubio.h\n|   |-- aubio_priv.h\n|   |-- config.h.cmake.in\n|   |-- cvec.c\n|   |-- cvec.h\n|   |-- effects\n|   |-- fmat.c\n|   |-- fmat.h\n|   |-- fvec.c\n|   |-- fvec.h\n|   |-- io\n|   |-- lvec.c\n|   |-- lvec.h\n|   |-- mathutils.c\n|   |-- mathutils.h\n|   |-- meson.build\n|   |-- musicutils.c\n|   |-- musicutils.h\n|   |-- notes\n|   |-- onset\n|   |-- pitch\n|   |-- spectral\n|   |-- synth\n|   |-- tempo\n|   |-- temporal\n|   |-- types.h\n|   |-- utils\n|   |-- vecutils.c\n|   |-- vecutils.h\n|   `-- wscript_build\n|-- tests\n|   |-- CMakeLists.txt\n|   |-- create_tests_source.py\n|   |-- meson.build\n|   |-- src\n|   |-- utils_tests.h\n|   `-- wscript_build\n|-- this_version.py\n|-- waf_gensyms.py\n`-- wscript\n\n23 directories, 102 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.4034578800201416
+			],
+			[
+				"apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libfftw3-dev libsndfile1-dev pkg-config && mkdir -p build && cd build && cmake -DAUBIO_BUILD_DEMOS=OFF -DAUBIO_BUILD_TESTS=OFF -DAUBIO_BUILD_DOC=OFF -DAUBIO_ENABLE_PYTHON=OFF .. && make -j4 -j\"$(nproc)\"",
+				"root@c0mpi1er-c0nta1ner:/work# \n<& cmake -DAUBIO_BUILD_DEMOS=OFF -DAUBIO_BUILD_TESTS=OFF -DAUBIO_BUILD_DOC=OFF -DAUBIO_ENABLE_PYTHON=OFF .. && make -j4 -j\"$(nproc)\"\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm InRelease [151 kB]\n\n0% [1 InRelease 6517 B/151 kB 4%]\n                                 \n0% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]\n\n0% [2 InRelease 9233 B/55.4 kB 17%]\n                                   \n0% [Waiting for headers]\n                        \nGet:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]\n\n0% [3 InRelease 13.1 kB/34.8 kB 38%]\n0% [3 InRelease 34.8 kB/34.8 kB 100%]\n                                     \n0% [Working]\n            \nGet:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]\n\n0% [4 Packages 0 B/8790 kB 0%]\n0% [4 Packages 47.5 kB/8790 kB 1%]\n18% [4 Packages 260 kB/8790 kB 3%]\n                                  \n90% [Working]\n90% [4 Packages store 0 B] [Waiting for headers]\n                                                \nGet:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]\n\n90% [4 Packages store 0 B] [5 Packages 6389 B/6924 B 92%]\n                                                         \nGet:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [376 kB]\n\n                                                         \n90% [4 Packages store 0 B] [6 Packages 4923 B/376 kB 1%]\n                                                        \n93% [4 Packages store 0 B]\n                          \n96% [Working]\n96% [5 Packages store 0 B]\n                          \n98% [Working]\n98% [6 Packages store 0 B]\n                          \n100% [Working]\n              \nFetched 9415 kB in 1s (7649 kB/s)\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 0%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 94%\n\nReading package lists... 99%\n\nReading package lists... 99%\n\nReading package lists... Done\n\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 0%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... 50%\n\nBuilding dependency tree... Done\n\n\nReading state information... 0% \n\nReading state information... 0%\n\nReading state information... Done\n\ncmake is already the newest version (3.25.1-1).\npkg-config is already the newest version (1.8.1-1).\nThe following additional packages will be installed:\n  libfftw3-bin libfftw3-long3 libfftw3-quad3 libfftw3-single3 libflac-dev libflac12 libmp3lame0 libmpg123-0 libmpg123-dev libogg-dev libogg0 libopus-dev libopus0 libout123-0 libsndfile1 libsyn123-0\n  libvorbis-dev libvorbis0a libvorbisenc2 libvorbisfile3\nSuggested packages:\n  libfftw3-doc opus-tools\nThe following NEW packages will be installed:\n  libfftw3-bin libfftw3-dev libfftw3-long3 libfftw3-quad3 libfftw3-single3 libflac-dev libflac12 libmp3lame0 libmpg123-0 libmpg123-dev libogg-dev libogg0 libopus-dev libopus0 libout123-0 libsndfile1\n  libsndfile1-dev libsyn123-0 libvorbis-dev libvorbis0a libvorbisenc2 libvorbisfile3\n0 upgraded, 22 newly installed, 0 to remove and 183 not upgraded.\nNeed to get 6782 kB of archives.\nAfter this operation, 31.9 MB of additional disk space will be used.\n\n0% [Working]\n            \nGet:1 http://deb.debian.org/debian bookworm/main amd64 libfftw3-long3 amd64 3.3.10-1 [337 kB]\n\n0% [1 libfftw3-long3 4356 B/337 kB 1%]\n                                      \n5% [Waiting for headers]\n                        \nGet:2 http://deb.debian.org/debian bookworm/main amd64 libfftw3-quad3 amd64 3.3.10-1 [603 kB]\n\n5% [2 libfftw3-quad3 2028 B/603 kB 0%]\n                                      \nGet:3 http://deb.debian.org/debian bookworm/main amd64 libfftw3-single3 amd64 3.3.10-1 [806 kB]\n\n13% [3 libfftw3-single3 40.0 kB/806 kB 5%]\n                                          \nGet:4 http://deb.debian.org/debian bookworm/main amd64 libfftw3-bin amd64 3.3.10-1 [51.7 kB]\n\n                                          \n23% [4 libfftw3-bin 8594 B/51.7 kB 17%]\n                                       \n25% [Waiting for headers]\n                         \nGet:5 http://deb.debian.org/debian bookworm/main amd64 libfftw3-dev amd64 3.3.10-1 [2123 kB]\n\n25% [5 libfftw3-dev 30.5 kB/2123 kB 1%]\n                                       \n51% [Waiting for headers]\n                         \nGet:6 http://deb.debian.org/debian bookworm/main amd64 libogg0 amd64 1.3.5-3 [23.4 kB]\n\n51% [6 libogg0 13.9 kB/23.4 kB 59%]\n                                   \nGet:7 http://deb.debian.org/debian bookworm/main amd64 libflac12 amd64 1.4.2+ds-2 [198 kB]\n\n                                   \n52% [7 libflac12 3755 B/198 kB 2%]\n                                  \nGet:8 http://deb.debian.org/debian bookworm/main amd64 libogg-dev amd64 1.3.5-3 [200 kB]\n\n55% [8 libogg-dev 9187 B/200 kB 5%]\n                                   \nGet:9 http://deb.debian.org/debian bookworm/main amd64 libflac-dev amd64 1.4.2+ds-2 [250 kB]\n\n59% [9 libflac-dev 9178 B/250 kB 4%]\n                                    \nGet:10 http://deb.debian.org/debian bookworm/main amd64 libmp3lame0 amd64 3.100-6 [365 kB]\n\n62% [10 libmp3lame0 4992 B/365 kB 1%]\n                                     \nGet:11 http://deb.debian.org/debian bookworm/main amd64 libmpg123-0 amd64 1.31.2-1+deb12u1 [147 kB]\n\n68% [11 libmpg123-0 6363 B/147 kB 4%]\n                                     \nGet:12 http://deb.debian.org/debian bookworm/main amd64 libout123-0 amd64 1.31.2-1+deb12u1 [28.5 kB]\n\n70% [12 libout123-0 7453 B/28.5 kB 26%]\n                                       \nGet:13 http://deb.debian.org/debian bookworm/main amd64 libsyn123-0 amd64 1.31.2-1+deb12u1 [86.1 kB]\n\n72% [13 libsyn123-0 34.2 kB/86.1 kB 40%]\n                                        \nGet:14 http://deb.debian.org/debian bookworm/main amd64 libmpg123-dev amd64 1.31.2-1+deb12u1 [57.6 kB]\n\n74% [14 libmpg123-dev 29.1 kB/57.6 kB 50%]\n                                          \nGet:15 http://deb.debian.org/debian bookworm/main amd64 libopus0 amd64 1.3.1-3 [195 kB]\n\n                                          \n75% [15 libopus0 11.9 kB/195 kB 6%]\n                                   \nGet:16 http://deb.debian.org/debian bookworm/main amd64 libopus-dev amd64 1.3.1-3 [246 kB]\n\n78% [16 libopus-dev 3219 B/246 kB 1%]\n                                     \nGet:17 http://deb.debian.org/debian bookworm/main amd64 libvorbis0a amd64 1.3.7-1 [93.0 kB]\n\n82% [17 libvorbis0a 2074 B/93.0 kB 2%]\n                                      \nGet:18 http://deb.debian.org/debian bookworm/main amd64 libvorbisenc2 amd64 1.3.7-1 [80.6 kB]\n\n84% [18 libvorbisenc2 656 B/80.6 kB 1%]\n                                       \nGet:19 http://deb.debian.org/debian bookworm/main amd64 libsndfile1 amd64 1.2.0-1+deb12u1 [197 kB]\n\n86% [19 libsndfile1 18.9 kB/197 kB 10%]\n                                       \n89% [Waiting for headers]\n                         \nGet:20 http://deb.debian.org/debian bookworm/main amd64 libvorbisfile3 amd64 1.3.7-1 [26.1 kB]\n\n89% [20 libvorbisfile3 11.9 kB/26.1 kB 46%]\n                                           \n90% [Waiting for headers]\n                         \nGet:21 http://deb.debian.org/debian bookworm/main amd64 libvorbis-dev amd64 1.3.7-1 [327 kB]\n\n91% [21 libvorbis-dev 30.4 kB/327 kB 9%]\n                                        \nGet:22 http://deb.debian.org/debian bookworm/main amd64 libsndfile1-dev amd64 1.2.0-1+deb12u1 [343 kB]\n\n95% [22 libsndfile1-dev 26.1 kB/343 kB 8%]\n                                          \n100% [Working]\n              \nFetched 6782 kB in 1s (12.5 MB/s)\ndebconf: delaying package configuration, since apt-utils is not installed\nSelecting previously unselected package libfftw3-long3:amd64.\n(Reading database ... \n(Reading database ... 5%\n(Reading database ... 10%\n(Reading database ... 15%\n(Reading database ... 20%\n(Reading database ... 25%\n(Reading database ... 30%\n(Reading database ... 35%\n(Reading database ... 40%\n(Reading database ... 45%\n(Reading database ... 50%\n(Reading database ... 55%\n(Reading database ... 60%\n(Reading database ... 65%\n(Reading database ... 70%\n(Reading database ... 75%\n(Reading database ... 80%\n(Reading database ... 85%\n(Reading database ... 90%\n(Reading database ... 95%\n(Reading database ... 100%\n(Reading database ... 31639 files and directories currently installed.)\nPreparing to unpack .../00-libfftw3-long3_3.3.10-1_amd64.deb ...\nUnpacking libfftw3-long3:amd64 (3.3.10-1) ...\nSelecting previously unselected package libfftw3-quad3:amd64.\nPreparing to unpack .../01-libfftw3-quad3_3.3.10-1_amd64.deb ...\nUnpacking libfftw3-quad3:amd64 (3.3.10-1) ...\nSelecting previously unselected package libfftw3-single3:amd64.\nPreparing to unpack .../02-libfftw3-single3_3.3.10-1_amd64.deb ...\nUnpacking libfftw3-single3:amd64 (3.3.10-1) ...\nSelecting previously unselected package libfftw3-bin.\nPreparing to unpack .../03-libfftw3-bin_3.3.10-1_amd64.deb ...\nUnpacking libfftw3-bin (3.3.10-1) ...\nSelecting previously unselected package libfftw3-dev:amd64.\nPreparing to unpack .../04-libfftw3-dev_3.3.10-1_amd64.deb ...\nUnpacking libfftw3-dev:amd64 (3.3.10-1) ...\nSelecting previously unselected package libogg0:amd64.\nPreparing to unpack .../05-libogg0_1.3.5-3_amd64.deb ...\nUnpacking libogg0:amd64 (1.3.5-3) ...\nSelecting previously unselected package libflac12:amd64.\nPreparing to unpack .../06-libflac12_1.4.2+ds-2_amd64.deb ...\nUnpacking libflac12:amd64 (1.4.2+ds-2) ...\nSelecting previously unselected package libogg-dev:amd64.\nPreparing to unpack .../07-libogg-dev_1.3.5-3_amd64.deb ...\nUnpacking libogg-dev:amd64 (1.3.5-3) ...\nSelecting previously unselected package libflac-dev:amd64.\nPreparing to unpack .../08-libflac-dev_1.4.2+ds-2_amd64.deb ...\nUnpacking libflac-dev:amd64 (1.4.2+ds-2) ...\nSelecting previously unselected package libmp3lame0:amd64.\nPreparing to unpack .../09-libmp3lame0_3.100-6_amd64.deb ...\nUnpacking libmp3lame0:amd64 (3.100-6) ...\nSelecting previously unselected package libmpg123-0:amd64.\nPreparing to unpack .../10-libmpg123-0_1.31.2-1+deb12u1_amd64.deb ...\nUnpacking libmpg123-0:amd64 (1.31.2-1+deb12u1) ...\nSelecting previously unselected package libout123-0:amd64.\nPreparing to unpack .../11-libout123-0_1.31.2-1+deb12u1_amd64.deb ...\nUnpacking libout123-0:amd64 (1.31.2-1+deb12u1) ...\nSelecting previously unselected package libsyn123-0:amd64.\nPreparing to unpack .../12-libsyn123-0_1.31.2-1+deb12u1_amd64.deb ...\nUnpacking libsyn123-0:amd64 (1.31.2-1+deb12u1) ...\nSelecting previously unselected package libmpg123-dev:amd64.\nPreparing to unpack .../13-libmpg123-dev_1.31.2-1+deb12u1_amd64.deb ...\nUnpacking libmpg123-dev:amd64 (1.31.2-1+deb12u1) ...\nSelecting previously unselected package libopus0:amd64.\nPreparing to unpack .../14-libopus0_1.3.1-3_amd64.deb ...\nUnpacking libopus0:amd64 (1.3.1-3) ...\nSelecting previously unselected package libopus-dev:amd64.\nPreparing to unpack .../15-libopus-dev_1.3.1-3_amd64.deb ...\nUnpacking libopus-dev:amd64 (1.3.1-3) ...\nSelecting previously unselected package libvorbis0a:amd64.\nPreparing to unpack .../16-libvorbis0a_1.3.7-1_amd64.deb ...\nUnpacking libvorbis0a:amd64 (1.3.7-1) ...\nSelecting previously unselected package libvorbisenc2:amd64.\nPreparing to unpack .../17-libvorbisenc2_1.3.7-1_amd64.deb ...\nUnpacking libvorbisenc2:amd64 (1.3.7-1) ...\nSelecting previously unselected package libsndfile1:amd64.\nPreparing to unpack .../18-libsndfile1_1.2.0-1+deb12u1_amd64.deb ...\nUnpacking libsndfile1:amd64 (1.2.0-1+deb12u1) ...\nSelecting previously unselected package libvorbisfile3:amd64.\nPreparing to unpack .../19-libvorbisfile3_1.3.7-1_amd64.deb ...\nUnpacking libvorbisfile3:amd64 (1.3.7-1) ...\nSelecting previously unselected package libvorbis-dev:amd64.\nPreparing to unpack .../20-libvorbis-dev_1.3.7-1_amd64.deb ...\nUnpacking libvorbis-dev:amd64 (1.3.7-1) ...\nSelecting previously unselected package libsndfile1-dev:amd64.\nPreparing to unpack .../21-libsndfile1-dev_1.2.0-1+deb12u1_amd64.deb ...\nUnpacking libsndfile1-dev:amd64 (1.2.0-1+deb12u1) ...\nSetting up libfftw3-single3:amd64 (3.3.10-1) ...\nSetting up libmpg123-0:amd64 (1.31.2-1+deb12u1) ...\nSetting up libogg0:amd64 (1.3.5-3) ...\nSetting up libfftw3-long3:amd64 (3.3.10-1) ...\nSetting up libogg-dev:amd64 (1.3.5-3) ...\nSetting up libout123-0:amd64 (1.31.2-1+deb12u1) ...\nSetting up libsyn123-0:amd64 (1.31.2-1+deb12u1) ...\nSetting up libflac12:amd64 (1.4.2+ds-2) ...\nSetting up libfftw3-quad3:amd64 (3.3.10-1) ...\nSetting up libopus0:amd64 (1.3.1-3) ...\nSetting up libvorbis0a:amd64 (1.3.7-1) ...\nSetting up libmp3lame0:amd64 (3.100-6) ...\nSetting up libvorbisenc2:amd64 (1.3.7-1) ...\nSetting up libflac-dev:amd64 (1.4.2+ds-2) ...\nSetting up libfftw3-bin (3.3.10-1) ...\nSetting up libopus-dev:amd64 (1.3.1-3) ...\nSetting up libmpg123-dev:amd64 (1.31.2-1+deb12u1) ...\nSetting up libvorbisfile3:amd64 (1.3.7-1) ...\nSetting up libsndfile1:amd64 (1.2.0-1+deb12u1) ...\nSetting up libfftw3-dev:amd64 (3.3.10-1) ...\nSetting up libvorbis-dev:amd64 (1.3.7-1) ...\nSetting up libsndfile1-dev:amd64 (1.2.0-1+deb12u1) ...\nProcessing triggers for libc-bin (2.36-9+deb12u7) ...\n-- The C compiler identification is GNU 13.2.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Looking for stdlib.h\n-- Looking for stdlib.h - found\n-- Looking for stdio.h\n-- Looking for stdio.h - found\n-- Looking for math.h\n-- Looking for math.h - found\n-- Looking for string.h\n-- Looking for string.h - found\n-- Looking for errno.h\n-- Looking for errno.h - found\n-- Looking for limits.h\n-- Looking for limits.h - found\n-- Looking for stdarg.h\n-- Looking for stdarg.h - found\n-- Looking for unistd.h\n-- Looking for unistd.h - found\n-- Looking for getopt.h\n-- Looking for getopt.h - found\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"1.8.1\") \n-- Checking for module 'sndfile>=1.0.4'\n--   Found sndfile, version 1.2.0\n-- Checking for module 'samplerate>=0.0.15'\n--   Package 'samplerate', required by 'virtual:world', not found\n-- Checking for module 'rubberband>=1.3'\n--   Package 'rubberband', required by 'virtual:world', not found\n-- Checking for modules 'libavcodec>=54.35.0;libavformat>=52.3.0;libavutil>=52.3.0;libswresample>=1.2.0'\n--   Package 'libavcodec', required by 'virtual:world', not found\n--   Package 'libavformat', required by 'virtual:world', not found\n--   Package 'libavutil', required by 'virtual:world', not found\n--   Package 'libswresample', required by 'virtual:world', not found\n-- Checking for modules 'vorbisenc;vorbis;ogg'\n--   Found vorbisenc, version 1.3.7\n--   Found vorbis, version 1.3.7\n--   Found ogg, version 1.3.5\n-- Checking for module 'flac'\n--   Found flac, version 1.4.2\n-- Configuring done\n-- Generating done\nCMake Warning:\n  Manually-specified variables were not used by the project:\n\n    AUBIO_BUILD_DEMOS\n    AUBIO_BUILD_DOC\n    AUBIO_BUILD_TESTS\n    AUBIO_ENABLE_PYTHON\n\n\n-- Build files have been written to: /work/build\n/bin/sh: 1: python: not found\nmake[2]: *** [tests/CMakeFiles/create_tests_source.dir/build.make:70: tests/CMakeFiles/create_tests_source] Error 127\nmake[1]: *** [CMakeFiles/Makefile2:463: tests/CMakeFiles/create_tests_source.dir/all] Error 2\nmake[1]: *** Waiting for unfinished jobs....\n[  1%] Building C object examples/CMakeFiles/progutils.dir/utils.c.o\n[  1%] Building C object src/CMakeFiles/aubio.dir/fvec.c.o\n[  2%] Building C object src/CMakeFiles/aubio.dir/fmat.c.o\n[  2%] Building C object src/CMakeFiles/aubio.dir/cvec.c.o\n[  3%] Building C object src/CMakeFiles/aubio.dir/lvec.c.o\n[  3%] Building C object src/CMakeFiles/aubio.dir/vecutils.c.o\n[  4%] Building C object src/CMakeFiles/aubio.dir/mathutils.c.o\n[  4%] Building C object src/CMakeFiles/aubio.dir/musicutils.c.o\n[  5%] Building C object src/CMakeFiles/aubio.dir/io/audio_unit.c.o\n[  5%] Building C object src/CMakeFiles/aubio.dir/io/ioutils.c.o\n[  6%] Building C object src/CMakeFiles/aubio.dir/io/sink.c.o\n[  6%] Building C object src/CMakeFiles/aubio.dir/io/sink_apple_audio.c.o\n[  7%] Building C object src/CMakeFiles/aubio.dir/io/sink_flac.c.o\n[  7%] Building C object src/CMakeFiles/aubio.dir/io/sink_sndfile.c.o\n[  8%] Building C object src/CMakeFiles/aubio.dir/io/sink_vorbis.c.o\n[  9%] Building C object src/CMakeFiles/aubio.dir/io/source.c.o\n[  9%] Building C object src/CMakeFiles/aubio.dir/io/sink_wavwrite.c.o\n[ 10%] Building C object src/CMakeFiles/aubio.dir/io/source_apple_audio.c.o\n[ 10%] Building C object src/CMakeFiles/aubio.dir/io/source_avcodec.c.o\n[ 11%] Building C object src/CMakeFiles/aubio.dir/io/source_sndfile.c.o\n[ 11%] Building C object src/CMakeFiles/aubio.dir/io/source_wavread.c.o\n[ 12%] Building C object src/CMakeFiles/aubio.dir/io/utils_apple_audio.c.o\n[ 12%] Building C object src/CMakeFiles/aubio.dir/utils/log.c.o\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/windll.c.o\n[ 13%] Built target progutils\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/hist.c.o\n[ 13%] Building C object src/CMakeFiles/aubio.dir/utils/parameter.c.o\n[ 14%] Building C object src/CMakeFiles/aubio.dir/utils/scale.c.o\n[ 15%] Building C object src/CMakeFiles/aubio.dir/utils/strutils.c.o\n[ 16%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_ooura.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/filterbank_mel.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/statistics.c.o\n[ 17%] Building C object src/CMakeFiles/aubio.dir/spectral/tss.c.o\n[ 18%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_fftw.c.o\n[ 18%] Building C object src/CMakeFiles/aubio.dir/spectral/specdesc.c.o\n[ 19%] Building C object src/CMakeFiles/aubio.dir/spectral/awhitening.c.o\n[ 19%] Building C object src/CMakeFiles/aubio.dir/spectral/filterbank.c.o\n[ 20%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_accelerate.c.o\n[ 20%] Building C object src/CMakeFiles/aubio.dir/spectral/fft.c.o\n[ 21%] Building C object src/CMakeFiles/aubio.dir/spectral/dct.c.o\n[ 21%] Building C object src/CMakeFiles/aubio.dir/spectral/mfcc.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/phasevoc.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_ipp.c.o\n[ 23%] Building C object src/CMakeFiles/aubio.dir/spectral/dct_plain.c.o\n[ 24%] Building C object src/CMakeFiles/aubio.dir/spectral/ooura_fft8g.c.o\n[ 24%] Building C object src/CMakeFiles/aubio.dir/temporal/biquad.c.o\n[ 25%] Building C object src/CMakeFiles/aubio.dir/temporal/filter.c.o\n[ 25%] Building C object src/CMakeFiles/aubio.dir/temporal/a_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/c_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/resampler.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchspecacf.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchschmitt.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchmcomb.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfast.c.o\n[ 29%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyin.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfft.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchfcomb.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/pitch/pitch.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/synth/sampler.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/synth/wavetable.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/notes/notes.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/beattracking.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/tempo.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_dummy.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/rubberband_utils.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_rubberband.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_dummy.c.o\n[ 36%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_rubberband.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/peakpicker.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/onset.c.o\n[ 38%] Linking C shared library libaubio.so\n[ 38%] Built target aubio\nmake: *** [Makefile:101: all] Error 2\n\nroot@c0mpi1er-c0nta1ner:/work/build# ",
+				44.235509634017944
+			],
+			[
+				"cd /work/build && make -j4 2>&1 | tail -n 150",
+				"root@c0mpi1er-c0nta1ner:/work/build# { cd /work/build && make -j4 2>&1 | tail -n 150\n/bin/sh: 1: python: not found\nmake[2]: *** [tests/CMakeFiles/create_tests_source.dir/build.make:70: tests/CMakeFiles/create_tests_source] Error 127\nmake[1]: *** [CMakeFiles/Makefile2:463: tests/CMakeFiles/create_tests_source.dir/all] Error 2\nmake[1]: *** Waiting for unfinished jobs....\n[  1%] Built target progutils\n[ 38%] Built target aubio\nmake: *** [Makefile:101: all] Error 2\n\nroot@c0mpi1er-c0nta1ner:/work/build# ",
+				12.335508584976196
+			],
+			[
+				"grep -n \"AUBIO_BUILD_TESTS\\|add_subdirectory(tests)\\|option(\" /work/CMakeLists.txt /work/src/CMakeLists.txt /work/tests/CMakeLists.txt /work/build/CMakeCache.txt 2>/dev/null | head -n 100",
+				"root@c0mpi1er-c0nta1ner:/work/build# \n<ion(\" /work/CMakeLists.txt /work/src/CMakeLists.txt /work/tests/CMakeLists.txt /work/build/CMakeCache.txt 2>/dev/null | head -n 100\n/work/build/CMakeCache.txt:24:AUBIO_BUILD_TESTS:UNINITIALIZED=OFF\n\nroot@c0mpi1er-c0nta1ner:/work/build# ",
+				0.20139694213867188
+			]
+		],
+		"CompileNavigator": [
+			[
+				"Project root contains CMakeLists.txt, meson.build, wscript, src/CMakeLists.txt, examples/, tests/, python/, doc/, scripts/, README.md. This is aubio, an audio analysis library with C sources and optional CLI examples.\n\nProject directory structure:\nroot@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- AUTHORS\n|-- CMakeLists.txt\n|-- COPYING\n|-- ChangeLog\n|-- MANIFEST.in\n|-- Makefile\n|-- README.md\n|-- VERSION\n|-- aubio.pc.in\n|-- azure-pipelines.yml\n|-- doc\n|   |-- Makefile\n|   |-- about.rst\n|   |-- android.rst\n|   |-- aubio.txt\n|   |-- aubiocut.txt\n|   |-- aubiomfcc.txt\n|   |-- aubionotes.txt\n|   |-- aubioonset.txt\n|   |-- aubiopitch.txt\n|   |-- aubioquiet.txt\n|   |-- aubiotrack.txt\n|   |-- binaries.rst\n|   |-- building.rst\n|   |-- cli.rst\n|   |-- cli_features.rst\n|   |-- conf.py\n|   |-- debian_packages.rst\n|   |-- develop.rst\n|   |-- download.rst\n|   |-- full.cfg\n|   |-- index.rst\n|   |-- installing.rst\n|   |-- make.bat\n|   |-- py_analysis.rst\n|   |-- py_datatypes.rst\n|   |-- py_examples.rst\n|   |-- py_io.rst\n|   |-- py_spectral.rst\n|   |-- py_synth.rst\n|   |-- py_temporal.rst\n|   |-- py_utils.rst\n|   |-- python.rst\n|   |-- python_module.rst\n|   |-- requirements.rst\n|   |-- statuslinks.rst\n|   |-- web.cfg\n|   `-- xcode_frameworks.rst\n|-- examples\n|   |-- CMakeLists.txt\n|   |-- aubiomfcc.c\n|   |-- aubionotes.c\n|   |-- aubioonset.c\n|   |-- aubiopitch.c\n|   |-- aubioquiet.c\n|   |-- aubiotrack.c\n|   |-- jackio.c\n|   |-- jackio.h\n|   |-- meson.build\n|   |-- parse_args.h\n|   |-- utils.c\n|   |-- utils.h\n|   `-- wscript_build\n|-- meson.build\n|-- python\n|   |-- README.md\n|   |-- demos\n|   |-- ext\n|   |-- lib\n|   `-- tests\n|-- requirements.txt\n|-- scripts\n|   |-- apple\n|   |-- build_android\n|   |-- build_apple_frameworks\n|   |-- build_cmake\n|   |-- build_emscripten\n|   |-- build_meson\n|   |-- build_mingw\n|   |-- get_waf.sh\n|   `-- setenv_local.sh\n|-- setup.py\n|-- src\n|   |-- CMakeLists.txt\n|   |-- aubio.h\n|   |-- aubio_priv.h\n|   |-- config.h.cmake.in\n|   |-- cvec.c\n|   |-- cvec.h\n|   |-- effects\n|   |-- fmat.c\n|   |-- fmat.h\n|   |-- fvec.c\n|   |-- fvec.h\n|   |-- io\n|   |-- lvec.c\n|   |-- lvec.h\n|   |-- mathutils.c\n|   |-- mathutils.h\n|   |-- meson.build\n|   |-- musicutils.c\n|   |-- musicutils.h\n|   |-- notes\n|   |-- onset\n|   |-- pitch\n|   |-- spectral\n|   |-- synth\n|   |-- tempo\n|   |-- temporal\n|   |-- types.h\n|   |-- utils\n|   |-- vecutils.c\n|   |-- vecutils.h\n|   `-- wscript_build\n|-- tests\n|   |-- CMakeLists.txt\n|   |-- create_tests_source.py\n|   |-- meson.build\n|   |-- src\n|   |-- utils_tests.h\n|   `-- wscript_build\n|-- this_version.py\n|-- waf_gensyms.py\n`-- wscript\n\n23 directories, 102 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+				"COMPILATION-UNCERTAIN (Terminated early due to repeated action/parsing loop)",
+				[]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "True",
+		"checker_result": "True(strict=False)",
+		"project": "aubio",
+		"ablation_mode": "full",
+		"security_mode": "all",
+		"strict_checker": false,
+		"checker_non_strict": true,
+		"checker_strict": true,
+		"elapsed_seconds": 637.97,
+		"iterations": 11,
+		"tool_calls": {
+			"Shell": 4,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [
+			"build/src/libaubio.so",
+			"build/src/libaubio.so.5.4.8"
+		],
+		"all_artifacts": [
+			"build/src/libaubio.so",
+			"build/src/libaubio.so.5.4.8"
+		],
+		"smoke_check": {
+			"checked_count": 2,
+			"passed": true,
+			"missing_libs": [],
+			"details": [
+				{
+					"artifact": "build/src/libaubio.so",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/build/src/libaubio.so: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, not stripped",
+					"ldd_output": "linux-vdso.so.1 (0x0000734613c6f000)\n\tlibsndfile.so.1 => /lib/x86_64-linux-gnu/libsndfile.so.1 (0x0000734613b97000)\n\tlibvorbisenc.so.2 => /lib/x86_64-linux-gnu/libvorbisenc.so.2 (0x0000734613aec000)\n\tlibvorbis.so.0 => /lib/x86_64-linux-gnu/libvorbis.so.0 (0x0000734613abf000)\n\tlibogg.so.0 => /lib/x86_64-linux-gnu/libogg.so.0 (0x0000734613ab5000)\n\tlibFLAC.so.12 => /lib/x86_64-linux-gnu/libFLAC.so.12 (0x0000734613a50000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000073461386d000)\n\tlibopus.so.0 => /lib/x86_64-linux-gnu/libopus.so.0 (0x000073461380f000)\n\tlibmpg123.so.0 => /lib/x86_64-linux-gnu/libmpg123.so.0 (0x00007346137b3000)\n\tlibmp3lame.so.0 => /lib/x86_64-linux-gnu/libmp3lame.so.0 (0x000073461373c000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000073461365d000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000734613c71000)"
+				},
+				{
+					"artifact": "build/src/libaubio.so.5.4.8",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/build/src/libaubio.so.5.4.8: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, not stripped",
+					"ldd_output": "linux-vdso.so.1 (0x0000796b18b2c000)\n\tlibsndfile.so.1 => /lib/x86_64-linux-gnu/libsndfile.so.1 (0x0000796b18a54000)\n\tlibvorbisenc.so.2 => /lib/x86_64-linux-gnu/libvorbisenc.so.2 (0x0000796b189a9000)\n\tlibvorbis.so.0 => /lib/x86_64-linux-gnu/libvorbis.so.0 (0x0000796b1897c000)\n\tlibogg.so.0 => /lib/x86_64-linux-gnu/libogg.so.0 (0x0000796b18972000)\n\tlibFLAC.so.12 => /lib/x86_64-linux-gnu/libFLAC.so.12 (0x0000796b1890d000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000796b1872a000)\n\tlibopus.so.0 => /lib/x86_64-linux-gnu/libopus.so.0 (0x0000796b186cc000)\n\tlibmpg123.so.0 => /lib/x86_64-linux-gnu/libmpg123.so.0 (0x0000796b18670000)\n\tlibmp3lame.so.0 => /lib/x86_64-linux-gnu/libmp3lame.so.0 (0x0000796b185f9000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000796b1851a000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000796b18b2e000)"
+				}
+			]
+		}
+	},
+	"security": {
+		"mode": "all",
+		"status": "completed",
+		"recipe": {
+			"build_system": "cmake",
+			"workdir": "/work/build",
+			"clean_cmd": "cmake --build \"/work/build\" --target clean",
+			"build_cmd": "cmake --build \"/work/build\" -j4",
+			"compile_db_cmd": "",
+			"test_cmd": "ctest --test-dir \"/work/build\" --output-on-failure",
+			"cmake_dir": "/work/build"
+		},
+		"layer1_sast": {
+			"semgrep": {
+				"status": "completed",
+				"configs_used": [
+					"/opt/rules/c_security.yaml",
+					"p/c"
+				],
+				"report_path": "outputs/runs/benchmark_100\\semgrep\\aubio.semgrep.json",
+				"total_findings": 4,
+				"by_severity": {
+					"ERROR": 1,
+					"WARNING": 3
+				},
+				"by_rule": {
+					"c-format-string-vuln": 1,
+					"c-integer-overflow-alloc": 3
+				},
+				"errors_count": 17,
+				"findings": [
+					{
+						"check_id": "opt.rules.c-format-string-vuln",
+						"rule": "c-format-string-vuln",
+						"severity": "ERROR",
+						"path": "examples/parse_args.h",
+						"line": 80,
+						"col": 3,
+						"message": "Non-literal format string passed directly to formatted output function (CWE-134). Attacker-controlled format specifiers (%n, %x, %s) can leak memory or achieve arbitrary write. Always use a literal format string such as \"%s\".",
+						"cwe": "CWE-134: Use of Externally-Controlled Format String"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "python/ext/aubioproxy.c",
+						"line": 149,
+						"col": 28,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "python/ext/py-sink.c",
+						"line": 110,
+						"col": 27,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					},
+					{
+						"check_id": "opt.rules.c-integer-overflow-alloc",
+						"rule": "c-integer-overflow-alloc",
+						"severity": "WARNING",
+						"path": "python/ext/py-source.c",
+						"line": 353,
+						"col": 27,
+						"message": "Unchecked integer multiplication inside heap allocation (CWE-190 / CWE-680). Multiplication overflow can cause under-allocation followed by heap buffer overflow. Validate multiplication bounds or use calloc(count, elem_size).",
+						"cwe": "CWE-190: Integer Overflow or Wraparound"
+					}
+				]
+			},
+			"cppcheck": {
+				"status": "completed",
+				"mode": "compile_commands",
+				"compile_db_entries": 127,
+				"report_path": "outputs/runs/benchmark_100\\cppcheck\\aubio.cppcheck.json",
+				"total_findings": 289,
+				"by_severity": {
+					"style": 169,
+					"warning": 116,
+					"error": 4
+				},
+				"findings": [
+					{
+						"id": "knownConditionTrueFalse",
+						"severity": "style",
+						"msg": "Condition 'pos<1' is always false",
+						"verbose": "Condition 'pos<1' is always false",
+						"cwe": "570",
+						"file": "src/mathutils.c",
+						"line": 490
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'a' can be reduced.",
+						"verbose": "The scope of the variable 'a' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 127
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'b' can be reduced.",
+						"verbose": "The scope of the variable 'b' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 127
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'middle' can be reduced.",
+						"verbose": "The scope of the variable 'middle' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 440
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'll' can be reduced.",
+						"verbose": "The scope of the variable 'll' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 440
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'hh' can be reduced.",
+						"verbose": "The scope of the variable 'hh' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 440
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/mathutils.c",
+						"line": 659
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'tmp' is assigned a value that is never used.",
+						"verbose": "Variable 'tmp' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/mathutils.c",
+						"line": 659
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/io/sink_flac.c",
+						"line": 282
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'v' can be reduced.",
+						"verbose": "The scope of the variable 'v' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/io/sink_flac.c",
+						"line": 282
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'c' can be reduced.",
+						"verbose": "The scope of the variable 'c' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/io/sink_flac.c",
+						"line": 302
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'v' can be reduced.",
+						"verbose": "The scope of the variable 'v' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/io/sink_flac.c",
+						"line": 302
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'fmt' is redundant or there is possible null pointer dereference: fmt.",
+						"verbose": "Either the condition 'fmt' is redundant or there is possible null pointer dereference: fmt.",
+						"cwe": "476",
+						"file": "src/io/sink_sndfile.c",
+						"line": 136
+					},
+					{
+						"id": "funcArgOrderDifferent",
+						"severity": "warning",
+						"msg": "Function 'new_aubio_scale' argument order different: declaration 'flow, fhig, ilow, ihig' definition 'ilow, ihig, olow, ohig'",
+						"verbose": "Function 'new_aubio_scale' argument order different: declaration 'flow, fhig, ilow, ihig' definition 'ilow, ihig, olow, ohig'",
+						"cwe": "683",
+						"file": "src/utils/scale.c",
+						"line": 40
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'inputrange' is assigned a value that is never used.",
+						"verbose": "Variable 'inputrange' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/utils/scale.c",
+						"line": 64
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'tmp' can be reduced.",
+						"verbose": "The scope of the variable 'tmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/utils/hist.c",
+						"line": 76
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'tmp' is assigned a value that is never used.",
+						"verbose": "Variable 'tmp' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/utils/hist.c",
+						"line": 76
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'tmp' is assigned a value that is never used.",
+						"verbose": "Variable 'tmp' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/utils/hist.c",
+						"line": 92
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'tmp' is assigned a value that is never used.",
+						"verbose": "Variable 'tmp' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/utils/hist.c",
+						"line": 109
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'riseInc' can be reduced.",
+						"verbose": "The scope of the variable 'riseInc' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/filterbank_mel.c",
+						"line": 43
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'downInc' can be reduced.",
+						"verbose": "The scope of the variable 'downInc' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/filterbank_mel.c",
+						"line": 43
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'freq_min' can be declared as pointer to const",
+						"verbose": "Parameter 'freq_min' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/filterbank_mel.c",
+						"line": 217
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sc' can be reduced.",
+						"verbose": "The scope of the variable 'sc' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 66
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 67
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'centroid' can be reduced.",
+						"verbose": "The scope of the variable 'centroid' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 82
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'sc' can be reduced.",
+						"verbose": "The scope of the variable 'sc' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 82
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 83
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/statistics.c",
+						"line": 170
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'centroid' is assigned a value that is never used.",
+						"verbose": "Variable 'centroid' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/spectral/statistics.c",
+						"line": 82
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'test' can be reduced.",
+						"verbose": "The scope of the variable 'test' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/tss.c",
+						"line": 47
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member '_aubio_resampler_t::dummy' is never used.",
+						"verbose": "struct member '_aubio_resampler_t::dummy' is never used.",
+						"cwe": "563",
+						"file": "src/temporal/resampler.c",
+						"line": 81
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xi' can be reduced.",
+						"verbose": "The scope of the variable 'xi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 343
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 506
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 506
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l' can be reduced.",
+						"verbose": "The scope of the variable 'l' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 506
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mh' can be reduced.",
+						"verbose": "The scope of the variable 'mh' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 506
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 507
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yr' can be reduced.",
+						"verbose": "The scope of the variable 'yr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 507
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 602
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 602
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'l' can be reduced.",
+						"verbose": "The scope of the variable 'l' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 602
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'm' can be reduced.",
+						"verbose": "The scope of the variable 'm' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 602
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'mh' can be reduced.",
+						"verbose": "The scope of the variable 'mh' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 602
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 603
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xi' can be reduced.",
+						"verbose": "The scope of the variable 'xi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 603
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yr' can be reduced.",
+						"verbose": "The scope of the variable 'yr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 603
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yi' can be reduced.",
+						"verbose": "The scope of the variable 'yi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 603
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 689
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'nwh' can be reduced.",
+						"verbose": "The scope of the variable 'nwh' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 689
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'delta' can be reduced.",
+						"verbose": "The scope of the variable 'delta' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 690
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x' can be reduced.",
+						"verbose": "The scope of the variable 'x' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 690
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y' can be reduced.",
+						"verbose": "The scope of the variable 'y' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 690
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 724
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'nch' can be reduced.",
+						"verbose": "The scope of the variable 'nch' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 724
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'delta' can be reduced.",
+						"verbose": "The scope of the variable 'delta' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 725
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j2' can be reduced.",
+						"verbose": "The scope of the variable 'j2' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 957
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j3' can be reduced.",
+						"verbose": "The scope of the variable 'j3' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 957
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x1r' can be reduced.",
+						"verbose": "The scope of the variable 'x1r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x1i' can be reduced.",
+						"verbose": "The scope of the variable 'x1i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x2r' can be reduced.",
+						"verbose": "The scope of the variable 'x2r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x2i' can be reduced.",
+						"verbose": "The scope of the variable 'x2i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x3r' can be reduced.",
+						"verbose": "The scope of the variable 'x3r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'x3i' can be reduced.",
+						"verbose": "The scope of the variable 'x3i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 958
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j4' can be reduced.",
+						"verbose": "The scope of the variable 'j4' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1009
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j5' can be reduced.",
+						"verbose": "The scope of the variable 'j5' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1009
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j6' can be reduced.",
+						"verbose": "The scope of the variable 'j6' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1009
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j7' can be reduced.",
+						"verbose": "The scope of the variable 'j7' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1009
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wn4r' can be reduced.",
+						"verbose": "The scope of the variable 'wn4r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1010
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y0r' can be reduced.",
+						"verbose": "The scope of the variable 'y0r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y0i' can be reduced.",
+						"verbose": "The scope of the variable 'y0i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y1r' can be reduced.",
+						"verbose": "The scope of the variable 'y1r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y1i' can be reduced.",
+						"verbose": "The scope of the variable 'y1i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y2r' can be reduced.",
+						"verbose": "The scope of the variable 'y2r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y2i' can be reduced.",
+						"verbose": "The scope of the variable 'y2i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y3r' can be reduced.",
+						"verbose": "The scope of the variable 'y3r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y3i' can be reduced.",
+						"verbose": "The scope of the variable 'y3i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1011
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y4r' can be reduced.",
+						"verbose": "The scope of the variable 'y4r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y4i' can be reduced.",
+						"verbose": "The scope of the variable 'y4i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y5r' can be reduced.",
+						"verbose": "The scope of the variable 'y5r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y5i' can be reduced.",
+						"verbose": "The scope of the variable 'y5i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y6r' can be reduced.",
+						"verbose": "The scope of the variable 'y6r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y6i' can be reduced.",
+						"verbose": "The scope of the variable 'y6i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y7r' can be reduced.",
+						"verbose": "The scope of the variable 'y7r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'y7i' can be reduced.",
+						"verbose": "The scope of the variable 'y7i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1012
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'j' can be reduced.",
+						"verbose": "The scope of the variable 'j' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1124
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k1' can be reduced.",
+						"verbose": "The scope of the variable 'k1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1124
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wtmp' can be reduced.",
+						"verbose": "The scope of the variable 'wtmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk1r' can be reduced.",
+						"verbose": "The scope of the variable 'wk1r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk1i' can be reduced.",
+						"verbose": "The scope of the variable 'wk1i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk2r' can be reduced.",
+						"verbose": "The scope of the variable 'wk2r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk2i' can be reduced.",
+						"verbose": "The scope of the variable 'wk2i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk3r' can be reduced.",
+						"verbose": "The scope of the variable 'wk3r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk3i' can be reduced.",
+						"verbose": "The scope of the variable 'wk3i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1125
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk4r' can be reduced.",
+						"verbose": "The scope of the variable 'wk4r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk4i' can be reduced.",
+						"verbose": "The scope of the variable 'wk4i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk5r' can be reduced.",
+						"verbose": "The scope of the variable 'wk5r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk5i' can be reduced.",
+						"verbose": "The scope of the variable 'wk5i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk6r' can be reduced.",
+						"verbose": "The scope of the variable 'wk6r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk6i' can be reduced.",
+						"verbose": "The scope of the variable 'wk6i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk7r' can be reduced.",
+						"verbose": "The scope of the variable 'wk7r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk7i' can be reduced.",
+						"verbose": "The scope of the variable 'wk7i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1126
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1339
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k1' can be reduced.",
+						"verbose": "The scope of the variable 'k1' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1339
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wtmp' can be reduced.",
+						"verbose": "The scope of the variable 'wtmp' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk1r' can be reduced.",
+						"verbose": "The scope of the variable 'wk1r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk1i' can be reduced.",
+						"verbose": "The scope of the variable 'wk1i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk2r' can be reduced.",
+						"verbose": "The scope of the variable 'wk2r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk2i' can be reduced.",
+						"verbose": "The scope of the variable 'wk2i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk3r' can be reduced.",
+						"verbose": "The scope of the variable 'wk3r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk3i' can be reduced.",
+						"verbose": "The scope of the variable 'wk3i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1340
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk4r' can be reduced.",
+						"verbose": "The scope of the variable 'wk4r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk4i' can be reduced.",
+						"verbose": "The scope of the variable 'wk4i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk5r' can be reduced.",
+						"verbose": "The scope of the variable 'wk5r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk5i' can be reduced.",
+						"verbose": "The scope of the variable 'wk5i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk6r' can be reduced.",
+						"verbose": "The scope of the variable 'wk6r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk6i' can be reduced.",
+						"verbose": "The scope of the variable 'wk6i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk7r' can be reduced.",
+						"verbose": "The scope of the variable 'wk7r' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wk7i' can be reduced.",
+						"verbose": "The scope of the variable 'wk7i' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1341
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1582
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wkr' can be reduced.",
+						"verbose": "The scope of the variable 'wkr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wki' can be reduced.",
+						"verbose": "The scope of the variable 'wki' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xi' can be reduced.",
+						"verbose": "The scope of the variable 'xi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yr' can be reduced.",
+						"verbose": "The scope of the variable 'yr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yi' can be reduced.",
+						"verbose": "The scope of the variable 'yi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1583
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1607
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wkr' can be reduced.",
+						"verbose": "The scope of the variable 'wkr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wki' can be reduced.",
+						"verbose": "The scope of the variable 'wki' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xi' can be reduced.",
+						"verbose": "The scope of the variable 'xi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yr' can be reduced.",
+						"verbose": "The scope of the variable 'yr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'yi' can be reduced.",
+						"verbose": "The scope of the variable 'yi' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1608
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1634
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wkr' can be reduced.",
+						"verbose": "The scope of the variable 'wkr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1635
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wki' can be reduced.",
+						"verbose": "The scope of the variable 'wki' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1635
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1635
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'k' can be reduced.",
+						"verbose": "The scope of the variable 'k' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1655
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wkr' can be reduced.",
+						"verbose": "The scope of the variable 'wkr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1656
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'wki' can be reduced.",
+						"verbose": "The scope of the variable 'wki' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1656
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'xr' can be reduced.",
+						"verbose": "The scope of the variable 'xr' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1656
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'w' can be declared as pointer to const",
+						"verbose": "Parameter 'w' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1122
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'w' can be declared as pointer to const",
+						"verbose": "Parameter 'w' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1337
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'c' can be declared as pointer to const",
+						"verbose": "Parameter 'c' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1580
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'c' can be declared as pointer to const",
+						"verbose": "Parameter 'c' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1605
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'c' can be declared as pointer to const",
+						"verbose": "Parameter 'c' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1632
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'c' can be declared as pointer to const",
+						"verbose": "Parameter 'c' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/spectral/ooura_fft8g.c",
+						"line": 1653
+					},
+					{
+						"id": "constParameter",
+						"severity": "style",
+						"msg": "Parameter 'indata' can be declared as pointer to const",
+						"verbose": "Parameter 'indata' can be declared as pointer to const",
+						"cwe": "398",
+						"file": "src/pitch/pitchschmitt.c",
+						"line": 62
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'ispeak' can be reduced.",
+						"verbose": "The scope of the variable 'ispeak' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/pitch/pitchmcomb.c",
+						"line": 296
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'period' can be reduced.",
+						"verbose": "The scope of the variable 'period' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/pitch/pitchyin.c",
+						"line": 145
+					},
+					{
+						"id": "duplicateExpression",
+						"severity": "style",
+						"msg": "Same expression on both sides of '||'.",
+						"verbose": "Finding the same expression on both sides of an operator is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "src/pitch/pitchyinfast.c",
+						"line": 61
+					},
+					{
+						"id": "duplicateExpression",
+						"severity": "style",
+						"msg": "Same expression '!o->kernel' found multiple times in chain of '||' operators.",
+						"verbose": "Finding the same expression more than once in a condition is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "src/pitch/pitchyinfast.c",
+						"line": 62
+					},
+					{
+						"id": "variableScope",
+						"severity": "style",
+						"msg": "The scope of the variable 'halfperiod' can be reduced.",
+						"verbose": "The scope of the variable 'halfperiod' can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for 'i' can be reduced:\\012void f(int x)\\012{\\012    int i = 0;\\012    if (x) {\\012        // it's safe to move 'int i = 0;' here\\012        for (int n = 0; n < 10; ++n) {\\012            // it is possible but not safe to move 'int i = 0;' here\\012            do_something(&i);\\012        }\\012    }\\012}\\012When you see this message it is always safe to reduce the variable scope 1 level.",
+						"cwe": "398",
+						"file": "src/pitch/pitchyinfft.c",
+						"line": 115
+					},
+					{
+						"id": "redundantInitialization",
+						"severity": "style",
+						"msg": "Redundant initialization for 'bp'. The initialized value is overwritten before it is read.",
+						"verbose": "Redundant initialization for 'bp'. The initialized value is overwritten before it is read.",
+						"cwe": "563",
+						"file": "src/tempo/beattracking.c",
+						"line": 365
+					},
+					{
+						"id": "duplicateAssignExpression",
+						"severity": "style",
+						"msg": "Same expression used in consecutive assignments of 'laglen' and 'step'.",
+						"verbose": "Finding variables 'laglen' and 'step' that are assigned the same expression is suspicious and might indicate a cut and paste or logic error. Please examine this code carefully to determine if it is correct.",
+						"cwe": "398",
+						"file": "src/tempo/beattracking.c",
+						"line": 68
+					},
+					{
+						"id": "unreadVariable",
+						"severity": "style",
+						"msg": "Variable 'flagconst' is assigned a value that is never used.",
+						"verbose": "Variable 'flagconst' is assigned a value that is never used.",
+						"cwe": "563",
+						"file": "src/tempo/beattracking.c",
+						"line": 364
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member '_aubio_pitchshift_t::dummy' is never used.",
+						"verbose": "struct member '_aubio_pitchshift_t::dummy' is never used.",
+						"cwe": "563",
+						"file": "src/effects/pitchshift_dummy.c",
+						"line": 32
+					},
+					{
+						"id": "unusedStructMember",
+						"severity": "style",
+						"msg": "struct member '_aubio_timestretch_t::dummy' is never used.",
+						"verbose": "struct member '_aubio_timestretch_t::dummy' is never used.",
+						"cwe": "563",
+						"file": "src/effects/timestretch_dummy.c",
+						"line": 32
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/utils.c",
+						"line": 183
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 4) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/utils.c",
+						"line": 183
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 6) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 6) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/utils.c",
+						"line": 183
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/utils.c",
+						"line": 226
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/parse_args.h",
+						"line": 346
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/parse_args.h",
+						"line": 349
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/parse_args.h",
+						"line": 352
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/parse_args.h",
+						"line": 352
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/parse_args.h",
+						"line": 358
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioonset.c",
+						"line": 74
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioonset.c",
+						"line": 76
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioonset.c",
+						"line": 77
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiomfcc.c",
+						"line": 58
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiomfcc.c",
+						"line": 59
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiomfcc.c",
+						"line": 60
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubionotes.c",
+						"line": 58
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubionotes.c",
+						"line": 61
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubionotes.c",
+						"line": 62
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubionotes.c",
+						"line": 66
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubionotes.c",
+						"line": 67
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiopitch.c",
+						"line": 61
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiopitch.c",
+						"line": 64
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiopitch.c",
+						"line": 65
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioquiet.c",
+						"line": 55
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioquiet.c",
+						"line": 56
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubioquiet.c",
+						"line": 57
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 2) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiotrack.c",
+						"line": 71
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiotrack.c",
+						"line": 74
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "examples/aubiotrack.c",
+						"line": 75
+					},
+					{
+						"id": "memleak",
+						"severity": "error",
+						"msg": "Memory leak: argv",
+						"verbose": "Memory leak: argv",
+						"cwe": "401",
+						"file": "tests/utils_tests.h",
+						"line": 149
+					},
+					{
+						"id": "memleak",
+						"severity": "error",
+						"msg": "Memory leak: argv",
+						"verbose": "Memory leak: argv",
+						"cwe": "401",
+						"file": "tests/utils_tests.h",
+						"line": 162
+					},
+					{
+						"id": "memleak",
+						"severity": "error",
+						"msg": "Memory leak: argv",
+						"verbose": "Memory leak: argv",
+						"cwe": "401",
+						"file": "tests/utils_tests.h",
+						"line": 178
+					},
+					{
+						"id": "memleak",
+						"severity": "error",
+						"msg": "Memory leak: argv",
+						"verbose": "Memory leak: argv",
+						"cwe": "401",
+						"file": "tests/utils_tests.h",
+						"line": 183
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'vec' is redundant or there is possible null pointer dereference: vec.",
+						"verbose": "Either the condition 'vec' is redundant or there is possible null pointer dereference: vec.",
+						"cwe": "476",
+						"file": "tests/src/test-fvec.c",
+						"line": 40
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'vec' is redundant or there is possible null pointer dereference: vec.",
+						"verbose": "Either the condition 'vec' is redundant or there is possible null pointer dereference: vec.",
+						"cwe": "476",
+						"file": "tests/src/test-fvec.c",
+						"line": 49
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'complex_vector' is redundant or there is possible null pointer dereference: complex_vector.",
+						"verbose": "Either the condition 'complex_vector' is redundant or there is possible null pointer dereference: complex_vector.",
+						"cwe": "476",
+						"file": "tests/src/test-cvec.c",
+						"line": 55
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"verbose": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"cwe": "476",
+						"file": "tests/src/test-fmat.c",
+						"line": 10
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"verbose": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"cwe": "476",
+						"file": "tests/src/test-fmat.c",
+						"line": 47
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"verbose": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"cwe": "476",
+						"file": "tests/src/test-fmat.c",
+						"line": 68
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"verbose": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"cwe": "476",
+						"file": "tests/src/test-fmat.c",
+						"line": 88
+					},
+					{
+						"id": "nullPointerRedundantCheck",
+						"severity": "warning",
+						"msg": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"verbose": "Either the condition 'mat' is redundant or there is possible null pointer dereference: mat.",
+						"cwe": "476",
+						"file": "tests/src/test-fmat.c",
+						"line": 89
+					},
+					{
+						"id": "invalidPrintfArgType_sint",
+						"severity": "warning",
+						"msg": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"verbose": "%d in format string (no. 1) requires 'int' but the argument type is 'unsigned int'.",
+						"cwe": "686",
+						"file": "tests/src/test-mathutils-window.c",
+						"line": 23
+					},
+					{
+						"id": "constVariable",
+						"severity": "style",
+						"msg": "Variable 'lengths' can be declared as const array",
+						"verbose": "Variable 'lengths' can be declared as const array",
+						"cwe": "398",
+						"file": "tests/src/test-mathutils-window.c",
+						"line": 8
+					}
+				]
+			}
+		},
+		"layer2_hardening_baseline": {
+			"label": "baseline",
+			"binary_count": 1,
+			"average_score": 50.0,
+			"binaries": [
+				{
+					"artifact": "build/src/libaubio.so",
+					"kind": "shared_library",
+					"elf_type": "DYN",
+					"nx": "Enabled",
+					"canary": "Disabled",
+					"pie": "DSO (PIC)",
+					"relro": "Partial RELRO",
+					"fortify": "Disabled (0 _chk)",
+					"fortify_symbols": [],
+					"rpath": "None",
+					"stripped": false,
+					"has_debug_info": false,
+					"asan": false,
+					"ubsan": false,
+					"score": 50
+				}
+			]
+		},
+		"layer3_hardening_rebuild": {
+			"build": {
+				"status": "failed",
+				"exit_code": 2,
+				"build_cmd": "cmake --build \"/work/build\" -j4",
+				"workdir": "/work/build",
+				"wrapper_flags": "-O2 -g -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC -pie -Wl,-z,relro,-z,now",
+				"output_tail": "26%] Building C object src/CMakeFiles/aubio.dir/temporal/c_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/resampler.c.o\n[ 27%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchspecacf.c.o\n[ 27%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchschmitt.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfast.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchmcomb.c.o\n[ 29%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyin.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfft.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchfcomb.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/pitch/pitch.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/synth/sampler.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/synth/wavetable.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/notes/notes.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/tempo.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/beattracking.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_dummy.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/rubberband_utils.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_rubberband.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_dummy.c.o\n[ 36%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_rubberband.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/peakpicker.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/onset.c.o\n[ 38%] Linking C shared library libaubio.so\n[ 38%] Built target aubio\n\n/bin/sh: 1: python: not found\ngmake[2]: *** [tests/CMakeFiles/create_tests_source.dir/build.make:70: tests/CMakeFiles/create_tests_source] Error 127\ngmake[1]: *** [CMakeFiles/Makefile2:463: tests/CMakeFiles/create_tests_source.dir/all] Error 2\ngmake[1]: *** Waiting for unfinished jobs....\ngmake: *** [Makefile:101: all] Error 2"
+			},
+			"audit_after": {
+				"label": "after_hardening",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"smoke_check_after": {
+				"checked_count": 0,
+				"passed": false,
+				"missing_libs": [],
+				"details": []
+			},
+			"before_vs_after": {
+				"before_avg_score": 50.0,
+				"after_avg_score": 0.0,
+				"avg_score_delta": -50.0,
+				"binaries": []
+			}
+		},
+		"layer3_sanitizer": {
+			"build": {
+				"status": "failed",
+				"exit_code": 2,
+				"build_cmd": "cmake --build \"/work/build\" -j4",
+				"workdir": "/work/build",
+				"wrapper_flags": "-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer",
+				"output_tail": "26%] Building C object src/CMakeFiles/aubio.dir/temporal/c_weighting.c.o\n[ 26%] Building C object src/CMakeFiles/aubio.dir/temporal/resampler.c.o\n[ 27%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchspecacf.c.o\n[ 27%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchschmitt.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchmcomb.c.o\n[ 28%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfast.c.o\n[ 29%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyin.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchfcomb.c.o\n[ 30%] Building C object src/CMakeFiles/aubio.dir/pitch/pitchyinfft.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/pitch/pitch.c.o\n[ 31%] Building C object src/CMakeFiles/aubio.dir/synth/sampler.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/synth/wavetable.c.o\n[ 32%] Building C object src/CMakeFiles/aubio.dir/notes/notes.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/tempo.c.o\n[ 33%] Building C object src/CMakeFiles/aubio.dir/tempo/beattracking.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/rubberband_utils.c.o\n[ 34%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_dummy.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/pitchshift_rubberband.c.o\n[ 35%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_dummy.c.o\n[ 36%] Building C object src/CMakeFiles/aubio.dir/effects/timestretch_rubberband.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/peakpicker.c.o\n[ 37%] Building C object src/CMakeFiles/aubio.dir/onset/onset.c.o\n[ 38%] Linking C shared library libaubio.so\n[ 38%] Built target aubio\n\n/bin/sh: 1: python: not found\ngmake[2]: *** [tests/CMakeFiles/create_tests_source.dir/build.make:70: tests/CMakeFiles/create_tests_source] Error 127\ngmake[1]: *** [CMakeFiles/Makefile2:463: tests/CMakeFiles/create_tests_source.dir/all] Error 2\ngmake[1]: *** Waiting for unfinished jobs....\ngmake: *** [Makefile:101: all] Error 2"
+			},
+			"audit_sanitizer": {
+				"label": "sanitizer",
+				"binary_count": 0,
+				"average_score": 0.0,
+				"binaries": []
+			},
+			"asan_instrumented_count": 0,
+			"ubsan_instrumented_count": 0,
+			"runs": [],
+			"asan_count": 0,
+			"ubsan_count": 0,
+			"asan_errors": [],
+			"ubsan_errors": []
+		},
+		"report_path": "outputs/runs/benchmark_100\\security\\aubio.security.json"
+	}
+}
