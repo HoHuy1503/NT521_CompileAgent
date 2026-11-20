@@ -16,23 +16,36 @@ for path in (SRC_DIR, SCRIPTS_DIR):
 from langchain_core.agents import AgentAction, AgentFinish  # noqa: E402
 
 import compile_agent.config as cfg  # noqa: E402
-from compile_agent.agent.error_solver import _truncate_mistake_text  # noqa: E402
+from compile_agent.agent.error_solver import (  # noqa: E402
+    ErrorSolver,
+    _truncate_mistake_text,
+    clean_output,
+    parse_output,
+    trans_confidence,
+)
 from compile_agent.agent.executor import (  # noqa: E402
     CompilationAgentExecutor,
     SafeReActSingleInputOutputParser,
     _REPETITION_WARNING,
 )
-from compile_agent.agent.navigator import AgentTools, CompileNavigator  # noqa: E402
+from compile_agent.agent.navigator import AgentTools  # noqa: E402
 from compile_agent.infra.docker_tools import InteractiveDockerShell  # noqa: E402
 from compile_agent.reporting.logs import (  # noqa: E402
+    RESULTS_JSONL_FILENAME,
     _is_build_system_probe_artifact,
     _matches_target_name,
+    append_jsonl,
+    atomic_write_json,
+    atomic_write_text,
+    backfill_results_jsonl,
+    cleanup_stale_tmp_files,
     find_compiled_artifacts,
     is_compiled,
+    iter_jsonl_records,
+    save_logs,
     smoke_check_artifact,
     snapshot_existing_artifacts,
 )
-from compile_agent.security.audit import detect_build_recipe  # noqa: E402
 import compile as compile_script  # noqa: E402
 import evaluate as evaluate_script  # noqa: E402
 
@@ -119,46 +132,42 @@ class TestStateEpochRepetitionAndLoopDetection(unittest.TestCase):
         self.assertIn("|-- CMakeLists.txt", enriched)
 
 
-class TestQuotaClassificationAndKeyPool(unittest.TestCase):
+class TestLocalLLMConfigAndRetry(unittest.TestCase):
     def tearDown(self):
-        cfg._KEY_POOL.configure([])
+        cfg._EXTRA_BODY_UNSUPPORTED_ENDPOINTS.clear()
+        cfg.reset_stop_bypass_cache()
         cfg.reset_circuit_breaker()
 
-    def test_rpm_429_not_misclassified_as_daily_quota(self):
-        rpm_err = RuntimeError(
-            "Error code: 429 - You exceeded your current quota, limit: 15 requests per minute, retry in 20s"
-        )
-        self.assertFalse(cfg._is_quota_exhausted_error(rpm_err))
-        self.assertTrue(cfg._is_rate_limit_error(rpm_err))
-
-        daily_err = RuntimeError("429 GenerateRequestsPerDay / PerDay quota exceeded")
-        self.assertTrue(cfg._is_quota_exhausted_error(daily_err))
-
-    def test_two_strike_protection_and_success_reset(self):
-        cfg._KEY_POOL.configure(["key-A-1234567890", "key-B-1234567890"])
-        ambiguous_429 = RuntimeError("Error code: 429 - quota limit reached")
-        next_key = cfg._KEY_POOL.mark_exhausted_and_rotate(reason="quota_exhausted", exc=ambiguous_429)
-        self.assertEqual(next_key, "key-B-1234567890")
-        self.assertEqual(cfg._KEY_POOL.remaining_count(), 2)
-
-        # Success clears strike history
-        cfg.record_llm_success()
-        self.assertEqual(cfg._KEY_POOL._quota_strikes, {})
-
-        # Two strikes on key-B permanently exhausts it
-        cfg._KEY_POOL.mark_exhausted_and_rotate(reason="quota_exhausted", exc=ambiguous_429)
-        self.assertEqual(cfg._KEY_POOL.remaining_count(), 2)
-        # Rotate back to key-B by hitting strike 1 on key-A (now active) -> brings back key-B cleanly via explicit reset test
-        cfg._KEY_POOL.configure(["key-only-123456"])
-        cfg._KEY_POOL.mark_exhausted_and_rotate(reason="quota_exhausted", exc=ambiguous_429)
-        self.assertEqual(cfg._KEY_POOL.remaining_count(), 1)
-        exhausted = cfg._KEY_POOL.mark_exhausted_and_rotate(reason="quota_exhausted", exc=ambiguous_429)
-        self.assertIsNone(exhausted)
-        self.assertEqual(cfg._KEY_POOL.remaining_count(), 0)
+    def test_local_providers_resolve_without_api_key(self):
+        for provider, expected_url, expected_model in (
+            ("llamacpp", "http://localhost:8080/v1", "Qwen 3.8 K_M Q4 27B"),
+            ("ollama", "http://localhost:11434/v1", "qwen3:30b"),
+            ("vllm", "http://localhost:8000/v1", "Qwen/Qwen3-30B-A3B"),
+        ):
+            with patch.dict(
+                os.environ,
+                {
+                    "LLM_PROVIDER": provider,
+                    "LLM_BASE_URL": "",
+                    "OPENAI_BASE_URL": "",
+                    "MASTER_MODEL": "",
+                    "DISCUSSION_MODELS": "",
+                },
+                clear=False,
+            ):
+                resolved = cfg.resolve_llm_config()
+                self.assertEqual(resolved["provider"], provider)
+                self.assertEqual(resolved["base_url"], expected_url)
+                self.assertEqual(resolved["master_model"], expected_model)
+                self.assertNotIn("api_key", resolved)
+                llm = cfg.create_chat_llm()
+                self.assertEqual(llm.openai_api_key.get_secret_value(), "EMPTY")
 
     def test_extra_body_400_fallback_strips_and_retries(self):
         class FakeClient:
             def __init__(self):
+                self.openai_api_base = "http://localhost:8080/v1"
+                self.model_name = "qwen3-27b"
                 self.extra_body = {"chat_template_kwargs": {"enable_thinking": False}}
                 self.model_kwargs = {"extra_body": dict(self.extra_body)}
                 self.calls = 0
@@ -170,16 +179,117 @@ class TestQuotaClassificationAndKeyPool(unittest.TestCase):
                 return "ok"
 
         client = FakeClient()
-        cfg._KEY_POOL.configure(["EMPTY"])
-        cfg._KEY_POOL.register_client(client)
-        res = cfg.call_with_rate_limit_retry(client.invoke, "hello")
+        res = cfg.call_with_llm_retry(client.invoke, "hello")
         self.assertEqual(res, "ok")
         self.assertEqual(client.calls, 2)
         self.assertIsNone(client.extra_body)
         self.assertNotIn("extra_body", client.model_kwargs)
 
 
-class TestDockerShellAndStage3Helpers(unittest.TestCase):
+class TestErrorSolverThreeAgentTwoRoundDebate(unittest.TestCase):
+    def test_trans_confidence_and_weighted_voting(self):
+        self.assertEqual(trans_confidence(0.5), 0.1)
+        self.assertEqual(trans_confidence(0.7), 0.3)
+        self.assertEqual(trans_confidence(0.85), 0.5)
+        self.assertEqual(trans_confidence(0.95), 0.8)
+        self.assertEqual(trans_confidence(1.0), 1.0)
+
+        agent_keys = ["qwen3-27b#1", "qwen3-27b#2", "qwen3-27b#3"]
+        results = [
+            {
+                "qwen3-27b#1_output_0": {
+                    "reasoning": "Missing zlib header",
+                    "solution": "apt-get update && apt-get install -y zlib1g-dev",
+                    "confidence_level": 0.9,
+                },
+                "qwen3-27b#2_output_0": {
+                    "reasoning": "Need zlib dev package",
+                    "solution": "apt-get update && apt-get install -y zlib1g-dev",
+                    "confidence_level": 0.95,
+                },
+                "qwen3-27b#3_output_0": {
+                    "reasoning": "Try cmake",
+                    "solution": "cmake -B build",
+                    "confidence_level": 0.6,
+                },
+            }
+        ]
+        cleaned = clean_output(results, rounds=0, agent_keys=agent_keys)
+        parsed = parse_output(cleaned, rounds=0, threshold=30, agent_keys=agent_keys)
+        self.assertEqual(
+            parsed[0]["weighted_max_0"],
+            "apt-get update && apt-get install -y zlib1g-dev",
+        )
+        self.assertIn("Majority agents' solution:", parsed[0]["debate_prompt_0"])
+
+    def test_discussion_runs_three_agents_two_rounds_with_single_local_model(self):
+        created_agents = []
+
+        class FakeSingleAgent:
+            def __init__(self, base_url=None, model_name=None, agent_key=None, temperature=None):
+                self.base_url = base_url
+                self.model_name = model_name
+                self.agent_key = agent_key
+                self.temperature = temperature
+                created_agents.append((agent_key, model_name, temperature))
+
+            def generate_answer(self, template, question, project_name, chat_history=None, search_budget=None):
+                if chat_history is None:
+                    return {
+                        "reasoning": f"r0 from {self.agent_key}",
+                        "solution": "apt-get update && apt-get install -y libssl-dev"
+                        if not self.agent_key.endswith("#3")
+                        else "make clean",
+                        "confidence_level": 0.9 if not self.agent_key.endswith("#3") else 0.5,
+                    }
+                return {
+                    "reasoning": f"r1 consensus from {self.agent_key}",
+                    "solution": "apt-get update && apt-get install -y libssl-dev",
+                    "confidence_level": 0.95,
+                }
+
+            def debate(self, template, question, project_name, results, rounds, search_budget=None):
+                for result in results:
+                    prev_prompt_key = f"debate_prompt_{rounds - 1}"
+                    out_key = f"{self.agent_key}_output_{rounds}"
+                    if (out_key not in result) and (prev_prompt_key in result) and len(result[prev_prompt_key]):
+                        result[out_key] = self.generate_answer(
+                            template=template,
+                            question=question,
+                            project_name=project_name,
+                            chat_history=result[prev_prompt_key],
+                            search_budget=search_budget,
+                        )
+                return results
+
+        fake_cfg = {
+            "provider": "llamacpp",
+            "base_url": "http://localhost:8080/v1",
+            "master_model": "qwen3-27b",
+            "discussion_models": ["qwen3-27b"],
+        }
+        with patch("compile_agent.agent.error_solver.resolve_llm_config", return_value=fake_cfg), \
+             patch("compile_agent.agent.error_solver.SingleAgent", FakeSingleAgent), \
+             patch("compile_agent.agent.error_solver.time.sleep"):
+            solver = ErrorSolver("demo-proj")
+            winner = solver.discussion("fatal error: openssl/ssl.h: No such file or directory")
+
+        self.assertEqual(
+            created_agents,
+            [
+                ("qwen3-27b#1", "qwen3-27b", 0.1),
+                ("qwen3-27b#2", "qwen3-27b", 0.4),
+                ("qwen3-27b#3", "qwen3-27b", 0.7),
+            ],
+        )
+        self.assertEqual(winner, "apt-get update && apt-get install -y libssl-dev")
+        self.assertEqual(len(solver.logger), 1)
+        round_data = solver.logger[0][1][0]
+        self.assertIn("weighted_max_0", round_data)
+        self.assertIn("weighted_max_1", round_data)
+
+
+class TestDockerShellAndHelpers(unittest.TestCase):
     def _dummy_shell(self):
         shell = InteractiveDockerShell.__new__(InteractiveDockerShell)
         shell.last_line = "root@c0mpi1er-c0nta1ner:/work# "
@@ -227,7 +337,7 @@ class TestDockerShellAndStage3Helpers(unittest.TestCase):
             res = atools.search_instructions_from_files("./README.md")
             self.assertEqual(res, "File is empty")
 
-    def test_has_existing_log_respects_security_mode_and_glob_chars(self):
+    def test_has_existing_log_handles_glob_chars(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             proj = "proj[1]"
             fp = os.path.join(tmpdir, f"{proj}.log.2026-01-01-00-00-00-000001.json")
@@ -235,41 +345,15 @@ class TestDockerShellAndStage3Helpers(unittest.TestCase):
                 json.dump(
                     {
                         "build": {"checker_non_strict": True, "checker_result": "True(strict=False)"},
-                        "security": {"mode": "none", "status": "skipped"},
                     },
                     f,
                 )
-            self.assertTrue(compile_script._has_existing_log(tmpdir, proj, security_mode="none"))
-            self.assertFalse(compile_script._has_existing_log(tmpdir, proj, security_mode="all"))
-
-            os.makedirs(os.path.join(tmpdir, "security"), exist_ok=True)
-            with open(os.path.join(tmpdir, "security", f"{proj}.security.json"), "w", encoding="utf-8") as sf:
-                json.dump({"status": "completed"}, sf)
-            self.assertTrue(compile_script._has_existing_log(tmpdir, proj, security_mode="all"))
-
-    def test_detect_build_recipe_prefers_exit0_and_keeps_env(self):
-        shell = SimpleNamespace(container_id=None, execute_command=lambda cmd, record_log=False: "[Exit code: 0]")
-        tools_log = {
-            "Shell": [
-                ["make BROKEN=1", "error\n[Exit code: 2]", 1.0],
-                ["CC=gcc CFLAGS=-O2 make", "ok\n[Exit code: 0]", 2.0],
-            ]
-        }
-        with patch("compile_agent.security.audit._run_container_python", return_value={"cmake_dirs": [], "ninja_dirs": [], "makefiles": []}), \
-             patch("compile_agent.security.audit._exec_in_container", return_value={"returncode": 0, "stdout": "", "stderr": ""}), \
-             patch("compile_agent.security.audit._probe_makefile_targets", return_value={"clean": False, "test": False, "check": False}):
-            recipe = detect_build_recipe(shell, tools_log)
-        self.assertEqual(recipe["build_system"], "make")
-        self.assertIn("CC=gcc CFLAGS=-O2 make -j", recipe["build_cmd"])
-        self.assertNotIn("*.a", recipe["clean_cmd"])
-        self.assertNotIn("*.so", recipe["clean_cmd"])
+            self.assertTrue(compile_script._has_existing_log(tmpdir, proj))
 
     def test_smoke_check_appends_linked_binaries_for_static_targets(self):
         found = {"matched_targets": ["libfoo.a"], "all_artifacts": ["libfoo.a", "demo_cli", "libfoo.so"]}
-        seen_cmds = []
 
         def fake_exec(cmd, record_log=False):
-            seen_cmds.append(cmd)
             if "file -L" in cmd:
                 if "libfoo.a" in cmd:
                     return "/work/libfoo.a: current ar archive\n[Exit code: 0]"
@@ -287,7 +371,6 @@ class TestDockerShellAndStage3Helpers(unittest.TestCase):
 
 class TestAntiFakeArtifactsAndMetricsAccuracy(unittest.TestCase):
     def tearDown(self):
-        cfg._KEY_POOL.configure([])
         cfg.reset_circuit_breaker()
 
     def test_snapshot_and_probe_filter_exclude_fake_artifacts(self):
@@ -300,7 +383,6 @@ class TestAntiFakeArtifactsAndMetricsAccuracy(unittest.TestCase):
             snap = snapshot_existing_artifacts(tmpdir)
             self.assertEqual(snap, {"preexisting_tool"})
 
-            # Simulate CMake/Autoconf compiler probe binaries + real built binary + intermediate .o
             probe_paths = [
                 os.path.join(tmpdir, "build", "CMakeFiles", "3.25.1", "CompilerIdC", "a.out"),
                 os.path.join(tmpdir, "build", "CMakeFiles", "CheckTypeSize", "INT.bin"),
@@ -365,63 +447,8 @@ class TestAntiFakeArtifactsAndMetricsAccuracy(unittest.TestCase):
             "False",
         )
 
-    def test_evaluate_avoids_stage3_dilution_and_unmatched_smoke_count(self):
-        sec_records = [
-            {
-                "project": "ok_repo",
-                "binary_count": 2,
-                "baseline_avg_score": 40.0,
-                "after_hardening_avg_score": 80.0,
-                "score_delta": 40.0,
-                "hardening_build_status": "completed",
-                "hardened_smoke_passed": True,
-                "sanitizer_build_status": "completed",
-                "cppcheck_mode": "compile_commands",
-                "semgrep_findings": 1,
-                "cppcheck_findings": 2,
-                "cppcheck_error": 1,
-                "asan_count": 0,
-                "ubsan_count": 0,
-            },
-            {
-                "project": "zero_bin_repo",
-                "binary_count": 0,
-                "baseline_avg_score": 0.0,
-                "after_hardening_avg_score": 0.0,
-                "score_delta": 0.0,
-                "hardening_build_status": "skipped",
-                "hardened_smoke_passed": False,
-                "sanitizer_build_status": "skipped",
-                "cppcheck_mode": "fallback",
-                "semgrep_findings": 0,
-                "cppcheck_findings": 0,
-                "cppcheck_error": 0,
-                "asan_count": 0,
-                "ubsan_count": 0,
-            },
-            {
-                "project": "failed_hardening_repo",
-                "binary_count": 1,
-                "baseline_avg_score": 20.0,
-                "after_hardening_avg_score": 0.0,
-                "score_delta": -20.0,
-                "hardening_build_status": "failed",
-                "hardened_smoke_passed": False,
-                "sanitizer_build_status": "failed",
-                "cppcheck_mode": "fallback",
-                "semgrep_findings": 0,
-                "cppcheck_findings": 0,
-                "cppcheck_error": 0,
-                "asan_count": 0,
-                "ubsan_count": 0,
-            },
-        ]
-        sec_sum = evaluate_script.compute_security_summary(sec_records)
-        self.assertEqual(sec_sum["avg_baseline_score"], 30.0)
-        self.assertEqual(sec_sum["avg_after_score"], 80.0)
-        self.assertEqual(sec_sum["avg_score_delta"], 40.0)
-
-        stage2_records = [
+    def test_evaluate_ignores_unmatched_smoke_count(self):
+        records = [
             {
                 "model_result": "False",
                 "checker_non_strict": False,
@@ -435,15 +462,14 @@ class TestAntiFakeArtifactsAndMetricsAccuracy(unittest.TestCase):
                 "error_solver_calls": 0,
             }
         ]
-        s2_sum = evaluate_script.compute_summary(stage2_records)
-        self.assertEqual(s2_sum["smoke_pass_count"], 0)
+        summary = evaluate_script.compute_summary(records)
+        self.assertEqual(summary["smoke_pass_count"], 0)
 
     def test_local_llm_circuit_breaker_requires_two_failures_and_health_retries(self):
         cfg.reset_circuit_breaker()
         fake_cfg = {
             "provider": "ollama",
             "base_url": "http://127.0.0.1:11434/v1",
-            "api_key": "ollama",
             "circuit_breaker_threshold": 3,
         }
         with patch("compile_agent.config.resolve_llm_config", return_value=fake_cfg), \
@@ -473,6 +499,341 @@ class TestAntiFakeArtifactsAndMetricsAccuracy(unittest.TestCase):
              patch("compile_agent.config.time.sleep"):
             self.assertTrue(cfg.probe_llm_server_health())
             self.assertEqual(calls["n"], 2)
+
+
+class TestLocalLlamaCppAndBenchmarkOptimizations(unittest.TestCase):
+    def tearDown(self):
+        cfg.reset_stop_bypass_cache()
+        cfg.reset_circuit_breaker()
+
+    def test_llamacpp_and_openai_compatible_auto_disable_thinking_for_qwen3_variants(self):
+        with patch.dict(
+            os.environ,
+            {
+                "LLM_PROVIDER": "openai_compatible",
+                "LLM_BASE_URL": "http://localhost:8080/v1",
+                "MASTER_MODEL": "Qwen 3.8 K_M Q4 27B",
+                "LLM_THINKING": "auto",
+                "LLM_DISABLE_THINKING": "",
+            },
+            clear=False,
+        ):
+            resolved = cfg.resolve_llm_config()
+            self.assertEqual(resolved["provider"], "openai_compatible")
+            self.assertEqual(resolved["thinking"], "false")
+            self.assertTrue(cfg.apply_thinking_directive("Compile this").endswith("/no_think"))
+            llm = cfg.create_chat_llm()
+            self.assertEqual(
+                (llm.extra_body or {}).get("chat_template_kwargs"),
+                {"enable_thinking": False},
+            )
+
+        with patch.dict(
+            os.environ,
+            {
+                "LLM_PROVIDER": "llama.cpp",
+                "LLM_BASE_URL": "http://localhost:8080/v1",
+                "MASTER_MODEL": "local-default-model",
+                "LLM_THINKING": "auto",
+                "LLM_DISABLE_THINKING": "",
+            },
+            clear=False,
+        ):
+            resolved = cfg.resolve_llm_config()
+            self.assertEqual(resolved["provider"], "llamacpp")
+            self.assertEqual(resolved["thinking"], "false")
+            llm = cfg.create_chat_llm()
+            self.assertEqual(
+                (llm.extra_body or {}).get("chat_template_kwargs"),
+                {"enable_thinking": False},
+            )
+
+    def test_reasoning_safe_chat_openai_salvages_and_bypasses_stop_on_reasoning_content(self):
+        from langchain_core.messages import HumanMessage
+
+        cls = cfg._get_reasoning_safe_chat_openai_cls()
+        llm = cls(base_url="http://127.0.0.1:8080/v1", model="qwen3-27b", api_key="EMPTY")
+
+        salvage_resp = {
+            "id": "chatcmpl-1",
+            "model": "qwen3-27b",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "reasoning_content": "Let's inspect /work.\nAction: Shell\nAction Input: tree . -L 2",
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+        res_salvaged = llm._create_chat_result(salvage_resp)
+        self.assertIn("Action: Shell", res_salvaged.generations[0].message.content)
+        self.assertTrue(res_salvaged.generations[0].message.additional_kwargs.get("reasoning_salvaged"))
+
+        recorded_stops = []
+
+        def fake_create(**payload):
+            recorded_stops.append(payload.get("stop"))
+            if payload.get("stop"):
+                return {
+                    "id": "chatcmpl-cut",
+                    "model": "qwen3-27b",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": "",
+                                "reasoning_content": "I should follow Thought/Action and wait for",
+                            },
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+            return {
+                "id": "chatcmpl-ok",
+                "model": "qwen3-27b",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Thought: Check layout.\nAction: Shell\nAction Input: ls -la",
+                            "reasoning_content": "done thinking",
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            }
+
+        with patch.object(llm, "client", SimpleNamespace(create=fake_create)):
+            out1 = llm._generate([HumanMessage(content="compile")], stop=["\nObservation:"])
+            self.assertIn("Action Input: ls -la", out1.generations[0].message.content)
+            self.assertEqual(recorded_stops, [["\nObservation:"], None])
+
+            out2 = llm._generate([HumanMessage(content="compile again")], stop=["\nObservation:"])
+            self.assertIn("Action Input: ls -la", out2.generations[0].message.content)
+            self.assertEqual(recorded_stops, [["\nObservation:"], None, None])
+
+    def test_parser_empty_response_and_clean_log_and_exception_collapse(self):
+        from langchain_core.exceptions import OutputParserException
+
+        parser = SafeReActSingleInputOutputParser()
+        with self.assertRaises(OutputParserException) as ctx:
+            parser.parse("   ")
+        self.assertEqual(ctx.exception.llm_output, "[empty response]")
+        self.assertTrue(ctx.exception.send_to_llm)
+        self.assertIn("Action Input:", ctx.exception.observation)
+
+        parsed = parser.parse(
+            "Thought: List files.\nAction: Shell\nAction Input: ls -la\nObservation: fake_file.c\nThought: Fake"
+        )
+        self.assertIsInstance(parsed, AgentAction)
+        self.assertEqual(parsed.tool_input, "ls -la")
+        self.assertNotIn("fake_file.c", parsed.log)
+
+        executor = CompilationAgentExecutor.__new__(CompilationAgentExecutor)
+        raw = [
+            (AgentAction("_Exception", "obs1", ""), "obs1"),
+            (AgentAction("_Exception", "obs2", ""), "obs2"),
+            (AgentAction("_Exception", "obs3", ""), "obs3"),
+            (AgentAction("_Exception", "obs4", ""), "obs4"),
+        ]
+        prepared = executor._prepare_intermediate_steps(raw)
+        self.assertEqual(len(prepared), 1)
+        self.assertEqual(prepared[0][0].log, "[empty response]")
+        self.assertTrue(CompilationAgentExecutor._is_stuck_in_loop(raw))
+
+    def test_normalize_make_jobs_handles_quoted_nproc_and_numbers(self):
+        cmd1 = 'make -j"$(nproc)" build_libs build_apps'
+        norm1 = InteractiveDockerShell._normalize_make_jobs(cmd1, max_jobs=4)
+        self.assertEqual(norm1, "make -j4 build_libs build_apps")
+
+        cmd2 = "cmake --build build -j'$(nproc)' && make -j\"16\" all"
+        norm2 = InteractiveDockerShell._normalize_make_jobs(cmd2, max_jobs=4)
+        self.assertEqual(norm2, "cmake --build build -j4 && make -j4 all")
+
+    def test_has_existing_log_retry_uncertain_behavior(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            loop_fp = os.path.join(tmpdir, "zstd.log.2026-11-19-02-31-01-000001.json")
+            with open(loop_fp, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "autocompiler": [["Invalid Format", "Early stop: loop detected"]],
+                        "build": {"model_result": "UNCERTAIN", "checker_non_strict": False, "checker_result": "False(strict=False)"},
+                    },
+                    f,
+                )
+            self.assertTrue(compile_script._has_existing_log(tmpdir, "zstd", retry_uncertain=False))
+            self.assertFalse(compile_script._has_existing_log(tmpdir, "zstd", retry_uncertain=True))
+
+            ok_fp = os.path.join(tmpdir, "openssl.log.2026-11-18-22-45-47-000001.json")
+            with open(ok_fp, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "build": {"model_result": "UNCERTAIN", "checker_non_strict": True, "checker_result": "True(strict=False)"},
+                    },
+                    f,
+                )
+            self.assertTrue(compile_script._has_existing_log(tmpdir, "openssl", retry_uncertain=True))
+
+            fail_fp = os.path.join(tmpdir, "mbedtls.log.2026-11-18-23-33-59-000001.json")
+            with open(fail_fp, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "autocompiler": [["obs", "Final Answer: COMPILATION-FAIL"]],
+                        "build": {"model_result": "False", "checker_non_strict": False, "checker_result": "False(strict=False)"},
+                    },
+                    f,
+                )
+            self.assertTrue(compile_script._has_existing_log(tmpdir, "mbedtls", retry_uncertain=True))
+
+
+class TestCrashSafeJsonlAndAtomicPersistence(unittest.TestCase):
+    def test_append_jsonl_recovers_from_power_loss_truncated_tail(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            jsonl_fp = os.path.join(tmpdir, RESULTS_JSONL_FILENAME)
+            append_jsonl(jsonl_fp, {"project": "repo1", "timestamp": "2026-11-20-00-00-01-000001", "build": {"model_result": "True"}})
+
+            with open(jsonl_fp, "ab") as f:
+                f.write(b'{"project": "repo2", "build": {"model_re')
+
+            append_jsonl(jsonl_fp, {"project": "repo3", "timestamp": "2026-11-20-00-00-03-000003", "build": {"model_result": "True"}})
+
+            records = iter_jsonl_records(jsonl_fp, repair_truncated_tail=True)
+            self.assertEqual([r["project"] for r in records], ["repo1", "repo3"])
+
+            with open(jsonl_fp, "r", encoding="utf-8") as f:
+                raw_lines = [line.strip() for line in f if line.strip()]
+            self.assertEqual(len(raw_lines), 2)
+            self.assertEqual(json.loads(raw_lines[1])["project"], "repo3")
+
+    def test_atomic_write_and_cleanup_stale_tmp_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = os.path.join(tmpdir, "report.json")
+            atomic_write_json(target, {"ok": True, "count": 42})
+            with open(target, "r", encoding="utf-8") as f:
+                self.assertEqual(json.load(f), {"ok": True, "count": 42})
+            self.assertEqual([n for n in os.listdir(tmpdir) if ".tmp." in n], [])
+
+            stale1 = os.path.join(tmpdir, "foo.json.tmp.999.abcd1234")
+            atomic_write_text(stale1, "partial")
+            removed = cleanup_stale_tmp_files(tmpdir)
+            self.assertEqual(removed, 1)
+            self.assertFalse(os.path.exists(stale1))
+
+    def test_save_logs_appends_results_jsonl_and_supports_jsonl_only_resume_and_evaluate(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run_dir = os.path.join(tmpdir, "run")
+            out_dir = os.path.join(tmpdir, "eval_out")
+            fake_tools = [SimpleNamespace(name="Shell", description="run shell")]
+
+            save_logs(
+                run_dir,
+                "demo-ok",
+                "compile demo-ok",
+                fake_tools,
+                {"output": "Final Answer: COMPILATION-SUCCESS", "intermediate_steps": [], "run_id": "run-1"},
+                {"Shell": [["make", "ok", 1.2]]},
+                "/tmp/demo-ok",
+                "True(strict=False)",
+                "True",
+                build_metadata={
+                    "project": "demo-ok",
+                    "ablation_mode": "full",
+                    "checker_non_strict": True,
+                    "checker_strict": True,
+                    "elapsed_seconds": 12.5,
+                    "iterations": 2,
+                    "tool_calls": {"Shell": 1, "CompileNavigator": 0, "ErrorSolver": 0},
+                    "matched_targets": ["demo"],
+                    "smoke_check": {"checked_count": 1, "passed": True, "missing_libs": [], "details": []},
+                },
+                project_url="https://github.com/example/demo-ok",
+            )
+            save_logs(
+                run_dir,
+                "demo-loop",
+                "compile demo-loop",
+                fake_tools,
+                {"output": "Early stop: loop detected", "intermediate_steps": [], "run_id": "run-2"},
+                {"Shell": []},
+                "/tmp/demo-loop",
+                "False(strict=False)",
+                "UNCERTAIN",
+                build_metadata={
+                    "project": "demo-loop",
+                    "ablation_mode": "full",
+                    "checker_non_strict": False,
+                    "checker_strict": False,
+                    "elapsed_seconds": 50.0,
+                    "iterations": 4,
+                    "tool_calls": {"Shell": 0, "CompileNavigator": 0, "ErrorSolver": 0},
+                    "matched_targets": [],
+                    "smoke_check": {"checked_count": 0, "passed": False, "missing_libs": [], "details": []},
+                },
+            )
+
+            for fn in os.listdir(run_dir):
+                if ".log." in fn and fn.endswith(".json"):
+                    os.remove(os.path.join(run_dir, fn))
+
+            jsonl_rows = iter_jsonl_records(os.path.join(run_dir, RESULTS_JSONL_FILENAME))
+            self.assertEqual(len(jsonl_rows), 2)
+            self.assertNotIn("security", jsonl_rows[0])
+
+            self.assertTrue(compile_script._has_existing_log(run_dir, "demo-ok", retry_uncertain=True))
+            self.assertTrue(compile_script._has_existing_log(run_dir, "demo-loop", retry_uncertain=False))
+            self.assertFalse(compile_script._has_existing_log(run_dir, "demo-loop", retry_uncertain=True))
+
+            eval_recs = evaluate_script.load_dedup_records(run_dir, "full")
+            self.assertEqual({r["project"] for r in eval_recs}, {"demo-ok", "demo-loop"})
+
+            from click.testing import CliRunner
+
+            res = CliRunner().invoke(
+                evaluate_script.main,
+                ["--full-dir", run_dir, "--ablation-dir", "", "--out-dir", out_dir],
+            )
+            self.assertEqual(res.exit_code, 0, res.output)
+            consolidated_fp = os.path.join(out_dir, "benchmark_results.json")
+            self.assertTrue(os.path.isfile(consolidated_fp))
+            with open(consolidated_fp, "r", encoding="utf-8") as f:
+                consolidated = json.load(f)
+            self.assertEqual(consolidated["full_summary"]["count"], 2)
+            self.assertEqual(consolidated["full_summary"]["csr_non_strict_count"], 1)
+            self.assertNotIn("security_summary", consolidated)
+
+    def test_merge_process_csvs_recovers_crash_without_duplicates_and_backfill_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            atomic_write_text(os.path.join(tmpdir, "statistics.csv"), "id-1,,a.txt,/p/a,True,True(strict=False)\n")
+            atomic_write_text(
+                os.path.join(tmpdir, "12345.csv"),
+                "id-1,,a.txt,/p/a,True,True(strict=False)\nid-2,,b.txt,/p/b,True,True(strict=False)\n",
+            )
+            merged = compile_script._merge_process_csvs(tmpdir)
+            self.assertEqual(merged, 1)
+            self.assertFalse(os.path.exists(os.path.join(tmpdir, "12345.csv")))
+            with open(os.path.join(tmpdir, "statistics.csv"), "r", encoding="utf-8") as f:
+                lines = [l.strip() for l in f if l.strip()]
+            self.assertEqual(len(lines), 2)
+
+            legacy_fp = os.path.join(tmpdir, "zlib.log.2026-11-19-01-02-03-000123.json")
+            atomic_write_json(
+                legacy_fp,
+                {
+                    "autocompiler": [["q", "Final Answer: COMPILATION-SUCCESS"]],
+                    "build": {"project": "zlib", "model_result": "True", "checker_non_strict": True},
+                },
+            )
+            self.assertEqual(backfill_results_jsonl(tmpdir), 1)
+            self.assertEqual(backfill_results_jsonl(tmpdir), 0)
+            rows = iter_jsonl_records(os.path.join(tmpdir, RESULTS_JSONL_FILENAME))
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["project"], "zlib")
 
 
 if __name__ == "__main__":

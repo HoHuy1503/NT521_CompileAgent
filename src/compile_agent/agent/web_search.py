@@ -12,10 +12,6 @@ from langchain.schema import StrOutputParser
 from compile_agent.config import *
 from compile_agent.agent.executor import CompilationAgentExecutor, SafeReActSingleInputOutputParser
 
-os.environ["LANGCHAIN_TRACING_V2"] = LANGCHAIN_TRACING_V2
-os.environ["LANGCHAIN_API_KEY"] = LANGCHAIN_API_KEY
-os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
-
 proxy = PROXY if USE_PROXY and PROXY else None
 
 
@@ -86,7 +82,7 @@ def google_search(question):
     prompt = PromptTemplate.from_template(template=apply_thinking_directive(template))
     chain = prompt | llm | StrOutputParser()
     try:
-        raw_answer = call_with_rate_limit_retry(
+        raw_answer = call_with_llm_retry(
             chain.invoke, {"question": question, "results": results}
         )
         return strip_thinking_tags(raw_answer)
@@ -197,6 +193,7 @@ def search_agent(question):
         tools=tools,
         prompt=prompt,
         output_parser=SafeReActSingleInputOutputParser(),
+        stop_sequence=resolve_react_stop_sequences(),
     )
     agent_executor = CompilationAgentExecutor(
         agent=agent,

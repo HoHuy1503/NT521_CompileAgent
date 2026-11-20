@@ -1,12 +1,12 @@
-"""Environment and active LLM provider verification script."""
+"""Environment and Local LLM backend verification script."""
 
 import importlib
 import json
 import os
-import shutil
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 try:
@@ -19,7 +19,12 @@ _SRC_DIR = os.path.join(_REPO_ROOT, "src")
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from compile_agent.config import resolve_llm_config, strip_thinking_tags
+from compile_agent.config import (
+    LOCAL_LLM_PROVIDERS,
+    apply_thinking_directive,
+    resolve_llm_config,
+    strip_thinking_tags,
+)
 
 REQUIRED_PACKAGES = [
     "dotenv",
@@ -36,15 +41,6 @@ REQUIRED_PACKAGES = [
 OPTIONAL_PACKAGES = [
     "chromadb",
 ]
-
-
-def mask_key(value: str) -> str:
-    """Return a masked representation of an API key."""
-    if not value:
-        return "<EMPTY>"
-    if len(value) <= 12:
-        return "***"
-    return f"{value[:8]}...{value[-4:]}"
 
 
 def load_env_file(env_path: str) -> None:
@@ -122,24 +118,21 @@ def check_docker() -> None:
     print(f"image autocompiler:gcc13 (rc={rc}): {image_status}")
 
 
-def check_semgrep() -> None:
-    """Check Semgrep CLI availability on Windows host."""
-    print("\n=== 3. Semgrep CLI ===")
-    semgrep_path = shutil.which("semgrep")
-    if not semgrep_path:
-        print("semgrep: NOT FOUND on Windows host PATH (can run inside Docker Linux container in Stage 3).")
-        return
-    rc, out, err = run_cmd(["semgrep", "--version"])
-    print(f"semgrep ({semgrep_path}) rc={rc}: {out or err}")
-
-
 def http_json(url: str, headers: dict, payload: dict = None, timeout: int = 20) -> tuple:
-    """Send a JSON GET/POST request and return (status_code, parsed_or_text_body)."""
+    """Send a JSON GET/POST request (bypassing proxy on localhost) and return (status_code, body)."""
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
     method = "POST" if payload is not None else "GET"
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
+
+    parsed = urllib.parse.urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if host in ("localhost", "127.0.0.1", "::1"):
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    else:
+        opener = urllib.request.build_opener()
+
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with opener.open(req, timeout=timeout) as resp:
             raw = resp.read().decode("utf-8", errors="replace")
             try:
                 return resp.status, json.loads(raw)
@@ -153,8 +146,8 @@ def http_json(url: str, headers: dict, payload: dict = None, timeout: int = 20) 
 
 
 def check_llm_provider() -> None:
-    """Test whichever LLM provider/endpoint is currently active in .env."""
-    print("\n=== 4. Active LLM Provider & Endpoint ===")
+    """Test whichever Local LLM server/endpoint is active in .env (no API key required)."""
+    print("\n=== 3. Active Local LLM Provider & Endpoint ===")
     try:
         cfg = resolve_llm_config()
     except ValueError as exc:
@@ -163,12 +156,6 @@ def check_llm_provider() -> None:
 
     print(f"LLM_PROVIDER:      {cfg['provider']}")
     print(f"LLM_BASE_URL:      {cfg['base_url']}")
-    pool_keys = cfg.get("api_keys") or []
-    if len(pool_keys) > 1:
-        masked_list = ", ".join(mask_key(k) for k in pool_keys)
-        print(f"API_KEY_POOL:      {len(pool_keys)} key(s) active={mask_key(cfg['api_key'])} [{masked_list}]")
-    else:
-        print(f"API_KEY:           {mask_key(cfg['api_key'])}")
     print(f"MASTER_MODEL:      {cfg['master_model']}")
     print(f"DISCUSSION_MODELS: {', '.join(cfg['discussion_models'])}")
     print(f"LLM_TIMEOUT:       {cfg['timeout']}s")
@@ -176,18 +163,10 @@ def check_llm_provider() -> None:
         f"TUNING:            ctx={cfg.get('context_window') or 'default'}, "
         f"max_tokens={cfg.get('max_tokens') or 'default'}, "
         f"thinking={cfg.get('thinking')}, "
-        f"error_solver={cfg.get('error_solver_mode')}, "
         f"cb_threshold={cfg.get('circuit_breaker_threshold')}"
     )
 
-    if cfg["requires_api_key"] and not cfg["api_key"]:
-        print(f"[FAIL] API key is empty for LLM_PROVIDER='{cfg['provider']}'.")
-        return
-
-    headers = {
-        "Authorization": f"Bearer {cfg['api_key']}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
 
     print("-- Endpoint Model List (GET /models) --")
     status, body = http_json(f"{cfg['base_url']}/models", headers, timeout=10)
@@ -210,24 +189,54 @@ def check_llm_provider() -> None:
         if m not in models_to_test:
             models_to_test.append(m)
 
-    print("-- OpenAI-compatible Chat Completions --")
+    print("-- OpenAI-compatible Local Chat Completions --")
     req_timeout = min(max(cfg["timeout"], 20), 60)
     for model in models_to_test:
+        prompt_text = apply_thinking_directive("Reply with OK", model=model)
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt_text}],
+        }
+        if cfg["provider"] in LOCAL_LLM_PROVIDERS and cfg.get("thinking") == "false":
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
         status, body = http_json(
             f"{cfg['base_url']}/chat/completions",
             headers,
-            payload={"model": model, "messages": [{"role": "user", "content": "Reply with OK"}]},
+            payload=payload,
             timeout=req_timeout,
         )
+        if status == 400 and "chat_template_kwargs" in payload:
+            payload.pop("chat_template_kwargs", None)
+            status, body = http_json(
+                f"{cfg['base_url']}/chat/completions",
+                headers,
+                payload=payload,
+                timeout=req_timeout,
+            )
         if status == 200 and isinstance(body, dict):
-            raw_content = body["choices"][0]["message"]["content"] or ""
+            msg = (body.get("choices") or [{}])[0].get("message") or {}
+            raw_content = msg.get("content") or ""
+            raw_reasoning = msg.get("reasoning_content") or msg.get("reasoning") or ""
             cleaned = strip_thinking_tags(raw_content).replace("\n", " ")
-            print(f"  [PASS] {model} (HTTP 200): {cleaned[:80] or '<thinking only>'}")
+            if not cleaned and raw_reasoning:
+                print(
+                    f"  [WARN] {model} (HTTP 200): content is EMPTY while reasoning_content has {len(raw_reasoning)} chars! "
+                    "Start llama-server with `--jinja --reasoning off` (or `--reasoning-budget 0`) and set `LLM_THINKING=false` in .env."
+                )
+            elif not cleaned:
+                print(f"  [WARN] {model} (HTTP 200): <empty / thinking only>")
+            else:
+                suffix = (
+                    f" (note: server also emitted {len(raw_reasoning)} reasoning_content chars)"
+                    if raw_reasoning
+                    else ""
+                )
+                print(f"  [PASS] {model} (HTTP 200): {cleaned[:80]}{suffix}")
         else:
             print(f"  [FAIL] {model} (HTTP {status}): {str(body)[:160]}")
 
     if cfg["embedding_model"]:
-        print("-- OpenAI-compatible Embeddings (Optional for local servers) --")
+        print("-- OpenAI-compatible Local Embeddings (Optional) --")
         status, body = http_json(
             f"{cfg['base_url']}/embeddings",
             headers,
@@ -237,8 +246,6 @@ def check_llm_provider() -> None:
         if status == 200 and isinstance(body, dict) and isinstance(body.get("data"), list) and body["data"]:
             dim = len(body["data"][0].get("embedding", []))
             print(f"  [PASS] {cfg['embedding_model']} (HTTP 200): dim={dim}")
-        elif cfg["provider"] == "google":
-            print(f"  [FAIL] {cfg['embedding_model']} (HTTP {status}): {str(body)[:160]}")
         else:
             print(
                 f"  [OPTIONAL] {cfg['embedding_model']} unavailable (HTTP {status}): {str(body)[:120]}"
@@ -250,7 +257,6 @@ def main() -> int:
     load_env_file(os.path.join(repo_root, ".env"))
     check_python_and_packages()
     check_docker()
-    check_semgrep()
     check_llm_provider()
     return 0
 

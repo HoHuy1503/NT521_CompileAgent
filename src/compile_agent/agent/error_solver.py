@@ -254,13 +254,11 @@ class SingleAgent:
         self,
         base_url=None,
         model_name=None,
-        api_key=None,
         agent_key=None,
         temperature: Optional[float] = None,
     ):
         self.base_url = base_url
         self.model_name = model_name
-        self.api_key = api_key
         self.agent_key = agent_key or model_name
         self.temperature = temperature
 
@@ -268,7 +266,6 @@ class SingleAgent:
         return create_chat_llm(
             base_url=self.base_url,
             model=self.model_name,
-            api_key=self.api_key,
             temperature=self.temperature,
         )
 
@@ -293,7 +290,7 @@ class SingleAgent:
                 payload["chat_history"] = chat_history
             prompt = PromptTemplate.from_template(template=template).partial(tools="")
             chain = prompt | self._build_llm() | StrOutputParser()
-            return call_with_rate_limit_retry(chain.invoke, payload)
+            return call_with_llm_retry(chain.invoke, payload)
 
         # Primary path: direct JSON chain (discussion templates do not contain {agent_scratchpad})
         output_text = _invoke_json_chain(question)
@@ -382,7 +379,8 @@ class ErrorSolver:
 
     def discussion(self, mistake):
         """
-        Reconcile with multiple agents to solve errors encountered during compilation.
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
         @param mistake: the mistake in the compilation process.
         """
         try:
@@ -390,45 +388,43 @@ class ErrorSolver:
             cfg = resolve_llm_config()
             base_url = cfg["base_url"]
             raw_models = list(cfg.get("discussion_models") or [cfg["master_model"]])
-            provider = cfg["provider"]
-            solver_mode = cfg.get("error_solver_mode", "auto")
 
-            is_local_single = (provider in LOCAL_LLM_PROVIDERS) and (len(set(raw_models)) <= 1)
-            use_fast = (solver_mode == "fast") or (solver_mode == "auto" and is_local_single)
+            rounds = 1
+            models = list(raw_models[:3])
+            while len(models) < 3:
+                models.append(models[-1] if models else cfg["master_model"])
 
-            if use_fast:
-                rounds = 0
-                base_model = raw_models[0] if raw_models else cfg["master_model"]
-                models = [base_model, base_model]
-                temperatures = [0.1, 0.5]
+            if len(set(models)) == 1:
+                temperatures = [0.1, 0.4, 0.7]
+                base_model = models[0]
+                agent_keys = [f"{base_model}#1", f"{base_model}#2", f"{base_model}#3"]
             else:
-                rounds = 1
-                models = list(raw_models[:3])
-                while len(models) < 3:
-                    models.append(models[-1] if models else cfg["master_model"])
-                if len(set(models)) == 1:
-                    temperatures = [0.1, 0.4, 0.7]
-                else:
-                    temperatures = [None, None, None]
+                temperatures = [None, None, None]
+                agent_keys = []
+                counts = {}
+                for m in models:
+                    counts[m] = counts.get(m, 0) + 1
+                seen = {}
+                for m in models:
+                    if counts[m] > 1:
+                        seen[m] = seen.get(m, 0) + 1
+                        agent_keys.append(f"{m}#{seen[m]}")
+                    else:
+                        agent_keys.append(m)
 
-            agents = []
-            agent_keys = []
-            for idx, (model_name, temp) in enumerate(zip(models, temperatures)):
-                key = model_name if model_name not in agent_keys else f"{model_name}#{idx + 1}"
-                agent_keys.append(key)
-                agents.append(
-                    SingleAgent(
-                        base_url=base_url,
-                        model_name=model_name,
-                        api_key=None,
-                        agent_key=key,
-                        temperature=temp,
-                    )
+            agents = [
+                SingleAgent(
+                    base_url=base_url,
+                    model_name=model_name,
+                    agent_key=key,
+                    temperature=temp,
                 )
+                for model_name, key, temp in zip(models, agent_keys, temperatures)
+            ]
 
             search_budget = {"remaining": 1}
 
-            # Phase 1: Initial Response Generation
+            # Phase 1: Initial Response Generation (Round 0)
             initial_predictions = {}
             transient_round0_err = None
             for agent in agents:
@@ -467,9 +463,9 @@ class ErrorSolver:
             all_results = [initial_predictions]
             all_results = clean_output(all_results, rounds=0, agent_keys=active_agent_keys)
             all_results = parse_output(all_results, rounds=0, threshold=30, agent_keys=active_agent_keys)
-            logger.info("[+] ------ Initial Round Discussion (mode=%s, agents=%d) ------", "fast" if use_fast else "debate", len(active_agents))
+            logger.info("[+] ------ Initial Round Discussion (agents=%d) ------", len(active_agents))
 
-            # Phase 2: Multi-Round Discussion (skipped in fast mode where rounds=0 or after transient round-0 abort)
+            # Phase 2: Multi-Round Debate (Round 1)
             last_completed_round = 0
             for rnd in range(1, effective_rounds + 1):
                 logger.info(f"[-] ------ Round {rnd} Discussion ------")

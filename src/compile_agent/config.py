@@ -4,42 +4,18 @@ import random
 import re
 import threading
 import time
-import weakref
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 from dotenv import load_dotenv
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ENV_FILE_PATH = os.path.join(REPO_ROOT, ".env")
 load_dotenv(ENV_FILE_PATH)
 
-LOCAL_LLM_PROVIDERS = ("ollama", "vllm", "lmstudio", "openai_compatible")
+LOCAL_LLM_PROVIDERS = ("llamacpp", "ollama", "vllm", "lmstudio", "openai_compatible")
 
 
 class FatalLLMError(RuntimeError):
-    """Unrecoverable LLM/API error (all keys exhausted, invalid auth, or server offline)."""
-
-
-def parse_api_keys(raw_value: str) -> List[str]:
-    """Split a comma-separated API key string into deduplicated keys preserving order."""
-    if not raw_value:
-        return []
-    keys: List[str] = []
-    seen = set()
-    for part in str(raw_value).split(","):
-        cleaned = part.strip().strip('"').strip("'").strip()
-        if cleaned and cleaned not in seen:
-            seen.add(cleaned)
-            keys.append(cleaned)
-    return keys
-
-
-def mask_api_key(value: str) -> str:
-    """Return a masked representation of an API key suitable for logs."""
-    if not value:
-        return "<EMPTY>"
-    if len(value) <= 12:
-        return "***"
-    return f"{value[:8]}...{value[-4:]}"
+    """Unrecoverable local LLM endpoint error (model missing or server persistently offline)."""
 
 
 def _iter_exception_chain(exc: BaseException):
@@ -56,7 +32,6 @@ def _extract_status_code(exc: BaseException) -> Optional[int]:
     """Extract an HTTP status code from non-web-scraper exceptions."""
     for cur in _iter_exception_chain(exc):
         mod = getattr(type(cur), "__module__", "") or ""
-        # Never mistake HTTP errors raised by web-scraping `requests` tools for LLM API errors
         if mod.startswith("requests"):
             continue
         code = getattr(cur, "status_code", None)
@@ -77,83 +52,8 @@ def _is_requests_web_error(exc: BaseException) -> bool:
     return False
 
 
-_AUTH_TEXT_PATTERNS = (
-    re.compile(r"\bHTTP(?:/\d(?:\.\d)?)?\s+(?:401|403)\b", re.IGNORECASE),
-    re.compile(r"\bError\s+code\s*[:=]\s*(?:401|403)\b", re.IGNORECASE),
-    re.compile(r"\bstatus[_\s]?code\s*[=:]\s*(?:401|403)\b", re.IGNORECASE),
-    re.compile(r"\b401\s+Unauthorized\b", re.IGNORECASE),
-)
-
-_AUTH_SUBSTRINGS = (
-    "api_key_invalid",
-    "invalid_api_key",
-    "incorrect api key",
-    "invalid authentication",
-    "missing api key for llm_provider",
-    "authenticationerror",
-    "permissiondeniederror",
-)
-
-
-def _is_auth_error(exc: BaseException) -> bool:
-    """Return True only for genuine LLM API authentication/permission errors (no bare 401/403 substring checks)."""
-    if _is_requests_web_error(exc):
-        return False
-
-    status_code = _extract_status_code(exc)
-    if status_code in (401, 403):
-        return True
-
-    for cur in _iter_exception_chain(exc):
-        mod = getattr(type(cur), "__module__", "") or ""
-        if mod.startswith("requests"):
-            continue
-        if type(cur).__name__ in ("AuthenticationError", "PermissionDeniedError"):
-            return True
-
-    err_text = str(exc or "")
-    err_low = err_text.lower()
-    if any(tok in err_low for tok in _AUTH_SUBSTRINGS):
-        return True
-    if any(pat.search(err_text) for pat in _AUTH_TEXT_PATTERNS):
-        return True
-    return False
-
-
-def _is_quota_exhausted_error(exc: BaseException) -> bool:
-    """Return True when the active API key has exhausted its daily/billing quota."""
-    if _is_requests_web_error(exc):
-        return False
-    err_text = str(exc or "")
-    err_low = err_text.lower()
-    explicit_daily_markers = (
-        "perday",
-        "per_day",
-        "generaterequestsperday",
-        "generatecontentinputtokenspermodelperday",
-        "billing_hard_limit",
-    )
-    per_minute_markers = (
-        "perminute",
-        "per_minute",
-        "requests per minute",
-        "tokens per minute",
-        "retry in ",
-        "retrydelay",
-        "rate_limit_exceeded",
-    )
-    has_per_minute = any(m in err_low for m in per_minute_markers)
-    if any(m in err_low for m in explicit_daily_markers):
-        return True
-    if "check your plan and billing" in err_low and not has_per_minute:
-        return True
-    if ("insufficient_quota" in err_low or "exceeded your current quota" in err_low) and not has_per_minute:
-        return True
-    return False
-
-
 def _is_extra_body_400_error(exc: BaseException) -> bool:
-    """Return True when HTTP 400 indicates the endpoint rejects extra_body/chat_template_kwargs/options."""
+    """Return True when HTTP 400 indicates the local endpoint rejects extra_body/chat_template_kwargs/options."""
     if _is_requests_web_error(exc):
         return False
     status_code = _extract_status_code(exc)
@@ -168,40 +68,14 @@ def _is_extra_body_400_error(exc: BaseException) -> bool:
         "chat_template_kwargs",
         "options",
         "enable_thinking",
+        "reasoning_format",
+        "reasoning_budget",
         "unrecognized request argument",
         "extra inputs are not permitted",
+        "unknown field",
+        "invalid parameter",
     )
     return any(m in err_low for m in param_markers)
-
-
-_RATE_LIMIT_PATTERNS = (
-    re.compile(r"\bHTTP(?:/\d(?:\.\d)?)?\s+429\b", re.IGNORECASE),
-    re.compile(r"\bError\s+(?:code\s*[:=]\s*)?429\b", re.IGNORECASE),
-    re.compile(r"\bstatus[_\s]?code\s*[=:]\s*429\b", re.IGNORECASE),
-    re.compile(r"\b429\s+Too\s+Many\s+Requests\b", re.IGNORECASE),
-)
-
-
-def _is_rate_limit_error(exc: BaseException) -> bool:
-    """Return True for transient RPM/TPM 429 rate-limit errors."""
-    if _is_requests_web_error(exc) or _is_quota_exhausted_error(exc):
-        return False
-    if _extract_status_code(exc) == 429:
-        return True
-    for cur in _iter_exception_chain(exc):
-        if type(cur).__name__ == "RateLimitError":
-            return True
-    err_text = str(exc or "")
-    err_low = err_text.lower()
-    if (
-        "resource_exhausted" in err_low
-        or "rate limit" in err_low
-        or "too many requests" in err_low
-    ):
-        return True
-    if any(pat.search(err_text) for pat in _RATE_LIMIT_PATTERNS):
-        return True
-    return False
 
 
 def _is_timeout_error(exc: BaseException) -> bool:
@@ -216,7 +90,7 @@ def _is_timeout_error(exc: BaseException) -> bool:
 
 
 def _is_connection_error(exc: BaseException) -> bool:
-    """Return True if exception indicates TCP/HTTP connection failure to the LLM endpoint."""
+    """Return True if exception indicates TCP/HTTP connection failure to the local LLM endpoint."""
     if _is_requests_web_error(exc):
         return False
     for cur in _iter_exception_chain(exc):
@@ -231,7 +105,7 @@ def _is_connection_error(exc: BaseException) -> bool:
 
 
 def _is_server_5xx_error(exc: BaseException) -> bool:
-    """Return True for transient upstream 5xx / InternalServerError failures."""
+    """Return True for transient local server 5xx / InternalServerError failures (e.g. model loading)."""
     if _is_requests_web_error(exc):
         return False
     status_code = _extract_status_code(exc)
@@ -260,7 +134,6 @@ _MODEL_NOT_FOUND_TEXT_PATTERNS = (
 _MODEL_NOT_FOUND_SUBSTRINGS = (
     "model_not_found",
     "model not found",
-    "is not found for api version",
     "model does not exist",
     "does not exist",
     "try pulling it first",
@@ -268,20 +141,17 @@ _MODEL_NOT_FOUND_SUBSTRINGS = (
 
 
 def _is_model_not_found_error(exc: BaseException) -> bool:
-    """Return True for HTTP 404 / NotFoundError / model_not_found errors from LLM providers."""
+    """Return True for HTTP 404 / NotFoundError / model_not_found errors from local LLM servers."""
     if _is_requests_web_error(exc):
         return False
-
     if _extract_status_code(exc) == 404:
         return True
-
     for cur in _iter_exception_chain(exc):
         mod = getattr(type(cur), "__module__", "") or ""
         if mod.startswith("requests"):
             continue
         if type(cur).__name__ == "NotFoundError":
             return True
-
     err_text = str(exc or "")
     err_low = err_text.lower()
     if any(tok in err_low for tok in _MODEL_NOT_FOUND_SUBSTRINGS):
@@ -292,367 +162,23 @@ def _is_model_not_found_error(exc: BaseException) -> bool:
 
 
 def is_transient_llm_error(exc: BaseException) -> bool:
-    """Return True if exception is a transient LLM timeout, connection, 5xx, or 429 rate-limit error."""
+    """Return True if exception is a transient local LLM timeout, connection, or 5xx error."""
     return (
         _is_timeout_error(exc)
         or _is_connection_error(exc)
         or _is_server_5xx_error(exc)
-        or _is_rate_limit_error(exc)
     )
 
 
-class KeyPoolManager:
-    """Thread-safe API key pool supporting rotation on exhaustion, auth errors, and 429 limits."""
-
-    def __init__(self):
-        self._lock = threading.RLock()
-        self.keys: List[str] = []
-        self.active_index: int = 0
-        self.exhausted_keys: set = set()
-        self.cooldown_until: Dict[str, float] = {}
-        self._quota_strikes: Dict[int, int] = {}
-        self.signature: Optional[Tuple] = None
-        self._clients: List[Tuple[int, weakref.ref]] = []
-
-    def _initial_active_index(self) -> int:
-        if len(self.keys) > 1 and os.environ.get("AC_MULTI_WORKER") == "1":
-            return os.getpid() % len(self.keys)
-        return 0
-
-    def configure(self, keys: List[str], signature: Optional[Tuple] = None) -> None:
-        with self._lock:
-            self.keys = list(keys or [])
-            self.active_index = self._initial_active_index()
-            self.exhausted_keys = set()
-            self.cooldown_until = {}
-            self._quota_strikes = {}
-            self.signature = signature
-            if self.keys:
-                self._sync_registered_clients(self.keys[self.active_index])
-
-    def reset(self) -> None:
-        with self._lock:
-            self.active_index = self._initial_active_index()
-            self.exhausted_keys = set()
-            self.cooldown_until = {}
-            self._quota_strikes = {}
-            if self.keys:
-                self._sync_registered_clients(self.keys[self.active_index])
-
-    def clear_strikes(self) -> None:
-        with self._lock:
-            self._quota_strikes.clear()
-
-    def strip_extra_body_on_clients(self) -> None:
-        """Disable extra_body on registered LLM clients after an HTTP 400 unsupported-param error."""
-        with self._lock:
-            alive: List[Tuple[int, weakref.ref]] = []
-            for cid, ref in self._clients:
-                client = ref()
-                if client is not None:
-                    alive.append((cid, ref))
-                    if hasattr(client, "extra_body"):
-                        try:
-                            setattr(client, "extra_body", None)
-                        except Exception:
-                            pass
-                    mk = getattr(client, "model_kwargs", None)
-                    if isinstance(mk, dict) and "extra_body" in mk:
-                        try:
-                            mk.pop("extra_body", None)
-                        except Exception:
-                            pass
-            self._clients = alive
-
-    def register_client(self, client) -> None:
-        if client is None:
-            return
-        with self._lock:
-            obj_id = id(client)
-            alive: List[Tuple[int, weakref.ref]] = []
-            already_registered = False
-            for cid, ref in self._clients:
-                if ref() is not None:
-                    alive.append((cid, ref))
-                    if cid == obj_id:
-                        already_registered = True
-            if not already_registered:
-                try:
-                    alive.append((obj_id, weakref.ref(client)))
-                except TypeError:
-                    pass
-            self._clients = alive
-
-    def _sync_registered_clients(self, new_key: str) -> None:
-        _update_module_active_key(new_key)
-        alive: List[Tuple[int, weakref.ref]] = []
-        for cid, ref in self._clients:
-            client = ref()
-            if client is not None:
-                alive.append((cid, ref))
-                _apply_key_to_client(client, new_key)
-        self._clients = alive
-
-    def has_available_key(self) -> bool:
-        with self._lock:
-            if not self.keys:
-                return False
-            return any(k not in self.exhausted_keys for k in self.keys)
-
-    def remaining_count(self) -> int:
-        with self._lock:
-            return sum(1 for k in self.keys if k not in self.exhausted_keys)
-
-    def peek_active_key(self) -> str:
-        with self._lock:
-            if not self.keys:
-                return ""
-            if 0 <= self.active_index < len(self.keys):
-                current = self.keys[self.active_index]
-                if current not in self.exhausted_keys:
-                    return current
-            for idx, key in enumerate(self.keys):
-                if key not in self.exhausted_keys:
-                    self.active_index = idx
-                    return key
-            return ""
-
-    def get_active_key(self) -> str:
-        with self._lock:
-            if not self.keys:
-                return ""
-            key = self.peek_active_key()
-            if key:
-                return key
-            raise FatalLLMError(
-                f"All {len(self.keys)} API key(s) in the pool are exhausted or invalid."
-            )
-
-    def mark_exhausted_and_rotate(
-        self,
-        failed_key: Optional[str] = None,
-        reason: str = "",
-        exc: Optional[BaseException] = None,
-    ) -> Optional[str]:
-        with self._lock:
-            if not self.keys:
-                return None
-            if failed_key and failed_key in self.keys:
-                old_idx = self.keys.index(failed_key)
-                target = failed_key
-            elif 0 <= self.active_index < len(self.keys):
-                old_idx = self.active_index
-                target = self.keys[old_idx]
-            else:
-                old_idx = 0
-                target = self.keys[0]
-
-            combined_low = f"{reason} {exc or ''}".lower()
-            explicit_daily_markers = (
-                "perday",
-                "per_day",
-                "generaterequestsperday",
-                "generatecontentinputtokenspermodelperday",
-                "billing_hard_limit",
-            )
-            has_explicit_daily = any(m in combined_low for m in explicit_daily_markers)
-            is_429 = (
-                (_extract_status_code(exc) == 429 if exc is not None else False)
-                or ("429" in combined_low)
-            )
-            if not has_explicit_daily and is_429 and reason != "auth_error":
-                strikes = self._quota_strikes.get(old_idx, 0) + 1
-                self._quota_strikes[old_idx] = strikes
-                if strikes < 2:
-                    self.cooldown_until[target] = time.time() + 15.0
-                    n = len(self.keys)
-                    now = time.time()
-                    chosen_idx = None
-                    fallback_idx = None
-                    for offset in range(1, n):
-                        idx = (old_idx + offset) % n
-                        candidate = self.keys[idx]
-                        if candidate in self.exhausted_keys:
-                            continue
-                        if self.cooldown_until.get(candidate, 0.0) <= now:
-                            chosen_idx = idx
-                            break
-                        if fallback_idx is None:
-                            fallback_idx = idx
-                    if chosen_idx is None:
-                        chosen_idx = fallback_idx
-                    if chosen_idx is not None:
-                        self.active_index = chosen_idx
-                        new_key = self.keys[chosen_idx]
-                        logging.warning(
-                            "[KeyPool] Ambiguous 429 on key %s (strike 1/2, %s); temporarily cooling down and rotating to key #%d/%d (%s).",
-                            mask_api_key(target),
-                            reason or "quota_suspect",
-                            chosen_idx + 1,
-                            n,
-                            mask_api_key(new_key),
-                        )
-                        self._sync_registered_clients(new_key)
-                        return new_key
-                    logging.warning(
-                        "[KeyPool] Ambiguous 429 on single key %s (strike 1/2); putting on temporary cooldown without permanent blacklist.",
-                        mask_api_key(target),
-                    )
-                    return target
-
-            self.exhausted_keys.add(target)
-
-            n = len(self.keys)
-            now = time.time()
-            fallback_idx = None
-            chosen_idx = None
-            for offset in range(1, n + 1):
-                idx = (self.active_index + offset) % n
-                candidate = self.keys[idx]
-                if candidate in self.exhausted_keys:
-                    continue
-                if self.cooldown_until.get(candidate, 0.0) <= now:
-                    chosen_idx = idx
-                    break
-                if fallback_idx is None:
-                    fallback_idx = idx
-
-            if chosen_idx is None:
-                chosen_idx = fallback_idx
-
-            if chosen_idx is None:
-                logging.error(
-                    "[KeyPool] Exhausted key %s (%s). No remaining keys in pool.",
-                    mask_api_key(target),
-                    reason or "quota/auth",
-                )
-                return None
-
-            self.active_index = chosen_idx
-            new_key = self.keys[chosen_idx]
-            logging.warning(
-                "[KeyPool] Key %s unavailable (%s); rotating to key #%d/%d (%s).",
-                mask_api_key(target),
-                reason or "quota/auth",
-                chosen_idx + 1,
-                n,
-                mask_api_key(new_key),
-            )
-            self._sync_registered_clients(new_key)
-            return new_key
-
-    def rotate_on_rate_limit(self, cooldown_seconds: float = 15.0) -> Tuple[str, bool]:
-        """Rotate to another non-cooldown key on 429 if available; returns (key, rotated_fresh)."""
-        with self._lock:
-            if not self.keys:
-                return "", False
-            current = self.peek_active_key()
-            if not current:
-                raise FatalLLMError(
-                    f"All {len(self.keys)} API key(s) in the pool are exhausted or invalid."
-                )
-            now = time.time()
-            self.cooldown_until[current] = now + max(1.0, float(cooldown_seconds))
-
-            n = len(self.keys)
-            for offset in range(1, n):
-                idx = (self.active_index + offset) % n
-                candidate = self.keys[idx]
-                if candidate in self.exhausted_keys:
-                    continue
-                if self.cooldown_until.get(candidate, 0.0) <= now:
-                    self.active_index = idx
-                    logging.info(
-                        "[KeyPool] Rate-limited on %s; switching immediately to ready key #%d/%d (%s).",
-                        mask_api_key(current),
-                        idx + 1,
-                        n,
-                        mask_api_key(candidate),
-                    )
-                    self._sync_registered_clients(candidate)
-                    return candidate, True
-
-            # All available keys are currently cooling down: stay or pick earliest expiry, sleep required
-            best_idx = self.active_index
-            earliest = self.cooldown_until.get(current, now)
-            for offset in range(1, n):
-                idx = (self.active_index + offset) % n
-                candidate = self.keys[idx]
-                if candidate not in self.exhausted_keys:
-                    cd = self.cooldown_until.get(candidate, 0.0)
-                    if cd < earliest:
-                        earliest = cd
-                        best_idx = idx
-            if best_idx != self.active_index:
-                self.active_index = best_idx
-                chosen = self.keys[best_idx]
-                self._sync_registered_clients(chosen)
-                return chosen, False
-            return current, False
-
-
-_KEY_POOL = KeyPoolManager()
-
-
-def _apply_key_to_client(client, new_key: str) -> None:
-    """Dynamically update API key credentials on an existing LangChain/OpenAI client."""
-    try:
-        from pydantic import SecretStr
-    except ImportError:
-        SecretStr = None
-
-    try:
-        if hasattr(client, "openai_api_key"):
-            val = SecretStr(new_key) if SecretStr is not None else new_key
-            setattr(client, "openai_api_key", val)
-    except Exception:
-        pass
-    for attr in ("root_client", "root_async_client"):
-        sub = getattr(client, attr, None)
-        if sub is not None and hasattr(sub, "api_key"):
-            try:
-                sub.api_key = new_key
-            except Exception:
-                pass
-    if hasattr(client, "api_key"):
-        try:
-            setattr(client, "api_key", new_key)
-        except Exception:
-            pass
-
-
-def _update_module_active_key(new_key: str) -> None:
-    """Keep module-level compatibility aliases synced with active key without mutating os.environ."""
-    globals()["LLM_API_KEY"] = new_key
-    globals()["OPENAI_API_KEY"] = new_key
-    globals()["ANTHROPIC_API_KEY"] = new_key
-    globals()["DEEPSEEK_API_KEY"] = new_key
-    globals()["READMEAI_API_KEY"] = new_key
-
-
-def get_key_pool() -> KeyPoolManager:
-    """Return the active KeyPoolManager singleton (ensuring env config has been resolved)."""
-    resolve_llm_config()
-    return _KEY_POOL
-
-
-def reset_key_pool() -> None:
-    """Reset the API key pool rotation/exhaustion state from current environment."""
-    cfg = resolve_llm_config()
-    sig = (cfg["provider"], cfg["base_url"], tuple(cfg["api_keys"]))
-    _KEY_POOL.configure(cfg["api_keys"], signature=sig)
-
-
-def get_active_api_key() -> str:
-    """Return the current active API key from the Key Pool, raising FatalLLMError if all exhausted."""
-    resolve_llm_config()
-    if not _KEY_POOL.keys:
-        return ""
-    return _KEY_POOL.get_active_key()
+def is_fatal_llm_error(exc: BaseException) -> bool:
+    """Return True for unrecoverable LLM errors (missing model or tripped Circuit Breaker)."""
+    if isinstance(exc, FatalLLMError):
+        return True
+    return _is_model_not_found_error(exc)
 
 
 class _CircuitBreakerState:
-    """Tracks consecutive LLM connectivity/timeout failures at both call and repo levels."""
+    """Tracks consecutive local LLM connectivity/timeout failures at both call and repo levels."""
 
     def __init__(self):
         self._lock = threading.RLock()
@@ -705,9 +231,8 @@ def get_circuit_breaker_state() -> dict:
 
 
 def record_llm_success() -> None:
-    """Record a successful LLM call, resetting consecutive call failure and quota-strike counters."""
+    """Record a successful local LLM call, resetting consecutive call failure counter."""
     _CIRCUIT_BREAKER.record_call_success()
-    _KEY_POOL.clear_strikes()
 
 
 def record_repo_llm_success() -> None:
@@ -717,7 +242,6 @@ def record_repo_llm_success() -> None:
 
 def probe_llm_server_health(
     base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
     timeout: float = 10.0,
 ) -> bool:
     """Perform a lightweight GET {base_url}/models health check (returns True on HTTP 2xx)."""
@@ -729,11 +253,8 @@ def probe_llm_server_health(
     resolved_base = (base_url or cfg["base_url"] or "").rstrip("/")
     if not resolved_base:
         return False
-    resolved_key = api_key if api_key is not None else (_KEY_POOL.peek_active_key() or cfg["api_key"])
     url = f"{resolved_base}/models"
     headers = {"Accept": "application/json"}
-    if resolved_key:
-        headers["Authorization"] = f"Bearer {resolved_key}"
 
     parsed = urllib.parse.urlparse(resolved_base)
     host = (parsed.hostname or "").lower()
@@ -763,7 +284,6 @@ def probe_llm_server_health(
                 status = getattr(resp, "status", 200)
                 return 200 <= int(status) < 300
         except urllib.error.HTTPError as exc:
-            # An HTTP response (even 401/404) proves the server is alive, though 5xx means unhealthy
             if exc.code in (500, 502, 503, 504):
                 logging.warning("[HealthProbe] %s returned HTTP %s", url, exc.code)
                 return False
@@ -779,17 +299,14 @@ def probe_llm_server_health(
 
 def record_llm_failure(exc: BaseException, check_health: bool = True) -> bool:
     """
-    Record an exhausted LLM transient/connectivity failure and evaluate the Circuit Breaker.
+    Record an exhausted local LLM transient/connectivity failure and evaluate the Circuit Breaker.
     Returns True if the batch should abort (FatalLLMError condition triggered).
     """
     cfg = resolve_llm_config()
     threshold = max(1, int(cfg.get("circuit_breaker_threshold", 3)))
     health_ok: Optional[bool] = None
     if check_health:
-        health_ok = probe_llm_server_health(
-            base_url=cfg["base_url"],
-            api_key=_KEY_POOL.peek_active_key() or cfg["api_key"],
-        )
+        health_ok = probe_llm_server_health(base_url=cfg["base_url"])
 
     with _CIRCUIT_BREAKER._lock:
         _CIRCUIT_BREAKER.consecutive_call_failures += 1
@@ -799,27 +316,22 @@ def record_llm_failure(exc: BaseException, check_health: bool = True) -> bool:
         repo_streak = _CIRCUIT_BREAKER.consecutive_repo_failures
 
     if health_ok is False:
-        if cfg["provider"] in LOCAL_LLM_PROVIDERS:
-            if call_streak >= 2 or repo_streak >= 1:
-                logging.critical(
-                    "[CircuitBreaker] Local LLM server health probe failed (%s) with call_streak=%d, repo_streak=%d; tripping circuit breaker.",
-                    cfg["base_url"],
-                    call_streak,
-                    repo_streak,
-                )
-                return True
-            logging.warning(
-                "[CircuitBreaker] Local LLM health probe to %s timed out on first failure (call_streak=%d, repo_streak=%d); waiting for confirmation before aborting batch.",
+        if call_streak >= 2 or repo_streak >= 1:
+            logging.critical(
+                "[CircuitBreaker] Local LLM server health probe failed (%s) with call_streak=%d, repo_streak=%d; tripping circuit breaker.",
                 cfg["base_url"],
                 call_streak,
                 repo_streak,
             )
-            return False
-        logging.critical(
-            "[CircuitBreaker] LLM server health probe failed (%s); tripping circuit breaker.",
+            return True
+        logging.warning(
+            "[CircuitBreaker] Local LLM health probe to %s timed out on first failure (call_streak=%d, repo_streak=%d); waiting for confirmation before aborting batch.",
             cfg["base_url"],
+            call_streak,
+            repo_streak,
         )
-        return True
+        return False
+
     if health_ok is True:
         if repo_streak >= threshold and call_streak >= threshold * 2:
             logging.critical(
@@ -839,6 +351,7 @@ def record_llm_failure(exc: BaseException, check_health: bool = True) -> bool:
             repo_streak,
         )
         return True
+
     logging.warning(
         "[CircuitBreaker] Transient failure (call_streak=%d, repo_streak=%d, threshold=%d, health_ok=%s; %s) — continuing batch.",
         call_streak,
@@ -874,42 +387,35 @@ def record_repo_llm_failure(exc: BaseException) -> bool:
     return False
 
 
-def is_fatal_llm_error(exc: BaseException) -> bool:
-    """Return True for unrecoverable LLM errors that must stop the batch rather than record fake failures."""
-    if isinstance(exc, FatalLLMError):
-        return True
-    if _is_model_not_found_error(exc):
-        return True
-    if _is_quota_exhausted_error(exc) or _is_auth_error(exc):
-        resolve_llm_config()
-        # Fatal only if no backup keys remain in the pool (or pool is empty)
-        return _KEY_POOL.remaining_count() <= 1
-    # Single connection/timeout errors are NOT immediately fatal on their own;
-    # Circuit Breaker / health probe promotes them to FatalLLMError when systemic.
-    return False
+_EXTRA_BODY_LOCK = threading.RLock()
+_EXTRA_BODY_UNSUPPORTED_ENDPOINTS: set = set()
 
 
-def _compute_rate_limit_sleep(err_text: str, attempt: int) -> float:
-    m = re.search(r"retry in (\d+(?:\.\d+)?)s", err_text, re.IGNORECASE)
-    if not m:
-        m = re.search(r"retryDelay['\"]?\s*[:=]\s*['\"]?(\d+(?:\.\d+)?)s", err_text)
-    if m:
-        return min(max(float(m.group(1)) + random.uniform(1.0, 3.0), 3.0), 70.0)
-    base = min(8.0 * (2 ** min(attempt, 4)), 60.0)
-    return base + random.uniform(0.5, 3.0)
+def _strip_extra_body_on_obj(obj) -> None:
+    if obj is None:
+        return
+    if hasattr(obj, "extra_body"):
+        try:
+            setattr(obj, "extra_body", None)
+        except Exception:
+            pass
+    mk = getattr(obj, "model_kwargs", None)
+    if isinstance(mk, dict) and "extra_body" in mk:
+        try:
+            mk.pop("extra_body", None)
+        except Exception:
+            pass
 
 
-def call_with_rate_limit_retry(fn, *args, max_attempts: Optional[int] = None, **kwargs):
-    """Execute fn with multi-key rotation, backoff+jitter retry, and Circuit Breaker health protection."""
-    cfg = resolve_llm_config()
+def call_with_llm_retry(fn, *args, max_attempts: Optional[int] = None, **kwargs):
+    """Execute fn with transient local-server backoff+jitter retry and Circuit Breaker protection."""
+    resolve_llm_config()
     attempts_limit = (
         int(max_attempts)
         if max_attempts is not None
         else max(1, int(os.getenv("LLM_RETRY_ATTEMPTS", "4") or "4"))
     )
     transient_attempt = 0
-    key_switches = 0
-    max_key_switches = max(len(_KEY_POOL.keys), 1) * 2
     extra_body_stripped = False
 
     while True:
@@ -920,7 +426,6 @@ def call_with_rate_limit_retry(fn, *args, max_attempts: Optional[int] = None, **
         except Exception as exc:
             if isinstance(exc, FatalLLMError):
                 raise
-            # Avoid double-retrying or double-counting Circuit Breaker if an outer caller wraps an inner retry
             if getattr(exc, "_llm_retry_exhausted", False):
                 raise
 
@@ -930,69 +435,25 @@ def call_with_rate_limit_retry(fn, *args, max_attempts: Optional[int] = None, **
             if not extra_body_stripped and _is_extra_body_400_error(exc):
                 extra_body_stripped = True
                 logging.warning(
-                    "[!] Endpoint rejected extra_body/thinking params with HTTP 400 (%s); "
+                    "[!] Local endpoint rejected extra_body/thinking params with HTTP 400 (%s); "
                     "stripping extra_body and retrying once.",
                     err_text[:180],
                 )
-                _KEY_POOL.strip_extra_body_on_clients()
                 bound_self = getattr(fn, "__self__", None)
+                _strip_extra_body_on_obj(bound_self)
                 if bound_self is not None:
-                    if hasattr(bound_self, "extra_body"):
-                        try:
-                            setattr(bound_self, "extra_body", None)
-                        except Exception:
-                            pass
-                    mk = getattr(bound_self, "model_kwargs", None)
-                    if isinstance(mk, dict) and "extra_body" in mk:
-                        try:
-                            mk.pop("extra_body", None)
-                        except Exception:
-                            pass
+                    base = str(getattr(bound_self, "openai_api_base", "") or "").rstrip("/")
+                    mdl = str(getattr(bound_self, "model_name", "") or "")
+                    if base or mdl:
+                        with _EXTRA_BODY_LOCK:
+                            _EXTRA_BODY_UNSUPPORTED_ENDPOINTS.add((base, mdl))
                 if "extra_body" in kwargs:
                     kwargs.pop("extra_body", None)
                 continue
 
             if _is_model_not_found_error(exc):
-                logging.critical("[!] Fatal model configuration error (%s): %s", err_name, err_text)
+                logging.critical("[!] Fatal local model configuration error (%s): %s", err_name, err_text)
                 raise FatalLLMError(err_text) from exc
-
-            if _is_quota_exhausted_error(exc) or _is_auth_error(exc):
-                reason = "quota_exhausted" if _is_quota_exhausted_error(exc) else "auth_error"
-                if key_switches < max_key_switches and _KEY_POOL.keys:
-                    prev_key = _KEY_POOL.peek_active_key()
-                    new_key = _KEY_POOL.mark_exhausted_and_rotate(reason=reason, exc=exc)
-                    if new_key is not None:
-                        key_switches += 1
-                        if new_key == prev_key and len(_KEY_POOL.keys) == 1:
-                            time.sleep(min(_compute_rate_limit_sleep(err_text, key_switches - 1), 5.0))
-                        continue
-                raise FatalLLMError(err_text) from exc
-
-            if _is_rate_limit_error(exc):
-                wait_seconds = _compute_rate_limit_sleep(err_text, transient_attempt)
-                if len(_KEY_POOL.keys) > 1 and key_switches < max_key_switches:
-                    _, rotated_fresh = _KEY_POOL.rotate_on_rate_limit(cooldown_seconds=wait_seconds)
-                    if rotated_fresh:
-                        key_switches += 1
-                        continue
-
-                if transient_attempt >= attempts_limit - 1:
-                    try:
-                        setattr(exc, "_llm_retry_exhausted", True)
-                    except Exception:
-                        pass
-                    if record_llm_failure(exc, check_health=True):
-                        raise FatalLLMError(err_text) from exc
-                    raise
-                logging.warning(
-                    "[!] Hit API RPM/TPM rate limit (attempt %d/%d); sleeping %.1fs...",
-                    transient_attempt + 1,
-                    attempts_limit,
-                    wait_seconds,
-                )
-                time.sleep(wait_seconds)
-                transient_attempt += 1
-                continue
 
             if is_transient_llm_error(exc):
                 if transient_attempt >= attempts_limit - 1:
@@ -1007,7 +468,7 @@ def call_with_rate_limit_retry(fn, *args, max_attempts: Optional[int] = None, **
                     0.2, 1.5
                 )
                 logging.warning(
-                    "[!] Transient LLM error (%s: %s) (attempt %d/%d); sleeping %.1fs...",
+                    "[!] Transient local LLM error (%s: %s) (attempt %d/%d); sleeping %.1fs...",
                     err_name,
                     err_text[:120],
                     transient_attempt + 1,
@@ -1018,29 +479,23 @@ def call_with_rate_limit_retry(fn, *args, max_attempts: Optional[int] = None, **
                 transient_attempt += 1
                 continue
 
-            # Unrecognized/programming/parsing errors propagate unchanged
             raise
 
 
-# LangSmith config
-LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "")
-LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT", "")
-LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY", "")
+# Backward-compatible alias for internal callers
+call_with_rate_limit_retry = call_with_llm_retry
 
-SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
 LOG_URL_TEMPLATE = os.getenv("LOG_URL_TEMPLATE", "")
 
-# Unified OpenAI-compatible LLM provider presets and configuration
+# Local OpenAI-compatible LLM backend presets (no API keys required)
 _PROVIDER_PRESETS = {
-    "google": {
-        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
-        "master_model": "gemini-2.5-flash",
+    "llamacpp": {
+        "base_url": "http://localhost:8080/v1",
+        "master_model": "Qwen 3.8 K_M Q4 27B",
         "discussion_models": None,
-        "embedding_model": "gemini-embedding-001",
-        "timeout": 60,
-        "api_key_fallback": "",
-        "requires_api_key": True,
-        "context_window": None,
+        "embedding_model": "",
+        "timeout": 240,
+        "context_window": 16384,
     },
     "ollama": {
         "base_url": "http://localhost:11434/v1",
@@ -1048,8 +503,6 @@ _PROVIDER_PRESETS = {
         "discussion_models": None,
         "embedding_model": "nomic-embed-text",
         "timeout": 180,
-        "api_key_fallback": "ollama",
-        "requires_api_key": False,
         "context_window": 16384,
     },
     "vllm": {
@@ -1058,8 +511,6 @@ _PROVIDER_PRESETS = {
         "discussion_models": None,
         "embedding_model": "BAAI/bge-m3",
         "timeout": 180,
-        "api_key_fallback": "EMPTY",
-        "requires_api_key": False,
         "context_window": None,
     },
     "lmstudio": {
@@ -1068,58 +519,54 @@ _PROVIDER_PRESETS = {
         "discussion_models": None,
         "embedding_model": "text-embedding-nomic-embed-text-v1.5",
         "timeout": 180,
-        "api_key_fallback": "lm-studio",
-        "requires_api_key": False,
-        "context_window": None,
-    },
-    "openai": {
-        "base_url": "https://api.openai.com/v1",
-        "master_model": "gpt-4o-mini",
-        "discussion_models": ["gpt-4o-mini"],
-        "embedding_model": "text-embedding-3-small",
-        "timeout": 60,
-        "api_key_fallback": "",
-        "requires_api_key": True,
-        "context_window": None,
-    },
-    "openrouter": {
-        "base_url": "https://openrouter.ai/api/v1",
-        "master_model": "qwen/qwen3-30b-a3b",
-        "discussion_models": None,
-        "embedding_model": "openai/text-embedding-3-small",
-        "timeout": 90,
-        "api_key_fallback": "",
-        "requires_api_key": True,
-        "context_window": None,
-    },
-    "deepseek": {
-        "base_url": "https://api.deepseek.com/v1",
-        "master_model": "deepseek-chat",
-        "discussion_models": ["deepseek-chat"],
-        "embedding_model": "",
-        "timeout": 90,
-        "api_key_fallback": "",
-        "requires_api_key": True,
         "context_window": None,
     },
     "openai_compatible": {
         "base_url": "http://localhost:8000/v1",
-        "master_model": "qwen3-30b",
+        "master_model": "qwen3-27b",
         "discussion_models": None,
         "embedding_model": "",
         "timeout": 180,
-        "api_key_fallback": "EMPTY",
-        "requires_api_key": False,
         "context_window": None,
     },
 }
 
 _PROVIDER_ALIASES = {
-    "gemini": "google",
     "local": "ollama",
+    "llama.cpp": "llamacpp",
+    "llama_cpp": "llamacpp",
+    "llama-cpp": "llamacpp",
+    "llama-server": "llamacpp",
     "custom": "openai_compatible",
     "openai-compatible": "openai_compatible",
 }
+
+_QWEN3_MODEL_RE = re.compile(r"qwen[\s._-]*3", re.IGNORECASE)
+_THINKING_MODEL_TOKENS = (
+    "deepseek-r1",
+    "deepseek_r1",
+    "qwq",
+    "thinking",
+    "reasoning",
+    "gpt-oss",
+    "glm-4.5",
+    "glm-z1",
+)
+
+
+def _is_qwen3_model_name(model: Optional[str]) -> bool:
+    """Return True if model identifier refers to a Qwen 3.x family model."""
+    return bool(_QWEN3_MODEL_RE.search(str(model or "")))
+
+
+def _is_thinking_model_name(model: Optional[str]) -> bool:
+    """Return True if model identifier matches known reasoning/thinking model families."""
+    mdl = str(model or "").strip().lower()
+    if not mdl:
+        return False
+    if _is_qwen3_model_name(mdl):
+        return True
+    return any(tok in mdl for tok in _THINKING_MODEL_TOKENS)
 
 
 def resolve_thinking_mode(
@@ -1127,7 +574,7 @@ def resolve_thinking_mode(
     provider: Optional[str] = None,
     raw_thinking: Optional[str] = None,
 ) -> str:
-    """Resolve effective thinking mode ('auto' | 'true' | 'false') for a target model/provider."""
+    """Resolve effective thinking mode ('auto' | 'true' | 'false') for a target local model/provider."""
     mode = (raw_thinking if raw_thinking is not None else os.getenv("LLM_THINKING", "auto") or "auto").strip().lower()
     if mode in ("true", "1", "yes", "on"):
         return "true"
@@ -1140,67 +587,34 @@ def resolve_thinking_mode(
     if disable_env in ("0", "false", "no", "off"):
         return "true"
 
-    # 'auto': disable verbose <think> on local Qwen3/DeepSeek-R1/QwQ ReAct workloads (ollama/vllm/lmstudio)
     prov = (provider or "").strip().lower()
-    mdl = (model or "").strip().lower()
-    if prov in ("ollama", "vllm", "lmstudio") and any(
-        tok in mdl for tok in ("qwen3", "deepseek-r1", "qwq")
-    ):
+    if prov in LOCAL_LLM_PROVIDERS and (_is_thinking_model_name(model) or prov == "llamacpp"):
         return "false"
     return "auto"
 
 
+def resolve_react_stop_sequences():
+    """Return stop_sequence setting for create_react_agent (uses colon-delimited '\\nObservation:' by default)."""
+    raw = os.getenv("LLM_REACT_STOP", "").strip().lower()
+    if raw in ("0", "false", "no", "off", "none"):
+        return False
+    return ["\nObservation:"]
+
+
 def resolve_llm_config(provider: str = None) -> dict:
-    """Resolve active LLM endpoint, key pool credentials, models, timeouts, and local tuning from env."""
-    raw_provider = (provider or os.getenv("LLM_PROVIDER") or "google").strip().lower()
+    """Resolve active local LLM endpoint, models, timeouts, and context tuning from env."""
+    raw_provider = (provider or os.getenv("LLM_PROVIDER") or "llamacpp").strip().lower()
     canonical = _PROVIDER_ALIASES.get(raw_provider, raw_provider)
     if canonical not in _PROVIDER_PRESETS:
         supported = ", ".join(sorted(_PROVIDER_PRESETS.keys()))
         raise ValueError(
-            f"Unsupported LLM_PROVIDER='{raw_provider}'. Supported providers: {supported}"
+            f"Unsupported local LLM_PROVIDER='{raw_provider}'. Supported providers: {supported}"
         )
 
     preset = _PROVIDER_PRESETS[canonical]
     explicit_base_url = os.getenv("LLM_BASE_URL", "").strip()
-    if canonical == "google":
-        base_url = explicit_base_url or os.getenv("GEMINI_BASE_URL", "").strip() or preset["base_url"]
-    elif canonical == "openai":
-        base_url = explicit_base_url or os.getenv("OPENAI_BASE_URL", "").strip() or preset["base_url"]
-    elif canonical == "deepseek":
-        base_url = explicit_base_url or os.getenv("DEEPSEEK_BASE_URL", "").strip() or preset["base_url"]
-    elif canonical == "openai_compatible":
-        base_url = explicit_base_url or os.getenv("OPENAI_BASE_URL", "").strip() or preset["base_url"]
-    else:
-        base_url = explicit_base_url or preset["base_url"]
-
+    base_url = explicit_base_url or os.getenv("OPENAI_BASE_URL", "").strip() or preset["base_url"]
     normalized_base_url = base_url.rstrip("/")
-
-    key_candidates = [os.getenv("LLM_API_KEYS", ""), os.getenv("LLM_API_KEY", "")]
-    if canonical == "google":
-        key_candidates.append(os.getenv("GOOGLE_API_KEY", ""))
-    elif canonical == "openai":
-        key_candidates.append(os.getenv("OPENAI_API_KEY", ""))
-    elif canonical == "deepseek":
-        key_candidates.append(os.getenv("DEEPSEEK_API_KEY", ""))
-    elif canonical == "openrouter":
-        key_candidates.extend([os.getenv("OPENROUTER_API_KEY", ""), os.getenv("OPENAI_API_KEY", "")])
-    elif canonical in ("vllm", "openai_compatible"):
-        key_candidates.append(os.getenv("OPENAI_API_KEY", ""))
-
-    api_keys: List[str] = []
-    for raw_k in key_candidates:
-        parsed = parse_api_keys(raw_k)
-        if parsed:
-            api_keys = parsed
-            break
-    if not api_keys and preset["api_key_fallback"]:
-        api_keys = [preset["api_key_fallback"]]
-
-    sig = (canonical, normalized_base_url, tuple(api_keys))
-    if _KEY_POOL.signature != sig:
-        _KEY_POOL.configure(api_keys, signature=sig)
-
-    active_key = _KEY_POOL.peek_active_key()
 
     master_env = os.getenv("MASTER_MODEL", "").strip()
     master_model = master_env or preset["master_model"]
@@ -1226,30 +640,22 @@ def resolve_llm_config(provider: str = None) -> dict:
 
     thinking = resolve_thinking_mode(model=master_model, provider=canonical)
 
-    solver_mode = (os.getenv("ERROR_SOLVER_MODE", "auto") or "auto").strip().lower()
-    if solver_mode not in ("auto", "fast", "debate"):
-        solver_mode = "auto"
-
     cb_env = os.getenv("LLM_CIRCUIT_BREAKER_THRESHOLD", "").strip()
     circuit_breaker_threshold = max(1, int(cb_env)) if cb_env else 3
 
     nav_iter_env = os.getenv("NAVIGATOR_MAX_ITERATIONS", "").strip()
-    navigator_max_iterations = max(1, int(nav_iter_env)) if nav_iter_env else 10
+    navigator_max_iterations = max(1, int(nav_iter_env)) if nav_iter_env else 15
 
     return {
         "provider": canonical,
         "base_url": normalized_base_url,
-        "api_key": active_key,
-        "api_keys": list(api_keys),
         "master_model": master_model,
         "discussion_models": discussion_models,
         "embedding_model": embedding_model,
         "timeout": timeout,
-        "requires_api_key": preset["requires_api_key"],
         "context_window": context_window,
         "max_tokens": max_tokens,
         "thinking": thinking,
-        "error_solver_mode": solver_mode,
         "circuit_breaker_threshold": circuit_breaker_threshold,
         "navigator_max_iterations": navigator_max_iterations,
     }
@@ -1265,24 +671,17 @@ def apply_thinking_directive(text: str, model: Optional[str] = None) -> str:
     if (
         effective == "false"
         and cfg["provider"] in LOCAL_LLM_PROVIDERS
-        and "qwen3" in target_model
+        and _is_qwen3_model_name(target_model)
         and "/no_think" not in text
     ):
         return f"{text.rstrip()}\n/no_think"
     return text
 
 
-_REACT_SALVAGE_MARKER_RE = re.compile(
-    r"(?:^|\n)[ \t]*(?:\*{0,2}Final\s+Answer\*{0,2}\s*:|\*{0,2}Action\s*\d*\*{0,2}\s*:)",
-    re.IGNORECASE,
-)
-
-
 def _salvage_react_from_text(tail: str) -> str:
     """Salvage a complete Action/Action Input or Final Answer block from an unclosed <think> section."""
     if not tail:
         return ""
-    # Check for Final Answer first (from last occurrence onward)
     fa_matches = list(
         re.finditer(r"(?:^|\n)[ \t]*\*{0,2}Final\s+Answer\*{0,2}\s*:\s*\S", tail, re.IGNORECASE)
     )
@@ -1294,7 +693,6 @@ def _salvage_react_from_text(tail: str) -> str:
         candidate = re.split(r"\n\s*Observation\s*:", candidate, maxsplit=1)[0].strip()
         return candidate
 
-    # Check for Action + Action Input pair (from last Action match onward)
     action_matches = list(
         re.finditer(r"(?:^|\n)[ \t]*\*{0,2}Action\s*\d*\*{0,2}\s*:", tail, re.IGNORECASE)
     )
@@ -1347,39 +745,202 @@ def strip_thinking_tags(text: str) -> str:
     return cleaned.strip()
 
 
+_STOP_BYPASS_LOCK = threading.RLock()
+_STOP_BYPASS_ENDPOINTS: set = set()
+_REASONING_SAFE_CHAT_OPENAI_CLS = None
+
+
+def reset_stop_bypass_cache() -> None:
+    """Clear remembered (base_url, model) endpoints that drop content when stop cuts reasoning_content."""
+    with _STOP_BYPASS_LOCK:
+        _STOP_BYPASS_ENDPOINTS.clear()
+
+
+def _extract_choice_reasoning(raw_choice: dict, raw_obj_choice=None) -> str:
+    """Extract non-empty reasoning_content / reasoning text from an OpenAI-compatible choice."""
+    if isinstance(raw_choice, dict):
+        msg = raw_choice.get("message")
+        if isinstance(msg, dict):
+            for key in ("reasoning_content", "reasoning"):
+                val = msg.get(key)
+                if isinstance(val, str) and val.strip():
+                    return val
+    if raw_obj_choice is not None:
+        obj_msg = getattr(raw_obj_choice, "message", None)
+        if obj_msg is not None:
+            for key in ("reasoning_content", "reasoning"):
+                val = getattr(obj_msg, key, None)
+                if isinstance(val, str) and val.strip():
+                    return val
+            extra = getattr(obj_msg, "model_extra", None)
+            if isinstance(extra, dict):
+                for key in ("reasoning_content", "reasoning"):
+                    val = extra.get(key)
+                    if isinstance(val, str) and val.strip():
+                        return val
+    return ""
+
+
+def _get_reasoning_safe_chat_openai_cls():
+    """Lazily build a ChatOpenAI subclass that handles llama.cpp/vLLM reasoning_content & stop truncation."""
+    global _REASONING_SAFE_CHAT_OPENAI_CLS
+    if _REASONING_SAFE_CHAT_OPENAI_CLS is not None:
+        return _REASONING_SAFE_CHAT_OPENAI_CLS
+
+    from langchain_openai import ChatOpenAI
+
+    class ReasoningSafeChatOpenAI(ChatOpenAI):
+        """ChatOpenAI subclass that salvages reasoning_content and recovers from stop-truncated empty turns."""
+
+        def _endpoint_key(self) -> Tuple[str, str]:
+            base = str(getattr(self, "openai_api_base", "") or "").rstrip("/")
+            mdl = str(getattr(self, "model_name", "") or "")
+            return (base, mdl)
+
+        def _create_chat_result(self, response, generation_info=None):
+            result = super()._create_chat_result(response, generation_info)
+            try:
+                response_dict = response if isinstance(response, dict) else response.model_dump()
+            except Exception:
+                response_dict = {}
+            raw_choices = response_dict.get("choices") if isinstance(response_dict, dict) else None
+            obj_choices = getattr(response, "choices", None) if not isinstance(response, dict) else None
+            if not raw_choices or not result.generations:
+                return result
+
+            for idx, gen in enumerate(result.generations):
+                if idx >= len(raw_choices):
+                    break
+                raw_obj = obj_choices[idx] if (obj_choices and idx < len(obj_choices)) else None
+                reasoning = _extract_choice_reasoning(raw_choices[idx], raw_obj)
+                if not reasoning:
+                    continue
+                gen.message.additional_kwargs["reasoning_content"] = reasoning
+                content_str = str(gen.message.content or "")
+                if not content_str.strip():
+                    salvaged = _salvage_react_from_text(reasoning)
+                    if salvaged:
+                        gen.message.content = salvaged
+                        gen.message.additional_kwargs["reasoning_salvaged"] = True
+                    else:
+                        gen.message.content = f"<think>{reasoning}"
+                        gen.message.additional_kwargs["empty_content_with_reasoning"] = True
+            return result
+
+        def _should_retry_without_stop(self, result, effective_stop) -> Tuple[bool, bool]:
+            """Return (should_retry, remember_endpoint_bypass) for empty stop-truncated responses."""
+            if not effective_stop or not result.generations:
+                return False, False
+            gen0 = result.generations[0]
+            msg0 = gen0.message
+            gen_info = gen0.generation_info or {}
+            finish_reason = str(gen_info.get("finish_reason") or "").lower()
+            if finish_reason == "length":
+                return False, False
+            if msg0.additional_kwargs.get("empty_content_with_reasoning"):
+                return True, True
+            if not str(msg0.content or "").strip():
+                return True, False
+            return False, False
+
+        def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+            endpoint_key = self._endpoint_key()
+            effective_stop = stop
+            if effective_stop:
+                with _STOP_BYPASS_LOCK:
+                    if endpoint_key in _STOP_BYPASS_ENDPOINTS:
+                        effective_stop = None
+
+            with _EXTRA_BODY_LOCK:
+                if endpoint_key in _EXTRA_BODY_UNSUPPORTED_ENDPOINTS:
+                    _strip_extra_body_on_obj(self)
+
+            try:
+                result = super()._generate(
+                    messages, stop=effective_stop, run_manager=run_manager, **kwargs
+                )
+            except Exception as exc:
+                if _is_extra_body_400_error(exc) and (
+                    getattr(self, "extra_body", None) is not None
+                    or isinstance(getattr(self, "model_kwargs", None), dict)
+                    and "extra_body" in getattr(self, "model_kwargs", {})
+                ):
+                    with _EXTRA_BODY_LOCK:
+                        _EXTRA_BODY_UNSUPPORTED_ENDPOINTS.add(endpoint_key)
+                    _strip_extra_body_on_obj(self)
+                    result = super()._generate(
+                        messages, stop=effective_stop, run_manager=run_manager, **kwargs
+                    )
+                else:
+                    raise
+
+            should_retry, remember_bypass = self._should_retry_without_stop(result, effective_stop)
+            if should_retry:
+                if remember_bypass:
+                    with _STOP_BYPASS_LOCK:
+                        _STOP_BYPASS_ENDPOINTS.add(endpoint_key)
+                    logging.warning(
+                        "[!] LLM endpoint %s (%s) returned empty content with reasoning_content under stop=%s; "
+                        "retrying without stop sequence and bypassing stop for this endpoint.",
+                        endpoint_key[0],
+                        endpoint_key[1],
+                        effective_stop,
+                    )
+                else:
+                    logging.warning(
+                        "[!] LLM endpoint %s (%s) returned empty content under stop=%s; retrying once without stop sequence.",
+                        endpoint_key[0],
+                        endpoint_key[1],
+                        effective_stop,
+                    )
+                result = super()._generate(
+                    messages, stop=None, run_manager=run_manager, **kwargs
+                )
+            return result
+
+        async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+            endpoint_key = self._endpoint_key()
+            effective_stop = stop
+            if effective_stop:
+                with _STOP_BYPASS_LOCK:
+                    if endpoint_key in _STOP_BYPASS_ENDPOINTS:
+                        effective_stop = None
+
+            with _EXTRA_BODY_LOCK:
+                if endpoint_key in _EXTRA_BODY_UNSUPPORTED_ENDPOINTS:
+                    _strip_extra_body_on_obj(self)
+
+            result = await super()._agenerate(
+                messages, stop=effective_stop, run_manager=run_manager, **kwargs
+            )
+            should_retry, remember_bypass = self._should_retry_without_stop(result, effective_stop)
+            if should_retry:
+                if remember_bypass:
+                    with _STOP_BYPASS_LOCK:
+                        _STOP_BYPASS_ENDPOINTS.add(endpoint_key)
+                result = await super()._agenerate(
+                    messages, stop=None, run_manager=run_manager, **kwargs
+                )
+            return result
+
+    _REASONING_SAFE_CHAT_OPENAI_CLS = ReasoningSafeChatOpenAI
+    return _REASONING_SAFE_CHAT_OPENAI_CLS
+
+
 def create_chat_llm(
     model: str = None,
     temperature: float = None,
     timeout: int = None,
     max_retries: int = 0,
     base_url: str = None,
-    api_key: str = None,
     extra_body: dict = None,
     max_tokens: int = None,
 ):
-    """Instantiate a ChatOpenAI client bound to dynamic KeyPool/provider config."""
-    from langchain_openai import ChatOpenAI
+    """Instantiate a ReasoningSafeChatOpenAI client pointing to the active Local LLM endpoint."""
+    ChatOpenAICls = _get_reasoning_safe_chat_openai_cls()
 
     cfg = resolve_llm_config()
     resolved_base_url = (base_url or cfg["base_url"]).rstrip("/")
-
-    use_pool = api_key is None
-    if api_key is not None:
-        resolved_api_key = api_key
-    else:
-        if not cfg["api_keys"] and cfg["requires_api_key"]:
-            raise ValueError(
-                f"Missing API key for LLM_PROVIDER='{cfg['provider']}'. "
-                f"Set LLM_API_KEYS / LLM_API_KEY (or GOOGLE_API_KEY for google) in {ENV_FILE_PATH}."
-            )
-        resolved_api_key = get_active_api_key() if cfg["api_keys"] else ""
-
-    if not resolved_api_key and cfg["requires_api_key"]:
-        raise ValueError(
-            f"Missing API key for LLM_PROVIDER='{cfg['provider']}'. "
-            f"Set LLM_API_KEYS / LLM_API_KEY (or GOOGLE_API_KEY for google) in {ENV_FILE_PATH}."
-        )
-
     resolved_model = model or cfg["master_model"]
     resolved_temp = LLM_TEMPERATURE if temperature is None else temperature
     resolved_timeout = cfg["timeout"] if timeout is None else timeout
@@ -1396,23 +957,25 @@ def create_chat_llm(
         os.getenv("LLM_DISABLE_THINKING", "").strip().lower() in ("1", "true", "yes", "on")
         or os.getenv("LLM_THINKING", "").strip().lower() in ("0", "false", "no", "off")
     )
-    is_thinking_model = any(tok in resolved_model.lower() for tok in ("qwen3", "deepseek-r1"))
+    is_thinking_model = _is_thinking_model_name(resolved_model)
     if (
         thinking_mode == "false"
-        and is_thinking_model
-        and (
-            cfg["provider"] in ("ollama", "vllm", "lmstudio")
-            or (cfg["provider"] == "openai_compatible" and explicit_disable)
-        )
+        and cfg["provider"] in LOCAL_LLM_PROVIDERS
+        and (is_thinking_model or explicit_disable or cfg["provider"] == "llamacpp")
     ):
         ctk = dict(merged_extra_body.get("chat_template_kwargs") or {})
         ctk.setdefault("enable_thinking", False)
         merged_extra_body["chat_template_kwargs"] = ctk
 
+    with _EXTRA_BODY_LOCK:
+        if (resolved_base_url, resolved_model) in _EXTRA_BODY_UNSUPPORTED_ENDPOINTS:
+            merged_extra_body.pop("chat_template_kwargs", None)
+            merged_extra_body.pop("options", None)
+
     llm_kwargs = {
         "base_url": resolved_base_url,
         "model": resolved_model,
-        "api_key": resolved_api_key or "EMPTY",
+        "api_key": "EMPTY",
         "temperature": resolved_temp,
         "timeout": resolved_timeout,
         "max_retries": max_retries,
@@ -1422,19 +985,12 @@ def create_chat_llm(
     if merged_extra_body:
         llm_kwargs["extra_body"] = merged_extra_body
 
-    llm = ChatOpenAI(**llm_kwargs)
-    if use_pool:
-        _KEY_POOL.register_client(llm)
-    return llm
+    return ChatOpenAICls(**llm_kwargs)
 
 
 _ACTIVE_LLM_CONFIG = resolve_llm_config()
 LLM_PROVIDER = _ACTIVE_LLM_CONFIG["provider"]
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
 LLM_BASE_URL = _ACTIVE_LLM_CONFIG["base_url"]
-LLM_API_KEYS = _ACTIVE_LLM_CONFIG["api_keys"]
-LLM_API_KEY = _ACTIVE_LLM_CONFIG["api_key"]
-GEMINI_BASE_URL = LLM_BASE_URL
 MASTER_MODEL = _ACTIVE_LLM_CONFIG["master_model"]
 DISCUSSION_MODELS = _ACTIVE_LLM_CONFIG["discussion_models"]
 
@@ -1443,30 +999,15 @@ LLM_TIMEOUT = _ACTIVE_LLM_CONFIG["timeout"]
 LLM_CONTEXT_WINDOW = _ACTIVE_LLM_CONFIG["context_window"]
 LLM_MAX_TOKENS = _ACTIVE_LLM_CONFIG["max_tokens"]
 LLM_THINKING = _ACTIVE_LLM_CONFIG["thinking"]
-ERROR_SOLVER_MODE = _ACTIVE_LLM_CONFIG["error_solver_mode"]
 LLM_CIRCUIT_BREAKER_THRESHOLD = _ACTIVE_LLM_CONFIG["circuit_breaker_threshold"]
 NAVIGATOR_MAX_ITERATIONS = _ACTIVE_LLM_CONFIG["navigator_max_iterations"]
 
 USE_PROXY = os.getenv("USE_PROXY", "false").lower() == "true"
 MAKE_JOBS = int(os.getenv("MAKE_JOBS", "4"))
 
-# Backward-compatible aliases for downstream modules
 OPENAI_BASE_URL = LLM_BASE_URL
 OPENAI_MODEL = DISCUSSION_MODELS[0]
 OPENAI_EMBEDDING_MODEL = _ACTIVE_LLM_CONFIG["embedding_model"]
-OPENAI_API_KEY = LLM_API_KEY
-
-ANTHROPIC_BASE_URL = LLM_BASE_URL
-ANTHROPIC_MODEL = DISCUSSION_MODELS[1] if len(DISCUSSION_MODELS) > 1 else DISCUSSION_MODELS[0]
-ANTHROPIC_API_KEY = LLM_API_KEY
-
-DEEPSEEK_BASE_URL = LLM_BASE_URL
-DEEPSEEK_MODEL = MASTER_MODEL
-DEEPSEEK_API_KEY = LLM_API_KEY
-
-READMEAI_BASE_URL = LLM_BASE_URL
-READMEAI_MODEL = MASTER_MODEL
-READMEAI_API_KEY = LLM_API_KEY
 
 PROXY = os.getenv("PROXY", "") if USE_PROXY else ""
 PASSWORD = os.getenv("PASSWORD", "root")
@@ -1534,6 +1075,7 @@ Observation: the result of the action
 Thought: I now know the final answer
 Final Answer: the final answer to the original input question
 
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
 
 Begin!
 Question: {input}
@@ -1547,11 +1089,12 @@ The project has been downloaded into /work/, which is also the Shell's initial p
 You should follow these rules:
 1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
 2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
-3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.
-4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+3. If there are any difficulties during compilation, try to break them without calling tools.
+4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.
 5. No need to install this project or test it, just compile it.
 6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
 7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
 """
 
 

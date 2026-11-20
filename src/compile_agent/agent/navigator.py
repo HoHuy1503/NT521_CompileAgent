@@ -25,7 +25,7 @@ class AgentTools:
         self.logger = []
 
     def _invoke_chain(self, chain, payload):
-        return call_with_rate_limit_retry(chain.invoke, payload)
+        return call_with_llm_retry(chain.invoke, payload)
 
     def debate(self, file):
         """
@@ -107,8 +107,10 @@ Output: <files which have been revised>"""
             with open(real_file_path, "r", encoding="utf-8", errors="ignore") as fp:
                 content = fp.read()
 
-            if len(content) > 20000:
-                content = content[:20000] + "\n... (content truncated due to length)"
+            cfg = resolve_llm_config()
+            doc_char_limit = 10000 if cfg["provider"] in LOCAL_LLM_PROVIDERS else 20000
+            if len(content) > doc_char_limit:
+                content = content[:doc_char_limit] + "\n... (content truncated due to length)"
 
             if not content.strip():
                 return "File is empty"
@@ -231,11 +233,17 @@ class CompileNavigator:
         """
         if self._cached_result is not None:
             return f"{self._cached_result}\n\n[Cached from previous CompileNavigator run]"
+        compact_structure = str(project_structure or "")
+        if len(compact_structure) > 4000:
+            compact_structure = CompilationAgentExecutor._compact_observation(
+                compact_structure, head_chars=2600, tail_chars=1200
+            )
+        cfg = resolve_llm_config()
         llm = _make_llm()
         agenttools = AgentTools(
             local_path=self.local_path,
             project_name=self.project_name,
-            project_structure=project_structure,
+            project_structure=compact_structure,
             proxy=PROXY,
         )
         tools = [
@@ -261,19 +269,25 @@ class CompileNavigator:
             prompt=prompt,
             tools=tools,
             output_parser=SafeReActSingleInputOutputParser(),
+            stop_sequence=resolve_react_stop_sequences(),
         )
-        nav_max_iterations = resolve_llm_config().get("navigator_max_iterations", NAVIGATOR_MAX_ITERATIONS)
+        nav_max_iterations = cfg.get("navigator_max_iterations", NAVIGATOR_MAX_ITERATIONS)
+        default_nav_timeout = 300 if cfg["provider"] in LOCAL_LLM_PROVIDERS else 180
+        nav_max_time = max(
+            60,
+            int(os.getenv("NAVIGATOR_MAX_EXECUTION_TIME", str(default_nav_timeout)) or default_nav_timeout),
+        )
         agent_executor = CompilationAgentExecutor(
             agent=agent,
             tools=tools,
             max_iterations=nav_max_iterations,
-            max_execution_time=180,
+            max_execution_time=nav_max_time,
             verbose=False,
             handle_parsing_errors=True,
         )
         get_instructions_prompt = apply_thinking_directive(
             get_instructions_template.format(
-                project_name=self.project_name, project_structure=project_structure
+                project_name=self.project_name, project_structure=compact_structure
             )
         )
 

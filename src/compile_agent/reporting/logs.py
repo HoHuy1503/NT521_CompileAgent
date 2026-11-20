@@ -1,14 +1,278 @@
 import base64
 import csv
 import datetime
+import glob
 import json
 import logging
 import os
 import posixpath
+import re
 import subprocess
-from typing import Optional
+import time
+import uuid
+from contextlib import contextmanager
+from typing import Any, Dict, List, Optional
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+try:
+    import msvcrt
+except ImportError:
+    msvcrt = None
 
 from compile_agent.config import *
+
+RESULTS_JSONL_FILENAME = "results.jsonl"
+_LOG_NAME_TS_RE = re.compile(
+    r"^(?P<project>.+?)\.log\.(?P<ts>\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d+)\.json$"
+)
+
+
+@contextmanager
+def _file_lock(target_path: str, timeout: float = 15.0):
+    """Cross-platform advisory file lock (flock on POSIX, msvcrt on Windows) for safe JSONL appends."""
+    lock_path = f"{os.path.abspath(target_path)}.lock"
+    parent = os.path.dirname(lock_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    fp = open(lock_path, "a+b")
+    locked = False
+    try:
+        deadline = time.monotonic() + max(0.5, float(timeout))
+        while True:
+            try:
+                if fcntl is not None:
+                    fcntl.flock(fp.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                elif msvcrt is not None:
+                    fp.seek(0)
+                    msvcrt.locking(fp.fileno(), msvcrt.LK_NBLCK, 1)
+                locked = True
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    logging.warning("[!] File lock timeout on %s; proceeding unlocked.", lock_path)
+                    break
+                time.sleep(0.02)
+        yield
+    finally:
+        if locked:
+            try:
+                if fcntl is not None:
+                    fcntl.flock(fp.fileno(), fcntl.LOCK_UN)
+                elif msvcrt is not None:
+                    fp.seek(0)
+                    msvcrt.locking(fp.fileno(), msvcrt.LK_UNLCK, 1)
+            except OSError:
+                pass
+        try:
+            fp.close()
+        except OSError:
+            pass
+
+
+def atomic_write_text(path: str, content: str) -> None:
+    """Write text to a temp file in the same directory, fsync, and atomically replace target."""
+    abs_path = os.path.abspath(path)
+    parent = os.path.dirname(abs_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    tmp_path = f"{abs_path}.tmp.{os.getpid()}.{uuid.uuid4().hex[:8]}"
+    try:
+        with open(tmp_path, "w", encoding="utf-8", errors="replace", newline="") as fp:
+            fp.write(content)
+            fp.flush()
+            os.fsync(fp.fileno())
+        os.replace(tmp_path, abs_path)
+    except Exception:
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def atomic_write_json(path: str, data: Any, indent: Any = 2) -> None:
+    """Serialize JSON and persist atomically with fsync to prevent corruption on power loss."""
+    payload = json.dumps(data, indent=indent, ensure_ascii=False)
+    atomic_write_text(path, payload)
+
+
+def append_jsonl(path: str, entry: dict) -> None:
+    """
+    Append one JSON object as a single line with cross-process locking, trailing-newline recovery
+    (in case a prior power loss left a truncated line without '\\n'), flush, and fsync.
+    """
+    abs_path = os.path.abspath(path)
+    parent = os.path.dirname(abs_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    line_bytes = (json.dumps(entry, ensure_ascii=False) + "\n").encode("utf-8", errors="replace")
+    with _file_lock(abs_path):
+        with open(abs_path, "a+b") as fp:
+            fp.seek(0, os.SEEK_END)
+            size = fp.tell()
+            if size > 0:
+                fp.seek(-1, os.SEEK_END)
+                last_byte = fp.read(1)
+                fp.seek(0, os.SEEK_END)
+                if last_byte != b"\n":
+                    fp.write(b"\n")
+            fp.write(line_bytes)
+            fp.flush()
+            os.fsync(fp.fileno())
+
+
+def iter_jsonl_records(path: str, repair_truncated_tail: bool = False) -> List[dict]:
+    """
+    Read valid JSON dict records from a JSONL file, gracefully skipping any corrupted/truncated
+    lines left by power outages. When repair_truncated_tail=True, rewrites atomically if any
+    corrupted lines were detected so future reads stay clean.
+    """
+    if not path or not os.path.isfile(path):
+        return []
+    records: List[dict] = []
+    valid_raw_lines: List[str] = []
+    bad_count = 0
+    with _file_lock(path):
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fp:
+                for line_no, raw_line in enumerate(fp, start=1):
+                    stripped = raw_line.strip()
+                    if not stripped:
+                        continue
+                    try:
+                        obj = json.loads(stripped)
+                        if isinstance(obj, dict):
+                            records.append(obj)
+                            valid_raw_lines.append(stripped)
+                        else:
+                            bad_count += 1
+                    except json.JSONDecodeError as err:
+                        bad_count += 1
+                        logging.warning(
+                            "[!] Skipping corrupted/truncated JSONL line %d in %s (%s)",
+                            line_no,
+                            path,
+                            err,
+                        )
+        except OSError as err:
+            logging.warning("[!] Could not read JSONL file %s: %s", path, err)
+            return []
+
+        if bad_count > 0 and repair_truncated_tail:
+            repaired_content = ("\n".join(valid_raw_lines) + "\n") if valid_raw_lines else ""
+            try:
+                atomic_write_text(path, repaired_content)
+                logging.info(
+                    "[+] Repaired %s by removing %d corrupted/truncated line(s); kept %d valid record(s).",
+                    path,
+                    bad_count,
+                    len(records),
+                )
+            except OSError as err:
+                logging.warning("[!] Failed to repair JSONL %s: %s", path, err)
+
+    return records
+
+
+def cleanup_stale_tmp_files(log_path: str) -> int:
+    """Remove leftover *.tmp.* files from interrupted atomic writes after a crash/power loss."""
+    if not log_path or not os.path.isdir(log_path):
+        return 0
+    removed = 0
+    for fp in glob.glob(os.path.join(log_path, "*.tmp.*")):
+        try:
+            if os.path.isfile(fp):
+                os.remove(fp)
+                removed += 1
+        except OSError:
+            pass
+    return removed
+
+
+def load_results_jsonl_index(log_path: str) -> Dict[str, List[dict]]:
+    """Return mapping project_name -> list of results.jsonl records sorted newest-first."""
+    jsonl_path = os.path.join(log_path, RESULTS_JSONL_FILENAME)
+    records = iter_jsonl_records(jsonl_path, repair_truncated_tail=False)
+    index: Dict[str, List[dict]] = {}
+    for rec in records:
+        build = rec.get("build") if isinstance(rec.get("build"), dict) else {}
+        proj = str(rec.get("project") or build.get("project") or "").strip()
+        if not proj:
+            continue
+        index.setdefault(proj, []).append(rec)
+    for proj in index:
+        index[proj].sort(key=lambda r: str(r.get("timestamp") or ""), reverse=True)
+    return index
+
+
+def backfill_results_jsonl(log_path: str) -> int:
+    """
+    Backfill existing per-project *.log.*.json files in log_path into results.jsonl
+    without duplicating already-recorded (project, timestamp) pairs.
+    """
+    if not log_path or not os.path.isdir(log_path):
+        return 0
+    jsonl_path = os.path.join(log_path, RESULTS_JSONL_FILENAME)
+    existing = iter_jsonl_records(jsonl_path, repair_truncated_tail=True)
+    seen = {
+        (
+            str(r.get("project") or (r.get("build") or {}).get("project") or ""),
+            str(r.get("timestamp") or ""),
+        )
+        for r in existing
+    }
+
+    added = 0
+    for fp in sorted(glob.glob(os.path.join(log_path, "*.log.*.json"))):
+        fname = os.path.basename(fp)
+        m = _LOG_NAME_TS_RE.match(fname)
+        if m:
+            fallback_proj = m.group("project")
+            ts_key = m.group("ts")
+        else:
+            fallback_proj = fname.split(".log.")[0]
+            ts_key = f"{os.path.getmtime(fp):020.6f}"
+        try:
+            with open(fp, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            continue
+        if not isinstance(data, dict) or not isinstance(data.get("build"), dict):
+            continue
+        build = data["build"]
+        proj = str(build.get("project") or fallback_proj)
+        if (proj, ts_key) in seen:
+            continue
+
+        auto = data.get("autocompiler") or []
+        final_tail = ""
+        if isinstance(auto, list) and auto:
+            last_pair = auto[-1]
+            tail_str = " ".join(str(x) for x in last_pair) if isinstance(last_pair, list) else str(last_pair)
+            final_tail = tail_str[-300:]
+
+        entry = {
+            "schema_version": 1,
+            "timestamp": ts_key,
+            "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),
+            "run_id": "",
+            "project": proj,
+            "url": "",
+            "log_file": fp.replace("\\", "/"),
+            "txt_log_file": fp[:-5].replace("\\", "/") + ".txt",
+            "local_path": "",
+            "final_output_tail": final_tail,
+            "build": build,
+        }
+        append_jsonl(jsonl_path, entry)
+        seen.add((proj, ts_key))
+        added += 1
+    return added
 
 
 def is_elf(file):
@@ -413,8 +677,8 @@ def save_logs(
     local_path,
     checker_ok,
     model_ok,
-    semgrep_summary=None,
     build_metadata=None,
+    project_url: str = "",
 ):
     os.makedirs(log_path, exist_ok=True)
 
@@ -423,13 +687,12 @@ def save_logs(
     intermediate_steps = res.get("intermediate_steps", [])
     run_id = res.get("run_id", "unknown")
 
-    # logging process
+    # Atomic per-project TXT + JSON logs (safe against power loss mid-write)
     now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
     log_local_file = os.path.join(log_path, f"{proj_name}.log.{now}.txt")
     logging.info(f"[-] Saving logs to {log_local_file}")
-    with open(log_local_file, "w", encoding="utf-8", errors="replace") as file:
-        s = assemble_all_to_txt(template, tools, question, output_text, intermediate_steps)
-        file.write(s)
+    txt_content = assemble_all_to_txt(template, tools, question, output_text, intermediate_steps)
+    atomic_write_text(log_local_file, txt_content)
 
     log_local_file_json = log_local_file.replace(".txt", ".json")
     logging.info(f"[-] Saving logs to {log_local_file_json}")
@@ -439,19 +702,42 @@ def save_logs(
     }
     if build_metadata:
         build_info.update(build_metadata)
-    with open(log_local_file_json, "w", encoding="utf-8", errors="replace") as file:
-        s = assemble_all_to_json(template, tools, question, output_text, intermediate_steps)
-        json.dump(
-            {
-                "autocompiler": s,
-                "tools": tools_logs,
-                "build": build_info,
-                "security": semgrep_summary,
-            },
-            file,
-            indent="\t",
-            ensure_ascii=False,
-        )
+    if "project" not in build_info:
+        build_info["project"] = proj_name
+    auto_json = assemble_all_to_json(template, tools, question, output_text, intermediate_steps)
+    atomic_write_json(
+        log_local_file_json,
+        {
+            "autocompiler": auto_json,
+            "tools": tools_logs,
+            "build": build_info,
+        },
+        indent="\t",
+    )
+
+    # Crash-safe append-only JSONL ledger (1 line = 1 completed repo, locked + fsync)
+    final_tail = ""
+    if auto_json:
+        last_pair = auto_json[-1]
+        tail_str = " ".join(str(x) for x in last_pair) if isinstance(last_pair, list) else str(last_pair)
+        final_tail = tail_str[-300:]
+    else:
+        final_tail = str(output_text or "")[-300:]
+
+    jsonl_entry = {
+        "schema_version": 1,
+        "timestamp": now,
+        "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "run_id": run_id,
+        "project": proj_name,
+        "url": project_url or "",
+        "log_file": log_local_file_json.replace("\\", "/"),
+        "txt_log_file": log_local_file.replace("\\", "/"),
+        "local_path": local_path,
+        "final_output_tail": final_tail,
+        "build": build_info,
+    }
+    append_jsonl(os.path.join(log_path, RESULTS_JSONL_FILENAME), jsonl_entry)
 
     # logging result into the current run's log_path so concurrent/different runs stay isolated
     log_url = LOG_URL_TEMPLATE.format(run_id=run_id) if LOG_URL_TEMPLATE else ""
@@ -460,3 +746,5 @@ def save_logs(
     with open(process_csv_file, "a", encoding="utf-8", errors="replace", newline="") as file:
         csv_writer = csv.writer(file)
         csv_writer.writerow([run_id, log_url, log_local_file, local_path, model_ok, checker_ok])
+        file.flush()
+        os.fsync(file.fileno())

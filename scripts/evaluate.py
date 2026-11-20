@@ -1,5 +1,7 @@
 import csv
+import datetime
 import glob
+import io
 import json
 import os
 import re
@@ -12,6 +14,13 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _SRC_DIR = os.path.join(_REPO_ROOT, "src")
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
+
+from compile_agent.reporting.logs import (
+    RESULTS_JSONL_FILENAME,
+    atomic_write_json,
+    atomic_write_text,
+    iter_jsonl_records,
+)
 
 LOG_NAME_RE = re.compile(r"^(?P<project>.+?)\.log\.(?P<ts>\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d+)\.json$")
 
@@ -38,10 +47,81 @@ def _classify_diagnosis(rec: dict) -> str:
     return "Compilation Failed"
 
 
+def _build_eval_record(
+    data: dict,
+    fallback_proj: str,
+    ts_key: str,
+    log_file: str,
+    default_mode: str,
+) -> dict:
+    build = data["build"]
+    tools = data.get("tools", {}) or {}
+    proj = build.get("project") or data.get("project") or fallback_proj
+    mode = build.get("ablation_mode") or default_mode
+    tool_calls = build.get("tool_calls") or {}
+    shell_calls = int(tool_calls.get("Shell", len(tools.get("Shell", []))))
+    nav_calls = int(tool_calls.get("CompileNavigator", len(tools.get("CompileNavigator", []))))
+    solver_calls = int(tool_calls.get("ErrorSolver", len(tools.get("ErrorSolver", []))))
+
+    smoke = build.get("smoke_check") or {}
+    checker_raw = str(build.get("checker_result", ""))
+    checker_ns = (
+        bool(build["checker_non_strict"])
+        if "checker_non_strict" in build
+        else _parse_boolish(checker_raw)
+    )
+    checker_strict = (
+        bool(build["checker_strict"])
+        if "checker_strict" in build
+        else (_parse_boolish(checker_raw) if "strict=True" in checker_raw else checker_ns)
+    )
+    matched = build.get("matched_targets") or []
+    auto_msgs = data.get("autocompiler") or []
+    iterations = int(build.get("iterations", max(0, len(auto_msgs) - 1)))
+
+    rec = {
+        "project": proj,
+        "mode": mode,
+        "timestamp": ts_key,
+        "log_file": str(log_file or "").replace("\\", "/"),
+        "model_result": str(build.get("model_result", "False")),
+        "checker_non_strict": checker_ns,
+        "checker_strict": checker_strict,
+        "smoke_passed": bool(smoke.get("passed", False)),
+        "smoke_checked": int(smoke.get("checked_count", 0)),
+        "missing_libs": "; ".join(smoke.get("missing_libs", [])),
+        "matched_targets": ", ".join(matched),
+        "iterations": iterations,
+        "elapsed_seconds": float(build.get("elapsed_seconds", 0.0)),
+        "shell_calls": shell_calls,
+        "navigator_calls": nav_calls,
+        "error_solver_calls": solver_calls,
+    }
+    rec["diagnosis"] = _classify_diagnosis(rec)
+    return rec
+
+
 def load_dedup_records(log_dir: str, default_mode: str) -> list:
     if not log_dir or not os.path.isdir(log_dir):
         return []
     latest = {}
+
+    # 1. Load from crash-safe results.jsonl ledger (supports JSONL-only runs or resumed batches)
+    jsonl_path = os.path.join(log_dir, RESULTS_JSONL_FILENAME)
+    for row in iter_jsonl_records(jsonl_path, repair_truncated_tail=False):
+        if not isinstance(row.get("build"), dict):
+            continue
+        proj = str(row.get("project") or row["build"].get("project") or "").strip()
+        if not proj:
+            continue
+        ts_key = str(row.get("timestamp") or "")
+        log_fp = str(row.get("log_file") or jsonl_path)
+        rec = _build_eval_record(row, proj, ts_key, log_fp, default_mode)
+        key = (rec["project"], rec["mode"])
+        if key not in latest or rec["timestamp"] >= latest[key]["timestamp"]:
+            latest[key] = rec
+
+    # 2. Load per-project *.log.*.json files (merges seamlessly & deduplicates by newest timestamp)
     for fp in glob.glob(os.path.join(log_dir, "*.log.*.json")):
         fname = os.path.basename(fp)
         m = LOG_NAME_RE.match(fname)
@@ -60,179 +140,12 @@ def load_dedup_records(log_dir: str, default_mode: str) -> list:
         if not isinstance(data, dict) or not isinstance(data.get("build"), dict):
             continue
 
-        build = data["build"]
-        tools = data.get("tools", {}) or {}
-        proj = build.get("project") or fallback_proj
-        mode = build.get("ablation_mode") or default_mode
-        tool_calls = build.get("tool_calls") or {}
-        shell_calls = int(tool_calls.get("Shell", len(tools.get("Shell", []))))
-        nav_calls = int(tool_calls.get("CompileNavigator", len(tools.get("CompileNavigator", []))))
-        solver_calls = int(tool_calls.get("ErrorSolver", len(tools.get("ErrorSolver", []))))
-
-        smoke = build.get("smoke_check") or {}
-        checker_raw = str(build.get("checker_result", ""))
-        checker_ns = (
-            bool(build["checker_non_strict"])
-            if "checker_non_strict" in build
-            else _parse_boolish(checker_raw)
-        )
-        checker_strict = (
-            bool(build["checker_strict"])
-            if "checker_strict" in build
-            else (_parse_boolish(checker_raw) if "strict=True" in checker_raw else checker_ns)
-        )
-        matched = build.get("matched_targets") or []
-        auto_msgs = data.get("autocompiler") or []
-        iterations = int(build.get("iterations", max(0, len(auto_msgs) - 1)))
-
-        rec = {
-            "project": proj,
-            "mode": mode,
-            "timestamp": ts_key,
-            "log_file": fp.replace("\\", "/"),
-            "model_result": str(build.get("model_result", "False")),
-            "checker_non_strict": checker_ns,
-            "checker_strict": checker_strict,
-            "smoke_passed": bool(smoke.get("passed", False)),
-            "smoke_checked": int(smoke.get("checked_count", 0)),
-            "missing_libs": "; ".join(smoke.get("missing_libs", [])),
-            "matched_targets": ", ".join(matched),
-            "iterations": iterations,
-            "elapsed_seconds": float(build.get("elapsed_seconds", 0.0)),
-            "shell_calls": shell_calls,
-            "navigator_calls": nav_calls,
-            "error_solver_calls": solver_calls,
-        }
-        rec["diagnosis"] = _classify_diagnosis(rec)
-
-        key = (proj, mode)
+        rec = _build_eval_record(data, fallback_proj, ts_key, fp, default_mode)
+        key = (rec["project"], rec["mode"])
         if key not in latest or rec["timestamp"] > latest[key]["timestamp"]:
             latest[key] = rec
 
     return sorted(latest.values(), key=lambda r: (r["mode"], r["project"].lower()))
-
-
-def load_security_records(log_dir: str) -> list:
-    if not log_dir:
-        return []
-    sec_dir = os.path.join(log_dir, "security")
-    if not os.path.isdir(sec_dir):
-        return []
-
-    records = []
-    for fp in sorted(glob.glob(os.path.join(sec_dir, "*.security.json"))):
-        proj = os.path.basename(fp)
-        if proj.endswith(".security.json"):
-            proj = proj[: -len(".security.json")]
-        try:
-            with open(fp, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            continue
-        if not isinstance(data, dict):
-            continue
-
-        recipe = data.get("recipe") or {}
-        l1 = data.get("layer1_sast") or {}
-        sg = l1.get("semgrep") or {}
-        cpp = l1.get("cppcheck") or {}
-        cpp_sev = cpp.get("by_severity") or {}
-        sg_rules = sg.get("by_rule") or {}
-
-        l2 = data.get("layer2_hardening_baseline") or {}
-        l3h = data.get("layer3_hardening_rebuild") or {}
-        l3h_build = l3h.get("build") or {}
-        l3h_after = l3h.get("audit_after") or {}
-        l3h_smoke = l3h.get("smoke_check_after") or {}
-        l3h_diff = l3h.get("before_vs_after") or {}
-
-        l3s = data.get("layer3_sanitizer") or {}
-        l3s_build = l3s.get("build") or {}
-
-        base_avg = l2.get("average_score")
-        after_avg = l3h_after.get("average_score")
-        delta = l3h_diff.get("avg_score_delta")
-        if delta is None and base_avg is not None and after_avg is not None:
-            delta = round(float(after_avg) - float(base_avg), 2)
-
-        records.append(
-            {
-                "project": proj,
-                "security_mode": data.get("mode", ""),
-                "security_status": data.get("status", ""),
-                "build_system": recipe.get("build_system", ""),
-                "semgrep_status": sg.get("status", "skipped"),
-                "semgrep_findings": int(sg.get("total_findings", 0) or 0),
-                "semgrep_errors": int(sg.get("errors_count", 0) or 0),
-                "semgrep_rules": ", ".join(f"{k}:{v}" for k, v in sorted(sg_rules.items())),
-                "cppcheck_status": cpp.get("status", "skipped"),
-                "cppcheck_mode": cpp.get("mode", ""),
-                "cppcheck_db_entries": int(cpp.get("compile_db_entries", 0) or 0),
-                "cppcheck_findings": int(cpp.get("total_findings", 0) or 0),
-                "cppcheck_error": int(cpp_sev.get("error", 0) or 0),
-                "cppcheck_warning": int(cpp_sev.get("warning", 0) or 0),
-                "cppcheck_style": int(cpp_sev.get("style", 0) or 0),
-                "cppcheck_performance": int(cpp_sev.get("performance", 0) or 0),
-                "cppcheck_portability": int(cpp_sev.get("portability", 0) or 0),
-                "binary_count": int(l2.get("binary_count", 0) or 0),
-                "baseline_avg_score": round(float(base_avg), 2) if base_avg is not None else 0.0,
-                "after_hardening_avg_score": round(float(after_avg), 2) if after_avg is not None else 0.0,
-                "score_delta": round(float(delta), 2) if delta is not None else 0.0,
-                "hardening_build_status": l3h_build.get("status", "skipped"),
-                "hardened_smoke_passed": bool(l3h_smoke.get("passed", False)),
-                "hardened_smoke_checked": int(l3h_smoke.get("checked_count", 0) or 0),
-                "sanitizer_build_status": l3s_build.get("status", "skipped"),
-                "asan_instrumented_count": int(l3s.get("asan_instrumented_count", 0) or 0),
-                "ubsan_instrumented_count": int(l3s.get("ubsan_instrumented_count", 0) or 0),
-                "asan_count": int(l3s.get("asan_count", 0) or 0),
-                "ubsan_count": int(l3s.get("ubsan_count", 0) or 0),
-                "security_report_file": fp.replace("\\", "/"),
-            }
-        )
-    return sorted(records, key=lambda r: r["project"].lower())
-
-
-def compute_security_summary(sec_records: list) -> dict:
-    n = len(sec_records)
-    if n == 0:
-        return {"count": 0}
-    hard_ok = sum(1 for r in sec_records if r["hardening_build_status"] == "completed")
-    smoke_ok = sum(1 for r in sec_records if r["hardened_smoke_passed"])
-    san_ok = sum(1 for r in sec_records if r["sanitizer_build_status"] == "completed")
-    compdb_cnt = sum(1 for r in sec_records if r["cppcheck_mode"] == "compile_commands")
-    baseline_pool = [r["baseline_avg_score"] for r in sec_records if r.get("binary_count", 0) > 0]
-    hardened_pool = [
-        r
-        for r in sec_records
-        if r.get("binary_count", 0) > 0 and r.get("hardening_build_status") == "completed"
-    ]
-    avg_baseline = round(mean(baseline_pool), 2) if baseline_pool else 0.0
-    avg_after = (
-        round(mean(r["after_hardening_avg_score"] for r in hardened_pool), 2)
-        if hardened_pool
-        else 0.0
-    )
-    avg_delta = (
-        round(mean(r["score_delta"] for r in hardened_pool), 2)
-        if hardened_pool
-        else 0.0
-    )
-    return {
-        "count": n,
-        "semgrep_total_findings": sum(r["semgrep_findings"] for r in sec_records),
-        "semgrep_projects_with_findings": sum(1 for r in sec_records if r["semgrep_findings"] > 0),
-        "cppcheck_total_findings": sum(r["cppcheck_findings"] for r in sec_records),
-        "cppcheck_total_errors": sum(r["cppcheck_error"] for r in sec_records),
-        "cppcheck_compile_db_projects": compdb_cnt,
-        "avg_baseline_score": avg_baseline,
-        "avg_after_score": avg_after,
-        "avg_score_delta": avg_delta,
-        "hardening_build_ok": hard_ok,
-        "hardened_smoke_ok": smoke_ok,
-        "sanitizer_build_ok": san_ok,
-        "total_asan_findings": sum(r["asan_count"] for r in sec_records),
-        "total_ubsan_findings": sum(r["ubsan_count"] for r in sec_records),
-    }
 
 
 def compute_summary(records: list) -> dict:
@@ -273,18 +186,17 @@ def compute_summary(records: list) -> dict:
 
 
 def write_csv(path: str, rows: list, fieldnames: list) -> None:
-    with open(path, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({k: row.get(k, "") for k in fieldnames})
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow({k: row.get(k, "") for k in fieldnames})
+    atomic_write_text(path, buf.getvalue())
 
 
-def build_markdown_report(
-    full_records: list, ablation_records: list, security_records: list = None
-) -> tuple:
+def build_markdown_report(full_records: list, ablation_records: list) -> tuple:
     full_sum = compute_summary(full_records)
-    lines = ["# Stage 2 & Stage 3 Benchmark Evaluation Report\n"]
+    lines = ["# CompileAgent Benchmark & Ablation Evaluation Report\n"]
 
     if full_records:
         lines.append("## 1. Full CompileAgent Benchmark Results\n")
@@ -381,51 +293,17 @@ def build_markdown_report(
             )
             lines.append(f"\nCSR Gain (Full vs Baseline, Non-Strict): **{delta_ns:+.1f} percentage points**\n")
 
-    if security_records:
-        sec_sum = compute_security_summary(security_records)
-        lines.append("\n## 3. Stage 3 3-Layer Security Pipeline Results\n")
-        lines.append(
-            "| Project | Build Sys | Semgrep (Findings / ParseErr) | Cppcheck Mode (DB) | Cppcheck (Total / E / W / S) | Hardening Score (Before -> After / Delta) | Hardening Build / Smoke | Sanitizer Instr (ASan/UBSan) | Runtime Findings (ASan / UBSan) |"
-        )
-        lines.append("| :--- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |")
-        for sr in security_records:
-            sg_col = f"{sr['semgrep_findings']} / {sr['semgrep_errors']}"
-            cpp_mode_col = f"{sr['cppcheck_mode']} ({sr['cppcheck_db_entries']})"
-            cpp_col = f"{sr['cppcheck_findings']} ({sr['cppcheck_error']}/{sr['cppcheck_warning']}/{sr['cppcheck_style']})"
-            score_col = f"{sr['baseline_avg_score']:.1f} -> {sr['after_hardening_avg_score']:.1f} ({sr['score_delta']:+.1f})"
-            hard_col = f"{sr['hardening_build_status']} / {'PASS' if sr['hardened_smoke_passed'] else 'FAIL'}"
-            san_instr_col = f"{sr['sanitizer_build_status']} ({sr['asan_instrumented_count']}/{sr['ubsan_instrumented_count']})"
-            san_find_col = f"{sr['asan_count']} / {sr['ubsan_count']}"
-            lines.append(
-                f"| `{sr['project']}` | {sr['build_system'] or '-'} | {sg_col} | {cpp_mode_col} | {cpp_col} | {score_col} | {hard_col} | {san_instr_col} | {san_find_col} |"
-            )
-
-        lines.append("\n### Aggregate Metrics (Stage 3 Security Pipeline)\n")
-        lines.append("| Metric | Value |")
-        lines.append("| :--- | :--- |")
-        lines.append(f"| Projects Audited | {sec_sum['count']} |")
-        lines.append(f"| Semgrep Total Findings | {sec_sum['semgrep_total_findings']} ({sec_sum['semgrep_projects_with_findings']}/{sec_sum['count']} projects) |")
-        lines.append(f"| Cppcheck `compile_commands` Coverage | {sec_sum['cppcheck_compile_db_projects']}/{sec_sum['count']} projects |")
-        lines.append(f"| Cppcheck Total Findings (Severity=Error) | {sec_sum['cppcheck_total_findings']} ({sec_sum['cppcheck_total_errors']} errors) |")
-        lines.append(
-            f"| Binary Hardening Avg Score (Baseline -> Hardened) | {sec_sum['avg_baseline_score']} -> {sec_sum['avg_after_score']} (avg delta {sec_sum['avg_score_delta']:+.2f}) |"
-        )
-        lines.append(f"| Hardening Rebuild / Smoke Pass Rate | {sec_sum['hardening_build_ok']}/{sec_sum['count']} builds ok, {sec_sum['hardened_smoke_ok']}/{sec_sum['count']} smoke pass |")
-        lines.append(f"| Sanitizer Build Success Rate | {sec_sum['sanitizer_build_ok']}/{sec_sum['count']} |")
-        lines.append(f"| Runtime Vulnerabilities Caught (ASan / UBSan) | {sec_sum['total_asan_findings']} ASan / {sec_sum['total_ubsan_findings']} UBSan |")
-
     return "\n".join(lines) + "\n", ablation_rows
 
 
 @click.command()
-@click.option("--full-dir", type=str, default="outputs/runs/stage2_full", help="Directory containing Full CompileAgent JSON logs")
-@click.option("--ablation-dir", type=str, default="outputs/runs/stage2_ablation", help="Directory containing Baseline/Ablation JSON logs")
-@click.option("--out-dir", type=str, default="outputs/reports/stage2_eval", help="Directory to save CSV and Markdown evaluation outputs")
+@click.option("--full-dir", type=str, default="outputs/runs/benchmark_full", help="Directory containing Full CompileAgent JSON logs")
+@click.option("--ablation-dir", type=str, default="outputs/runs/benchmark_ablation", help="Directory containing Baseline/Ablation JSON logs")
+@click.option("--out-dir", type=str, default="outputs/reports/eval", help="Directory to save CSV and Markdown evaluation outputs")
 def main(full_dir, ablation_dir, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     full_records = load_dedup_records(full_dir, "full")
     ablation_records = load_dedup_records(ablation_dir, "baseline_no_nav_no_solver")
-    security_records = load_security_records(full_dir)
 
     detail_fields = [
         "project",
@@ -450,28 +328,33 @@ def main(full_dir, ablation_dir, out_dir):
     details_csv = os.path.join(out_dir, "benchmark_details.csv")
     write_csv(details_csv, all_records, detail_fields)
 
-    md_text, ablation_rows = build_markdown_report(
-        full_records, ablation_records, security_records=security_records
-    )
+    md_text, ablation_rows = build_markdown_report(full_records, ablation_records)
     if ablation_rows:
         ab_fields = list(ablation_rows[0].keys())
         write_csv(os.path.join(out_dir, "ablation_comparison.csv"), ablation_rows, ab_fields)
 
-    security_csv = None
-    if security_records:
-        sec_fields = list(security_records[0].keys())
-        security_csv = os.path.join(out_dir, "security_summary.csv")
-        write_csv(security_csv, security_records, sec_fields)
-
     md_path = os.path.join(out_dir, "benchmark_report.md")
-    with open(md_path, "w", encoding="utf-8") as f:
-        f.write(md_text)
+    atomic_write_text(md_path, md_text)
+
+    results_json_path = os.path.join(out_dir, "benchmark_results.json")
+    atomic_write_json(
+        results_json_path,
+        {
+            "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
+            "full_dir": str(full_dir or "").replace("\\", "/"),
+            "ablation_dir": str(ablation_dir or "").replace("\\", "/"),
+            "full_summary": compute_summary(full_records),
+            "ablation_summary": compute_summary(ablation_records) if ablation_records else {},
+            "full_records": full_records,
+            "ablation_records": ablation_records,
+        },
+        indent=2,
+    )
 
     print(md_text)
     print(f"Saved details CSV -> {details_csv}")
-    if security_csv:
-        print(f"Saved security CSV -> {security_csv}")
     print(f"Saved Markdown report -> {md_path}")
+    print(f"Saved consolidated JSON -> {results_json_path}")
 
 
 if __name__ == "__main__":

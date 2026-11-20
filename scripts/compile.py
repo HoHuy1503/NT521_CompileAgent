@@ -16,11 +16,6 @@ import click
 from langchain.agents import Tool, create_react_agent
 from langchain.prompts import PromptTemplate
 
-try:
-    from langchain_anthropic import ChatAnthropic
-except ImportError:
-    ChatAnthropic = None
-
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _SRC_DIR = os.path.join(_REPO_ROOT, "src")
 if _SRC_DIR not in sys.path:
@@ -30,15 +25,20 @@ from compile_agent.config import *
 from compile_agent.agent.executor import CompilationAgentExecutor, SafeReActSingleInputOutputParser
 from compile_agent.infra.downloader import copy_project, download_project
 from compile_agent.reporting.logs import (
+    RESULTS_JSONL_FILENAME,
+    append_jsonl,
+    backfill_results_jsonl,
+    cleanup_stale_tmp_files,
     find_compiled_artifacts,
     is_compiled,
+    iter_jsonl_records,
+    load_results_jsonl_index,
     save_logs,
     smoke_check_artifact,
     snapshot_existing_artifacts,
 )
 from compile_agent.agent.error_solver import ErrorSolver
 from compile_agent.agent.navigator import CompileNavigator
-from compile_agent.security.audit import run_security_pipeline
 from compile_agent.infra.docker_tools import InteractiveDockerShell
 
 logging.basicConfig(
@@ -46,10 +46,6 @@ logging.basicConfig(
 )
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("chromadb").setLevel(logging.ERROR)
-
-os.environ["LANGCHAIN_TRACING_V2"] = LANGCHAIN_TRACING_V2
-os.environ["LANGCHAIN_API_KEY"] = LANGCHAIN_API_KEY
-os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 prompt = PromptTemplate.from_template(template)
 question_template = model_decision_template
@@ -98,35 +94,64 @@ def parse_model_decision(res: dict) -> str:
     return "False"
 
 
-def _has_existing_log(log_path: str, proj_name: str, security_mode: str = "none") -> bool:
+def _is_uncertain_or_loop_log(data: dict, build: dict) -> bool:
+    if str(build.get("model_result", "")).upper() == "UNCERTAIN":
+        return True
+    tail_candidates = []
+    if data.get("final_output_tail"):
+        tail_candidates.append(str(data.get("final_output_tail")))
+    auto = data.get("autocompiler")
+    if isinstance(auto, list) and auto:
+        last_pair = auto[-1]
+        tail_candidates.append(
+            " ".join(str(x) for x in last_pair) if isinstance(last_pair, list) else str(last_pair)
+        )
+    low_tail = " ".join(tail_candidates).lower()
+    if (
+        "early stop: loop detected" in low_tail
+        or "terminated early due to repeated action/parsing loop" in low_tail
+        or "agent stopped due to iteration limit or time limit" in low_tail
+    ):
+        return True
+    return False
+
+
+def _record_satisfies_existing(
+    data: dict,
+    retry_uncertain: bool,
+) -> bool:
+    if not (isinstance(data, dict) and isinstance(data.get("build"), dict)):
+        return False
+    build = data.get("build") or {}
+    compile_ok = (
+        bool(build.get("checker_non_strict"))
+        or str(build.get("checker_result", "")).startswith("True")
+        or str(build.get("model_result", "")) == "True"
+        or str(data.get("final_Decision", "")) == "COMPILATION-SUCCESS"
+    )
+    if retry_uncertain and not compile_ok and _is_uncertain_or_loop_log(data, build):
+        return False
+    return True
+
+
+def _has_existing_log(
+    log_path: str,
+    proj_name: str,
+    retry_uncertain: bool = False,
+    jsonl_index: dict = None,
+) -> bool:
+    index = jsonl_index if jsonl_index is not None else load_results_jsonl_index(log_path)
+    for rec in index.get(proj_name, []):
+        if _record_satisfies_existing(rec, retry_uncertain):
+            return True
+
     pattern = os.path.join(log_path, f"{glob.escape(proj_name)}.log.*.json")
-    sec_mode = (security_mode or "none").strip().lower()
-    for fp in glob.glob(pattern):
+    for fp in sorted(glob.glob(pattern), reverse=True):
         try:
             with open(fp, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            if not (isinstance(data, dict) and isinstance(data.get("build"), dict)):
-                continue
-            if sec_mode != "none":
-                build = data.get("build") or {}
-                compile_ok = (
-                    bool(build.get("checker_non_strict"))
-                    or str(build.get("checker_result", "")).startswith("True")
-                    or str(build.get("model_result", "")) == "True"
-                    or str(data.get("final_Decision", "")) == "COMPILATION-SUCCESS"
-                )
-                if compile_ok:
-                    sec_obj = data.get("security")
-                    has_inline_sec = (
-                        isinstance(sec_obj, dict)
-                        and bool(sec_obj)
-                        and sec_obj.get("status") not in ("skipped_retry_pending", "error", "", None)
-                        and not (sec_obj.get("mode") == "none" and sec_obj.get("status") == "skipped")
-                    )
-                    sec_file = os.path.join(log_path, "security", f"{proj_name}.security.json")
-                    if not (has_inline_sec or os.path.exists(sec_file)):
-                        continue
-            return True
+            if _record_satisfies_existing(data, retry_uncertain):
+                return True
         except Exception:
             continue
     return False
@@ -135,8 +160,7 @@ def _has_existing_log(log_path: str, proj_name: str, security_mode: str = "none"
 def _append_error_jsonl(log_path: str, filename: str, entry: dict) -> None:
     os.makedirs(log_path, exist_ok=True)
     err_file = os.path.join(log_path, filename)
-    with open(err_file, "a", encoding="utf-8") as fp:
-        fp.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    append_jsonl(err_file, entry)
 
 
 def _record_download_error(log_path: str, proj_name: str, url: str, err: Exception) -> None:
@@ -187,11 +211,13 @@ def _record_container_error(
 def _open_docker_shell_with_retry(
     local_path: str, max_attempts: int = 2
 ) -> InteractiveDockerShell:
+    stuck_timeout = max(30, int(os.getenv("SHELL_STUCK_TIMEOUT", "240") or "240"))
     last_err = None
     for idx in range(max(1, int(max_attempts))):
         try:
             return InteractiveDockerShell(
                 local_path=local_path,
+                stuck_timeout=stuck_timeout,
                 cmd_timeout=1200,
                 use_proxy=USE_PROXY,
                 pre_exec=USE_PROXY,
@@ -207,15 +233,58 @@ def _open_docker_shell_with_retry(
     raise last_err
 
 
-def _cleanup_stale_process_csvs(csv_dir: str) -> None:
+def _merge_process_csvs(csv_dir: str) -> int:
+    """
+    Merge any temporary <pid>.csv files inside csv_dir into statistics.csv (deduplicating by run_id)
+    and delete the merged temp files. Safe to call both on startup crash-recovery and in finally.
+    """
     if not csv_dir or not os.path.isdir(csv_dir):
-        return
-    for filename in os.listdir(csv_dir):
+        return 0
+    stats_path = os.path.join(csv_dir, "statistics.csv")
+    seen_run_ids = set()
+    if os.path.isfile(stats_path):
+        try:
+            with open(stats_path, "r", encoding="utf-8", errors="replace", newline="") as fp:
+                for row in csv.reader(fp):
+                    if row and row[0]:
+                        seen_run_ids.add(row[0])
+        except OSError:
+            pass
+
+    rows_to_append = []
+    for filename in sorted(os.listdir(csv_dir)):
         if filename.endswith(".csv") and filename[:-4].isdigit():
+            file_path = os.path.join(csv_dir, filename)
             try:
-                os.remove(os.path.join(csv_dir, filename))
+                with open(file_path, "r", encoding="utf-8", errors="replace", newline="") as fp:
+                    for row in csv.reader(fp):
+                        if not row:
+                            continue
+                        run_id = row[0] if row[0] else None
+                        if run_id and run_id in seen_run_ids:
+                            continue
+                        if run_id:
+                            seen_run_ids.add(run_id)
+                        rows_to_append.append(row)
             except OSError:
-                pass
+                continue
+            finally:
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+
+    if rows_to_append:
+        with open(stats_path, "a", encoding="utf-8", errors="replace", newline="") as fp:
+            csv_writer = csv.writer(fp)
+            for row in rows_to_append:
+                csv_writer.writerow(row)
+            fp.flush()
+            os.fsync(fp.fileno())
+    return len(rows_to_append)
+
+
+_cleanup_stale_process_csvs = _merge_process_csvs
 
 
 def start_compile(
@@ -228,8 +297,8 @@ def start_compile(
     disable_navigator,
     disable_error_solver,
     skip_existing,
-    security_mode,
     projects,
+    retry_uncertain=False,
 ):
     DATASET_BASE_PATH = None
     if os.environ.get("DATASET_BASE_PATH"):
@@ -254,12 +323,26 @@ def start_compile(
         ablation_mode = "full"
 
     consecutive_container_failures = 0
+    total_projects = len(projects)
+    jsonl_index = load_results_jsonl_index(log_path) if skip_existing else {}
 
-    for info in projects:
+    for proj_idx, info in enumerate(projects, start=1):
         proj_name = info["name"]
-        if skip_existing and _has_existing_log(log_path, proj_name, security_mode=security_mode):
-            logging.info("[-] Skipping %s (existing JSON log found in %s)", proj_name, log_path)
+        if skip_existing and _has_existing_log(
+            log_path,
+            proj_name,
+            retry_uncertain=retry_uncertain,
+            jsonl_index=jsonl_index,
+        ):
+            logging.info(
+                "[-] [%d/%d] Skipping %s (existing completed record found in %s)",
+                proj_idx,
+                total_projects,
+                proj_name,
+                log_path,
+            )
             continue
+        logging.info("[+] [%d/%d] Starting project: %s", proj_idx, total_projects, proj_name)
 
         for attempt_idx in range(retry + 1):
             url = info["url"]
@@ -349,6 +432,7 @@ def start_compile(
                         tools=tools,
                         prompt=prompt,
                         output_parser=SafeReActSingleInputOutputParser(),
+                        stop_sequence=resolve_react_stop_sequences(),
                     )
                     agent_max_execution_time = max(
                         60, int(os.getenv("AGENT_MAX_EXECUTION_TIME", "1800") or "1800")
@@ -428,7 +512,7 @@ def start_compile(
                                 raise
                             transient_llm_aborted = True
                             logging.warning(
-                                "[!] Transient LLM error on %s (%s); skipping save_logs/Stage 3 so --skip-existing will retry later.",
+                                "[!] Transient LLM error on %s (%s); skipping save_logs so --skip-existing will retry later.",
                                 proj_name,
                                 e,
                             )
@@ -464,7 +548,6 @@ def start_compile(
                         build_metadata = {
                             "project": proj_name,
                             "ablation_mode": ablation_mode,
-                            "security_mode": security_mode,
                             "strict_checker": bool(strict_checker),
                             "checker_non_strict": checker_non_strict,
                             "checker_strict": checker_strict,
@@ -480,37 +563,6 @@ def start_compile(
                             "smoke_check": smoke_check,
                         }
 
-                        # Run the 3-layer security pipeline ONCE per project on the final attempt
-                        # (either compilation passed, or retries are exhausted) while the container is open.
-                        is_final_attempt = (attempt_idx == retry) or (not checker_ok.startswith("False"))
-                        if is_final_attempt:
-                            try:
-                                security_report = run_security_pipeline(
-                                    shell=shell,
-                                    local_path=local_path,
-                                    log_path=log_path,
-                                    proj_name=proj_name,
-                                    target_files=files,
-                                    tools_log=tools_log,
-                                    security_mode=security_mode,
-                                    ignore_relpaths=pre_existing_artifacts,
-                                )
-                            except Exception as sec_err:
-                                logging.exception(
-                                    "[!] Security pipeline failed for %s: %s", proj_name, sec_err
-                                )
-                                security_report = {
-                                    "mode": security_mode,
-                                    "status": "error",
-                                    "error": str(sec_err),
-                                }
-                        else:
-                            security_report = {
-                                "mode": security_mode,
-                                "status": "skipped_retry_pending",
-                                "attempt": attempt_idx + 1,
-                            }
-
                         save_logs(
                             log_path,
                             proj_name,
@@ -521,8 +573,8 @@ def start_compile(
                             local_path,
                             checker_ok,
                             model_ok,
-                            security_report,
                             build_metadata=build_metadata,
+                            project_url=url,
                         )
             except Exception as repo_err:
                 if is_fatal_llm_error(repo_err):
@@ -672,17 +724,30 @@ def start_compile(
     help="skip projects that already have a valid JSON log in log_path",
 )
 @click.option(
+    "--retry-uncertain",
+    is_flag=True,
+    default=False,
+    help="when combined with --skip-existing, re-run projects whose prior log ended in UNCERTAIN / loop early-stop without passing checker",
+)
+@click.option(
+    "--start-index",
+    type=int,
+    default=1,
+    show_default=True,
+    help="1-based starting index into json_path (applied before --limit)",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=0,
+    show_default=True,
+    help="maximum number of projects to run from the selected slice (0 = all)",
+)
+@click.option(
     "--projects-filter",
     type=str,
     default="",
     help="comma-separated list of project names to run from json_path",
-)
-@click.option(
-    "--security-mode",
-    type=click.Choice(["none", "sast", "hardening", "sanitizer", "all"], case_sensitive=False),
-    default="all",
-    show_default=True,
-    help="Stage 3 security pipeline mode (none, sast, hardening, sanitizer, all)",
 )
 def main(
     json_path,
@@ -697,8 +762,10 @@ def main(
     disable_navigator,
     disable_error_solver,
     skip_existing,
+    retry_uncertain,
+    start_index,
+    limit,
     projects_filter,
-    security_mode,
 ):
     """
     Compile the projects from source code with the help of AI assistant
@@ -725,12 +792,55 @@ def main(
             )
         projects = filtered
 
+    if start_index > 1:
+        projects = projects[start_index - 1 :]
+    if limit and limit > 0:
+        projects = projects[:limit]
+
     if not projects:
         logging.warning("[!] No matching projects found to compile.")
         return
 
     os.makedirs(log_path, exist_ok=True)
-    _cleanup_stale_process_csvs(log_path)
+    removed_tmps = cleanup_stale_tmp_files(log_path)
+    if removed_tmps:
+        logging.info("[+] Cleaned up %d interrupted *.tmp.* file(s) in %s.", removed_tmps, log_path)
+    recovered_csv_rows = _merge_process_csvs(log_path)
+    if recovered_csv_rows:
+        logging.info(
+            "[+] Recovered %d unmerged statistics.csv row(s) from prior interrupted run in %s.",
+            recovered_csv_rows,
+            log_path,
+        )
+
+    # Repair any truncated trailing JSONL lines from a prior power cut and sync legacy logs
+    for jsonl_name in (
+        RESULTS_JSONL_FILENAME,
+        "download_errors.jsonl",
+        "llm_transient_errors.jsonl",
+        "container_errors.jsonl",
+    ):
+        iter_jsonl_records(os.path.join(log_path, jsonl_name), repair_truncated_tail=True)
+    backfilled = backfill_results_jsonl(log_path)
+    if backfilled:
+        logging.info(
+            "[+] Backfilled %d existing *.log.*.json record(s) into %s.",
+            backfilled,
+            os.path.join(log_path, RESULTS_JSONL_FILENAME),
+        )
+
+    if not skip_existing:
+        existing_logs = glob.glob(os.path.join(log_path, "*.log.*.json"))
+        existing_jsonl = iter_jsonl_records(os.path.join(log_path, RESULTS_JSONL_FILENAME))
+        existing_count = max(len(existing_logs), len(existing_jsonl))
+        if existing_count:
+            logging.warning(
+                "[!] Found %d existing log record(s) in %s, but --skip-existing is False; "
+                "starting from project #1 of the selected list (%s). Pass --skip-existing to resume.",
+                existing_count,
+                log_path,
+                projects[0].get("name", "?"),
+            )
 
     base_tuple = (
         dataset_base_path,
@@ -742,42 +852,20 @@ def main(
         disable_navigator,
         disable_error_solver,
         skip_existing,
-        security_mode,
     )
     try:
         if multi_process:
             os.environ["AC_MULTI_WORKER"] = "1"
             worker_count = max(1, min(len(projects), max_workers or 2))
-            args = [base_tuple + ([project],) for project in projects]
+            args = [base_tuple + ([project], retry_uncertain) for project in projects]
             with multiprocessing.Pool(processes=worker_count) as pool:
                 pool.starmap(start_compile, args)
         else:
-            args = base_tuple + (projects,)
+            args = base_tuple + (projects, retry_uncertain)
             start_compile(*args)
     finally:
         # Merge temporary <pid>.csv inside log_path into statistics.csv and clean up temp files
-        merge_data = []
-        for filename in sorted(os.listdir(log_path)):
-            if filename.endswith(".csv") and filename[:-4].isdigit():
-                file_path = os.path.join(log_path, filename)
-                try:
-                    with open(file_path, "r", encoding="utf-8", errors="replace", newline="") as fp:
-                        csv_reader = csv.reader(fp)
-                        csv_data = list(csv_reader)
-                        merge_data.append(csv_data)
-                finally:
-                    try:
-                        os.remove(file_path)
-                    except OSError:
-                        pass
-
-        if merge_data:
-            stats_path = os.path.join(log_path, "statistics.csv")
-            with open(stats_path, "a", encoding="utf-8", errors="replace", newline="") as fp:
-                csv_writer = csv.writer(fp)
-                for data in merge_data:
-                    for row in data:
-                        csv_writer.writerow(row)
+        _merge_process_csvs(log_path)
 
 
 if __name__ == "__main__":

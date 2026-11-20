@@ -31,7 +31,7 @@ class InteractiveDockerShell:
         local_path,
         image_name="autocompiler:gcc13",
         use_proxy=USE_PROXY,
-        stuck_timeout=120,
+        stuck_timeout=None,
         cmd_timeout=3600,
         pre_exec=False,
     ):
@@ -42,6 +42,8 @@ class InteractiveDockerShell:
         self.container_name = f"ac-{os.getpid()}-{int(time.time() * 1000)}"
         self.ssh_port = None
         self.use_proxy = bool(use_proxy)
+        if stuck_timeout is None:
+            stuck_timeout = max(30, int(os.getenv("SHELL_STUCK_TIMEOUT", "240") or "240"))
         self.stuck_timeout = stuck_timeout
         self.cmd_timeout = cmd_timeout
         self.last_line = "root@c0mpi1er-c0nta1ner:/work# "
@@ -275,18 +277,24 @@ class InteractiveDockerShell:
             m = make_prefix_re.match(seg)
             if not m:
                 if re.search(r"\bcmake\s+--build\b", seg):
-                    seg = re.sub(r"-j\s*\$\([^)]+\)", f"-j{max_jobs}", seg)
+                    seg = re.sub(r"""-j\s*["']?\$\([^)]+\)["']?""", f"-j{max_jobs}", seg)
+                    seg = re.sub(r"""-j\s*["']?\$\{?[A-Za-z_][A-Za-z0-9_]*\}?["']?""", f"-j{max_jobs}", seg)
                     parts[idx] = seg
                 continue
 
             prefix, make_part = m.group(1), m.group(2)
-            make_part = re.sub(r"-j\s*\$\([^)]+\)", f"-j{max_jobs}", make_part)
+            make_part = re.sub(r"""-j\s*["']?\$\([^)]+\)["']?""", f"-j{max_jobs}", make_part)
+            make_part = re.sub(r"""-j\s*["']?\$\{?[A-Za-z_][A-Za-z0-9_]*\}?["']?""", f"-j{max_jobs}", make_part)
             make_part = re.sub(
-                r"-j\s*(\d+)\b",
-                lambda jm: f"-j{max_jobs}" if int(jm.group(1)) > max_jobs else jm.group(0),
+                r"""-j\s*(?:"(\d+)"|'(\d+)'|(\d+)\b)""",
+                lambda jm: (
+                    f"-j{max_jobs}"
+                    if int(jm.group(1) or jm.group(2) or jm.group(3)) > max_jobs
+                    else f"-j{jm.group(1) or jm.group(2) or jm.group(3)}"
+                ),
                 make_part,
             )
-            make_part = re.sub(r"\s-j(?=[\s)]|$)", f" -j{max_jobs}", make_part)
+            make_part = re.sub(r"\s-j(?=[\s)'\"]|$)", f" -j{max_jobs}", make_part)
             if not re.search(r"(?:^|\s)-j(?:\s*\d+|\s|$)", make_part):
                 tokens = set(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_-]*\b", make_part))
                 if not (tokens & skip_targets):
@@ -722,11 +730,10 @@ class SearchCompilationInstruction:
                 )
                 all_splits = text_splitter.split_documents(docs)
                 cfg = resolve_llm_config()
-                emb_key = get_active_api_key() or cfg.get("api_key") or "EMPTY"
                 emb_function = OpenAIEmbeddings(
                     base_url=cfg["base_url"],
                     model=cfg["embedding_model"] or OPENAI_EMBEDDING_MODEL,
-                    api_key=emb_key,
+                    api_key="EMPTY",
                     check_embedding_ctx_length=False,
                 )
                 if os.path.exists(self.vec_store):
@@ -778,7 +785,7 @@ class SearchCompilationInstruction:
                         | StrOutputParser()
                     )
                     answer = strip_thinking_tags(
-                        call_with_rate_limit_retry(rag_chain.invoke, {})
+                        call_with_llm_retry(rag_chain.invoke, {})
                     )
                     self.logger.append(
                         [
@@ -817,7 +824,7 @@ class SearchCompilationInstruction:
                     | StrOutputParser()
                 )
                 answer = strip_thinking_tags(
-                    call_with_rate_limit_retry(rag_chain.invoke, {})
+                    call_with_llm_retry(rag_chain.invoke, {})
                 )
                 self.logger2.append(
                     [
@@ -887,7 +894,7 @@ class SearchCompilationInstruction:
             chain = prompt | llm | StrOutputParser()
             logging.info(f"[+] Invoke SearchCompilationInstruction for file: {real_file_path}")
             answer = strip_thinking_tags(
-                call_with_rate_limit_retry(chain.invoke, {"text": content, "file_path": file_path})
+                call_with_llm_retry(chain.invoke, {"text": content, "file_path": file_path})
             )
             self.logger.append(
                 [

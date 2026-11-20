@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# Build-Aware Compiler Wrapper for AutoCompiler / NT521_CompileAgent (Stage 3)
-# Intercepts gcc / g++ / cc / c++ / clang / clang++ when ENABLE_COMPILER_WRAPPER is enabled
-# (or WRAPPER_OPTI is non-empty) and routes compile-only, shared-library, and link flags safely.
+# Compiler Wrapper (Ch3nYe/AutoCompiler)
+# Usage:
+# 1. Link this script to PATH, e.g., ln -s /wrapper_compiler.sh /usr/local/bin/gcc
+# 2. Move original compiler to <compiler>-real (e.g., mv /usr/local/bin/gcc /usr/local/bin/gcc-real)
+# 3. Set ENABLE_COMPILER_WRAPPER=True or WRAPPER_OPTI to enable option replacement
+# Example: WRAPPER_OPTI="-O2 -gdwarf-4" gcc -O3 -Wall -o test.elf test.c
 
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 [source files and options]"
+  echo "This is a wrapper for the compiler 'gcc, g++, clang, clang++, cc, c++'."
+  echo "It modifies the compilation options and ignores certain flags."
   exit 1
 fi
 
@@ -16,273 +21,93 @@ real_clangxx="clang++-real"
 real_cc="gcc-real"
 real_cxx="g++-real"
 
-compiler=""
-case "$(basename "$0")" in
-  gcc)
-    compiler="${WRAPPER_GCC:-$real_gcc}"
-    ;;
-  clang)
-    compiler="${WRAPPER_CLANG:-$real_clang}"
-    ;;
-  g++)
-    compiler="${WRAPPER_GXX:-$real_gxx}"
-    ;;
-  clang++)
-    compiler="${WRAPPER_CLANGXX:-$real_clangxx}"
-    ;;
-  cc)
-    compiler="${WRAPPER_CC:-$real_cc}"
-    ;;
-  c++)
-    compiler="${WRAPPER_CXX:-$real_cxx}"
-    ;;
-  *)
-    echo "Error: Unknown compiler '$0'." >&2
-    exit 1
-    ;;
-esac
+resolve_compiler() {
+  case "$(basename "$1")" in
+    gcc)
+      echo "${WRAPPER_GCC:-$real_gcc}"
+      ;;
+    clang)
+      echo "${WRAPPER_CLANG:-$real_clang}"
+      ;;
+    g++)
+      echo "${WRAPPER_GXX:-$real_gxx}"
+      ;;
+    clang++)
+      echo "${WRAPPER_CLANGXX:-$real_clangxx}"
+      ;;
+    cc)
+      echo "${WRAPPER_CC:-$real_cc}"
+      ;;
+    c++)
+      echo "${WRAPPER_CXX:-$real_cxx}"
+      ;;
+    *)
+      echo "Error: Unknown compiler '$1'." >&2
+      return 1
+      ;;
+  esac
+}
 
-# Pass-through when wrapper is disabled or unset with empty WRAPPER_OPTI
+compiler="$(resolve_compiler "$0")" || exit 1
+
+# Pass-through directly if neither ENABLE_COMPILER_WRAPPER nor WRAPPER_OPTI is enabled
 enable_lc="$(printf '%s' "$ENABLE_COMPILER_WRAPPER" | tr '[:upper:]' '[:lower:]')"
 if [ "$enable_lc" = "0" ] || [ "$enable_lc" = "false" ] || [ "$enable_lc" = "no" ]; then
   exec "$compiler" "$@"
 fi
-if [ -z "$enable_lc" ] && [ -z "$WRAPPER_OPTI" ]; then
+if [ -z "$ENABLE_COMPILER_WRAPPER" ] && [ -z "$WRAPPER_OPTI" ]; then
   exec "$compiler" "$@"
 fi
 
-# Inspect incoming arguments for mode detection
-IS_QUERY_OR_PREPROC=false
-IS_COMPILE_ONLY=false
-IS_SHARED=false
-IS_STATIC=false
-IS_RELOCATABLE=false
-HAS_FPIC=false
-HAS_V_FLAG=false
-HAS_INPUT_OR_OUT=false
-HAS_NON_O0_IN_ARGS=false
-HAS_ANY_OPTI_IN_ARGS=false
-
-for arg in "$@"; do
+skip_base_arg() {
+  local arg="$1"
   case "$arg" in
-    -E|-M|-MM|-fsyntax-only|-dumpversion|-dumpmachine|-dumpspecs|--version|--help|-print-search-dirs|-print-libgcc-file-name|-print-multiarch|-print-file-name=*|-print-prog-name=*|-print-*)
-      IS_QUERY_OR_PREPROC=true
+    -s|-DNDEBUG|-g|-gdwarf-*|-gdwarf|--debug|--debug=*|--optimize|--optimize=*)
+      return 0
       ;;
-    -c|-S)
-      IS_COMPILE_ONLY=true
-      ;;
-    -shared)
-      IS_SHARED=true
-      ;;
-    -r|-Wl,-r|--relocatable)
-      IS_RELOCATABLE=true
-      ;;
-    -static|-static-libgcc)
-      if [ "$arg" = "-static" ]; then
-        IS_STATIC=true
-      fi
-      ;;
-    -fPIC|-fpic)
-      HAS_FPIC=true
-      ;;
-    -v|-V)
-      HAS_V_FLAG=true
-      ;;
-    -o)
-      HAS_INPUT_OR_OUT=true
-      ;;
-    -O0)
-      HAS_ANY_OPTI_IN_ARGS=true
-      HAS_NON_O0_IN_ARGS=false
-      ;;
-    -O|-O1|-O2|-O3|-Os|-Ofast|-Og|-Oz)
-      HAS_ANY_OPTI_IN_ARGS=true
-      HAS_NON_O0_IN_ARGS=true
-      ;;
-    *.c|*.cc|*.cpp|*.cxx|*.C|*.S|*.s|*.i|*.ii|*.o|*.a|*.so|*.so.*)
-      HAS_INPUT_OR_OUT=true
+    *)
+      return 1
       ;;
   esac
-done
+}
 
-# Query-only -v / -V invocation (e.g., configure probing compiler version)
-if $HAS_V_FLAG && ! $HAS_INPUT_OR_OUT; then
-  IS_QUERY_OR_PREPROC=true
-fi
-
-if $IS_QUERY_OR_PREPROC; then
-  exec "$compiler" "$@"
-fi
-
-IS_LINK=true
-if $IS_COMPILE_ONLY; then
-  IS_LINK=false
-fi
-
-# Parse WRAPPER_OPTI as whitespace-separated tokens (preserve commas inside -Wl,... and -fsanitize=...)
-read -ra OPTI_ARR <<< "$WRAPPER_OPTI"
-
-HAS_WRAP_OPTI=false
-WRAP_EFFECTIVE_O0=false
-HAS_WRAP_NON_O0=false
-HAS_WRAP_FORTIFY=false
-HAS_WRAP_STACK_PROT=false
-HAS_WRAP_PIE=false
-HAS_WRAP_RELRO=false
-HAS_WRAP_DEBUG=false
-HAS_WRAP_SANITIZER=false
-
-for opt in "${OPTI_ARR[@]}"; do
-  case "$opt" in
-    -O0)
-      HAS_WRAP_OPTI=true
-      WRAP_EFFECTIVE_O0=true
-      HAS_WRAP_NON_O0=false
+skip_opti_arg() {
+  local arg="$1"
+  case "$arg" in
+    -O|-O0|-O1|-O2|-O3|-Os|-Ofast|-Og|-Oz)
+      return 0
       ;;
-    -O|-O1|-O2|-O3|-Os|-Ofast|-Og|-Oz)
-      HAS_WRAP_OPTI=true
-      WRAP_EFFECTIVE_O0=false
-      HAS_WRAP_NON_O0=true
-      ;;
-    -D_FORTIFY_SOURCE*|-U_FORTIFY_SOURCE*)
-      HAS_WRAP_FORTIFY=true
-      ;;
-    -fstack-protector*)
-      HAS_WRAP_STACK_PROT=true
-      ;;
-    -pie|-fPIE|-fpie)
-      HAS_WRAP_PIE=true
-      ;;
-    -Wl,-z,relro*|-Wl,-z,now*)
-      HAS_WRAP_RELRO=true
-      ;;
-    -g|-g[0-9]|-gdwarf*|-ggdb*)
-      HAS_WRAP_DEBUG=true
-      ;;
-    -fsanitize=*)
-      HAS_WRAP_SANITIZER=true
+    *)
+      return 1
       ;;
   esac
-done
+}
 
-# Determine effective optimization status (FOR _FORTIFY_SOURCE safety)
-EFFECTIVE_NON_O0=false
-if $HAS_WRAP_OPTI; then
-  if $HAS_WRAP_NON_O0; then
-    EFFECTIVE_NON_O0=true
-  fi
-else
-  if $HAS_NON_O0_IN_ARGS; then
-    EFFECTIVE_NON_O0=true
-  fi
+IS_WRAP_OPTI=false
+if [[ "$WRAPPER_OPTI" =~ -O[0-3sfastgz]* ]]; then
+  IS_WRAP_OPTI=true
 fi
 
-# Filter conflicting flags from original arguments
 params=()
 for arg in "$@"; do
-  case "$arg" in
-    -s)
-      continue
-      ;;
-    -Werror|-Werror=*)
-      continue
-      ;;
-    --debug|--debug=*)
-      continue
-      ;;
-    -g|-gdwarf|-gdwarf-*)
-      if $HAS_WRAP_DEBUG; then
-        continue
-      fi
-      ;;
-    -O|-O0|-O1|-O2|-O3|-Os|-Ofast|-Og|-Oz|--optimize|--optimize=*)
-      if $HAS_WRAP_OPTI; then
-        continue
-      fi
-      ;;
-    -D_FORTIFY_SOURCE*|-U_FORTIFY_SOURCE*)
-      if $HAS_WRAP_FORTIFY; then
-        continue
-      fi
-      ;;
-    -fno-stack-protector|-fstack-protector*)
-      if $HAS_WRAP_STACK_PROT; then
-        continue
-      fi
-      ;;
-    -no-pie|-nopie|-fno-pie|-fno-PIE)
-      if $HAS_WRAP_PIE; then
-        continue
-      fi
-      ;;
-    -Wl,-z,norelro|-Wl,-z,lazy)
-      if $HAS_WRAP_RELRO; then
-        continue
-      fi
-      ;;
-    -Wl,--no-undefined|-Wl,-z,defs)
-      if $IS_SHARED && $HAS_WRAP_SANITIZER; then
-        continue
-      fi
-      ;;
-    -Wl,*)
-      if $IS_SHARED && $HAS_WRAP_SANITIZER; then
-        cleaned_wl="${arg//,--no-undefined/}"
-        cleaned_wl="${cleaned_wl//-Wl,--no-undefined,/-Wl,}"
-        cleaned_wl="${cleaned_wl//,-z,defs/}"
-        cleaned_wl="${cleaned_wl//-Wl,-z,defs,/-Wl,}"
-        if [ "$cleaned_wl" = "-Wl," ] || [ "$cleaned_wl" = "-Wl" ] || [ -z "$cleaned_wl" ]; then
-          continue
-        fi
-        params+=("$cleaned_wl")
-        continue
-      fi
-      ;;
-  esac
+  if skip_base_arg "$arg"; then
+    continue
+  fi
+  if $IS_WRAP_OPTI && skip_opti_arg "$arg"; then
+    continue
+  fi
   params+=("$arg")
 done
 
-# Append wrapper options according to compile/link/shared/static context
-added_undef_fortify=false
-for opt in "${OPTI_ARR[@]}"; do
-  [ -z "$opt" ] && continue
-  case "$opt" in
-    -pie)
-      if $IS_LINK && ! $IS_SHARED && ! $IS_STATIC && ! $IS_RELOCATABLE; then
-        params+=("$opt")
-      fi
-      ;;
-    -fPIE|-fpie)
-      if $IS_STATIC || $IS_RELOCATABLE; then
-        continue
-      elif $IS_COMPILE_ONLY || $IS_SHARED || $HAS_FPIC; then
-        params+=("-fPIC")
-      else
-        params+=("$opt")
-      fi
-      ;;
-    -Wl,*)
-      if $IS_LINK && ! $IS_RELOCATABLE; then
-        params+=("$opt")
-      fi
-      ;;
-    -D_FORTIFY_SOURCE*)
-      if $EFFECTIVE_NON_O0; then
-        if ! $added_undef_fortify; then
-          params+=("-U_FORTIFY_SOURCE")
-          added_undef_fortify=true
-        fi
-        params+=("$opt")
-      fi
-      ;;
-    -U_FORTIFY_SOURCE*)
-      params+=("$opt")
-      added_undef_fortify=true
-      ;;
-    *)
-      params+=("$opt")
-      ;;
-  esac
-done
+if [ -n "$WRAPPER_OPTI" ]; then
+  WRAPPER_OPTI_MODIFIED="${WRAPPER_OPTI//,/ }"
+  read -ra OPTI_ARR <<< "$WRAPPER_OPTI_MODIFIED"
+  for opt in "${OPTI_ARR[@]}"; do
+    opt_trimmed="$(echo "$opt" | xargs)"
+    if [ -n "$opt_trimmed" ]; then
+      params+=("$opt_trimmed")
+    fi
+  done
+fi
 
 exec "$compiler" "${params[@]}"

@@ -5,7 +5,7 @@ ARG SSH_PASSWORD="root"
 ENV DEBIAN_FRONTEND=noninteractive \
     GIT_TERMINAL_PROMPT=0
 
-# Install build, SSH, and Stage 3 security analysis tools in a single layer
+# Install build tools and SSH server
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     tree \
@@ -27,28 +27,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     automake \
     libtool \
     pkg-config \
-    bear \
-    cppcheck \
-    gdb \
     python3 \
-    python3-venv \
-    python3-pip \
+    python-is-python3 \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /var/run/sshd /work /opt/rules \
+    && mkdir -p /var/run/sshd /work \
     && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
     && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && echo "root:$SSH_PASSWORD" | chpasswd \
     && echo "cd /work" >> /root/.bashrc
-
-# Install Semgrep inside an isolated virtualenv (PEP 668 safe on Debian 12)
-RUN python3 -m venv /opt/semgrep \
-    && /opt/semgrep/bin/pip install --no-cache-dir --upgrade pip \
-    && /opt/semgrep/bin/pip install --no-cache-dir semgrep \
-    && ln -sf /opt/semgrep/bin/semgrep /usr/local/bin/semgrep
-
-# Copy custom C/C++ Semgrep rules
-COPY ./rules /opt/rules
-RUN sed -i 's/\r$//' /opt/rules/*
 
 # Copy compiler and strip wrappers, strip CRLF if built on Windows, and symlink real binaries
 COPY ./docker/wrappers/wrapper_compiler.sh /wrapper_compiler.sh

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import re
 from typing import AsyncIterator, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -18,7 +19,11 @@ from langchain_core.callbacks import (
 from langchain_core.exceptions import OutputParserException
 from langchain_core.tools import BaseTool
 
-from compile_agent.config import call_with_rate_limit_retry, strip_thinking_tags
+from compile_agent.config import (
+    call_with_llm_retry,
+    resolve_llm_config,
+    strip_thinking_tags,
+)
 
 _REPETITION_WARNING = (
     "\n[SYSTEM WARNING] You have already executed this exact action multiple times "
@@ -115,6 +120,21 @@ class SafeReActSingleInputOutputParser(ReActSingleInputOutputParser):
         has_unclosed_think = "<think>" in low_raw and "</think>" not in low_raw
         has_think_tags = "<think" in low_raw or "</think>" in low_raw
 
+        if not raw_text.strip():
+            raise OutputParserException(
+                "LLM returned an empty response.",
+                observation=(
+                    "Your previous response was empty (likely hidden thinking or early stop on 'Observation:'). "
+                    "Do NOT output 'Observation:' or empty text. Respond immediately with:\n"
+                    "Thought: <1 brief sentence>\n"
+                    "Action: <tool name>\n"
+                    "Action Input: <command or input>\n"
+                    "(or 'Thought: ...\\nFinal Answer: COMPILATION-SUCCESS|COMPILATION-FAIL|COMPILATION-UNCERTAIN')."
+                ),
+                llm_output="[empty response]",
+                send_to_llm=True,
+            )
+
         cleaned_text = strip_thinking_tags(raw_text)
         normalized_text = _normalize_react_headers(cleaned_text)
 
@@ -130,7 +150,13 @@ class SafeReActSingleInputOutputParser(ReActSingleInputOutputParser):
                         r"\n\s*Final Answer\s*:", action_match.group(2), maxsplit=1
                     )[0].strip()
                     tool_input = _clean_tool_input(raw_action_input)
-                    return AgentAction(action, tool_input, normalized_text[:fa_idx].strip())
+                    thought_prefix = normalized_text[: action_match.start()].strip()
+                    clean_log = (
+                        f"{thought_prefix}\nAction: {action}\nAction Input: {tool_input}"
+                        if thought_prefix
+                        else f"Action: {action}\nAction Input: {tool_input}"
+                    )
+                    return AgentAction(action, tool_input, clean_log)
                 final_output = re.split(
                     r"\n\s*(?:---\s*\n\s*)?(?:Thought|Action(?:\s*\d+)?|Observation)\s*:",
                     normalized_text.split(FINAL_ANSWER_ACTION)[-1],
@@ -142,7 +168,13 @@ class SafeReActSingleInputOutputParser(ReActSingleInputOutputParser):
                 )
             action = _clean_tool_name(action_match.group(1))
             tool_input = _clean_tool_input(action_match.group(2))
-            return AgentAction(action, tool_input, normalized_text)
+            thought_prefix = normalized_text[: action_match.start()].strip()
+            clean_log = (
+                f"{thought_prefix}\nAction: {action}\nAction Input: {tool_input}"
+                if thought_prefix
+                else f"Action: {action}\nAction Input: {tool_input}"
+            )
+            return AgentAction(action, tool_input, clean_log)
 
         try:
             return super().parse(normalized_text)
@@ -154,7 +186,7 @@ class SafeReActSingleInputOutputParser(ReActSingleInputOutputParser):
                         "Your previous output was truncated inside a <think> block before emitting a valid Action or Final Answer. "
                         "Do NOT write 'Observation:' inside <think>. Respond directly with 'Thought:', 'Action:', and 'Action Input:' (or 'Final Answer:')."
                     ),
-                    llm_output=raw_text,
+                    llm_output="[truncated thinking without Action]",
                     send_to_llm=True,
                 ) from exc
             raise
@@ -193,11 +225,44 @@ class CompilationAgentExecutor(AgentExecutor):
             compacted = f"{compacted}\n{exit_tag}"
         return compacted
 
+    @staticmethod
+    def _resolve_scratchpad_max_chars() -> int:
+        env_val = os.getenv("LLM_SCRATCHPAD_MAX_CHARS", "").strip()
+        if env_val:
+            try:
+                return max(4000, int(env_val))
+            except ValueError:
+                pass
+        try:
+            ctx = resolve_llm_config().get("context_window")
+            if ctx and int(ctx) > 0:
+                return min(24000, max(6000, int(int(ctx) * 1.5)))
+        except Exception:
+            pass
+        return 24000
+
     def _prepare_intermediate_steps(
         self,
         intermediate_steps: List[Tuple[AgentAction, str]],
     ) -> List[Tuple[AgentAction, str]]:
-        steps = list(intermediate_steps or [])
+        raw_steps = list(intermediate_steps or [])
+        if not raw_steps:
+            return raw_steps
+
+        # Normalize empty _Exception logs and collapse consecutive _Exception runs in prompt copy
+        # (raw_steps stays untouched for loop detection).
+        steps: List[Tuple[AgentAction, str]] = []
+        for act, obs in raw_steps:
+            if act.tool == "_Exception":
+                clean_log = str(act.log or "").strip() or "[empty response]"
+                norm_act = AgentAction(act.tool, act.tool_input, clean_log)
+                if steps and steps[-1][0].tool == "_Exception":
+                    steps[-1] = (norm_act, obs)
+                else:
+                    steps.append((norm_act, obs))
+            else:
+                steps.append((act, obs))
+
         n = len(steps)
         if n == 0:
             return steps
@@ -205,7 +270,7 @@ class CompilationAgentExecutor(AgentExecutor):
         def _total_len(step_list: List[Tuple[AgentAction, str]]) -> int:
             return sum(len(str(a.log or "")) + len(str(obs or "")) for a, obs in step_list)
 
-        max_chars = 24000
+        max_chars = self._resolve_scratchpad_max_chars()
         keep_recent = 6
         if n <= keep_recent and _total_len(steps) <= max_chars:
             return steps
@@ -263,7 +328,7 @@ class CompilationAgentExecutor(AgentExecutor):
 
         try:
             prepared_steps = self._prepare_intermediate_steps(raw_steps)
-            output = call_with_rate_limit_retry(
+            output = call_with_llm_retry(
                 self.agent.plan,
                 prepared_steps,
                 callbacks=run_manager.get_child() if run_manager else None,
@@ -507,6 +572,10 @@ class CompilationAgentExecutor(AgentExecutor):
                     break
             if not tree_obs:
                 tree_obs = first_valid_obs or str(intermediate_steps[0][1])
+            if len(tree_obs) > 3500:
+                tree_obs = CompilationAgentExecutor._compact_observation(
+                    tree_obs, head_chars=2200, tail_chars=1000
+                )
             if len(raw_input) < 25:
                 return tree_obs
             if "|--" not in raw_input and "`--" not in raw_input:
