@@ -1,0 +1,118 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+CompileNavigator: 
+        A tool for finding out the compilation instruction from project structure.
+        @param project_structure: The project structure.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, CompileNavigator ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project dsvpn from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
+3. Analyze any compilation or configuration errors directly using the Shell tool output and fix missing dependencies or build flags on your own.
+4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- build.zig
+|-- include
+|   |-- charm.h
+|   |-- os.h
+|   `-- vpn.h
+|-- logo.png
+`-- src
+    |-- charm.c
+    |-- charm.h
+    |-- os.c
+    `-- vpn.c
+
+3 directories, 12 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: CompileNavigator
+Action Input: .
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- build.zig
+|-- include
+|   |-- charm.h
+|   |-- os.h
+|   `-- vpn.h
+|-- logo.png
+`-- src
+    |-- charm.c
+    |-- charm.h
+    |-- os.c
+    `-- vpn.c
+Observation: To compile the DSVPN project, you can use one of the following methods:
+
+1. **Using Make (Standard):**
+   ```sh
+   make
+   ```
+
+2. **Using Make (Raspberry Pi 3/4 with NEON optimizations):**
+   ```sh
+   env OPTFLAGS=-mfpu=neon make
+   ```
+
+3. **Using Zig:**
+   If you have [Zig](https://ziglang.org) installed, you can compile it with:
+   ```sh
+   zig build -Drelease
+   ```
+Thought: Action: Shell
+Action Input: make
+Observation: root@c0mpi1er-c0nta1ner:/work# { make -j4
+cc $(cat ".cflags")  -Iinclude -o dsvpn src/vpn.c src/charm.c src/os.c
+strip dsvpn
+Skipping strip operation on original file: dsvpn
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Observation: The `make` command completed successfully with exit code 0. The output shows that the `dsvpn` executable was created and the strip operation was attempted (though skipped, likely because it's already stripped or the file doesn't exist in the expected way, but the compilation itself succeeded).
+
+Let's verify the executable exists.
+Action: Shell
+Action Input: ls -l dsvpn
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls -l dsvpn
+-rwxr-xr-x 1 root root 36208 Nov 22 22:23 dsvpn
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: The `dsvpn` executable file exists and has executable permissions. The compilation was successful.
+
+Final Answer: COMPILATION-SUCCESS

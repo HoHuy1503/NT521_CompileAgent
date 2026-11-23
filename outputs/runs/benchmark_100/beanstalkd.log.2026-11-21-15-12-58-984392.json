@@ -1,0 +1,108 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nCompileNavigator: \n        A tool for finding out the compilation instruction from project structure.\n        @param project_structure: The project structure.\n        \nErrorSolver: \n        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting\n        to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nImportant: Never write \"Observation:\" yourself. Stop immediately after \"Action Input:\".\n\nBegin!\nQuestion: I want you to help me compile the project beanstalkd from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.\n3. If there are any difficulties during compilation, try to break them without calling tools.\n4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n/no_think\n\nThought:",
+			"Action: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- CHANGELOG.md\n|-- CONTRIBUTING.md\n|-- CodeOfConduct.txt\n|-- Dockerfile\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- adm\n|   |-- Readme\n|   |-- launchd\n|   |-- systemd\n|   |-- systemv\n|   `-- upstart\n|-- conn.c\n|-- ct\n|   |-- License\n|   |-- ct.c\n|   |-- ct.h\n|   |-- gen\n|   `-- internal.h\n|-- darwin.c\n|-- dat.h\n|-- doc\n|   |-- beanstalkd.1\n|   |-- beanstalkd.1.html\n|   |-- beanstalkd.ronn\n|   |-- protocol.txt\n|   `-- protocol.zh-CN.md\n|-- file.c\n|-- freebsd.c\n|-- heap.c\n|-- job.c\n|-- linux.c\n|-- main.c\n|-- ms.c\n|-- net.c\n|-- pkg\n|   |-- README.md\n|   |-- beanstalkd.spec.in\n|   |-- bloghead.in\n|   |-- dist.sh\n|   |-- mail.sh\n|   `-- newstail.in\n|-- primes.c\n|-- prot.c\n|-- serv.c\n|-- sunos.c\n|-- testheap.c\n|-- testjobs.c\n|-- testms.c\n|-- testserv.c\n|-- testutil.c\n|-- time.c\n|-- tube.c\n|-- util.c\n|-- verc.sh\n|-- vers.sh\n`-- walg.c\n\n9 directories, 50 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Action: CompileNavigator\nAction Input: .\n|-- CHANGELOG.md\n|-- CONTRIBUTING.md\n|-- CodeOfConduct.txt\n|-- Dockerfile\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- adm\n|   |-- Readme\n|   |-- launchd\n|   |-- systemd\n|   |-- systemv\n|   `-- upstart\n|-- conn.c\n|-- ct\n|   |-- License\n|   |-- ct.c\n|   |-- ct.h\n|   |-- gen\n|   `-- internal.h\n|-- darwin.c\n|-- dat.h\n|-- doc\n|   |-- beanstalkd.1\n|   |-- beanstalkd.1.html\n|   |-- beanstalkd.ronn\n|   |-- protocol.txt\n|   `-- protocol.zh-CN.md\n|-- file.c\n|-- freebsd.c\n|-- heap.c\n|-- job.c\n|-- linux.c\n|-- main.c\n|-- ms.c\n|-- net.c\n|-- pkg\n|   |-- README.md\n|   |-- beanstalkd.spec.in\n|   |-- bloghead.in\n|   |-- dist.sh\n|   |-- mail.sh\n|   `-- newstail.in\n|-- primes.c\n|-- prot.c\n|-- serv.c\n|-- sunos.c\n|-- testheap.c\n|-- testjobs.c\n|-- testms.c\n|-- testserv.c\n|-- testutil.c\n|-- time.c\n|-- tube.c\n|-- util.c\n|-- verc.sh\n|-- vers.sh\n`-- walg.c"
+		],
+		[
+			"To compile the beanstalkd project, use the following steps:\n\n1.  **Prerequisites**: Ensure you have a C compiler and `make` installed. If you want systemd support, ensure `libsystemd` is available via `pkg-config`.\n2.  **Compilation**: Run the following command in the project root directory:\n    ```bash\n    make\n    ```\n    *   *Optional*: To explicitly disable systemd support, use `make USE_SYSTEMD=no`.\n    *   *Optional*: To force enable systemd support, use `make USE_SYSTEMD=yes`.\n3.  **Installation** (Optional): To install the compiled binary to `/usr/local/bin` (or a custom prefix), run:\n    ```bash\n    make install\n    ```",
+			"Thought: The CompileNavigator suggests using `make` to compile the project. I will first check the Makefile to understand the build process and then run `make`.\nAction: Shell\nAction Input: cat Makefile"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat Makefile\nPREFIX?=/usr/local\nBINDIR=$(DESTDIR)$(PREFIX)/bin\n\noverride CFLAGS+=-Wall -Werror -Wformat=2 -g\noverride LDFLAGS?=\n\nLDLIBS?=\n\nOS?=$(shell uname | tr 'A-Z' 'a-z')\nINSTALL?=install\nPKG_CONFIG?=pkg-config\n\nifeq ($(OS),sunos)\noverride LDFLAGS += -lxnet -lsocket -lnsl\nendif\n\nVERS=$(shell ./vers.sh)\nTARG=beanstalkd\nMOFILE=main.o\nOFILES=\\\n\t$(OS).o\\\n\tconn.o\\\n\tfile.o\\\n\theap.o\\\n\tjob.o\\\n\tms.o\\\n\tnet.o\\\n\tprimes.o\\\n\tprot.o\\\n\tserv.o\\\n\ttime.o\\\n\ttube.o\\\n\tutil.o\\\n\tvers.o\\\n\twalg.o\\\n\nTOFILES=\\\n\ttestheap.o\\\n\ttestjobs.o\\\n\ttestms.o\\\n\ttestserv.o\\\n\ttestutil.o\\\n\nHFILES=\\\n\tdat.h\\\n\nifeq ($(OS),linux)\n   LDLIBS+=-lrt\nendif\n\n# systemd support can be configured via USE_SYSTEMD:\n#        no: disabled\n#       yes: enabled, build fails if libsystemd is not found\n# otherwise: enabled if libsystemd is found\nifneq ($(USE_SYSTEMD),no)\nifeq ($(shell $(PKG_CONFIG) --exists libsystemd && echo $$?),0)\n\tLDLIBS+=$(shell $(PKG_CONFIG) --libs libsystemd)\n\tCPPFLAGS+=-DHAVE_LIBSYSTEMD\nelse\nifeq ($(USE_SYSTEMD),yes)\n$(error USE_SYSTEMD is set to \"$(USE_SYSTEMD)\", but $(PKG_CONFIG) cannot find libsystemd)\nendif\nendif\nendif\n\nCLEANFILES=\\\n\tvers.c\\\n\t$(wildcard *.gc*)\n\n.PHONY: all\nall: $(TARG)\n\n$(TARG): $(OFILES) $(MOFILE)\n\t$(LINK.o) -o $@ $^ $(LDLIBS)\n\n.PHONY: install\ninstall: $(BINDIR)/$(TARG)\n\n$(BINDIR)/%: %\n\t$(INSTALL) -d $(dir $@)\n\t$(INSTALL) $< $@\n\nCLEANFILES+=$(TARG)\n\n$(OFILES) $(MOFILE): $(HFILES)\n\nCLEANFILES+=$(wildcard *.o)\n\n.PHONY: clean\nclean:\n\trm -f $(CLEANFILES)\n\n.PHONY: check\ncheck: ct/_ctcheck\n\tct/_ctcheck\n\n.PHONY: bench\nbench: ct/_ctcheck\n\tct/_ctcheck -b\n\nct/_ctcheck: ct/_ctcheck.o ct/ct.o $(OFILES) $(TOFILES)\n\nct/_ctcheck.c: $(TOFILES) ct/gen\n\tct/gen $(TOFILES) >$@.part\n\tmv $@.part $@\n\nct/ct.o ct/_ctcheck.o: ct/ct.h ct/internal.h\n\n$(TOFILES): $(HFILES) ct/ct.h\n\nCLEANFILES+=$(wildcard ct/_* ct/*.o ct/*.gc*)\n\nifneq ($(shell ./verc.sh),$(shell cat vers.c 2>/dev/null))\n.PHONY: vers.c\nendif\nvers.c:\n\t./verc.sh >vers.c\n\ndoc/beanstalkd.1 doc/beanstalkd.1.html: doc/beanstalkd.ronn\n\tronn $<\n\nfreebsd.o: darwin.c\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Action: Shell\nAction Input: make"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { make -j4\ncc -Wall -Werror -Wformat=2 -g   -c -o linux.o linux.c\ncc -Wall -Werror -Wformat=2 -g   -c -o conn.o conn.c\ncc -Wall -Werror -Wformat=2 -g   -c -o file.o file.c\ncc -Wall -Werror -Wformat=2 -g   -c -o heap.o heap.c\ncc -Wall -Werror -Wformat=2 -g   -c -o job.o job.c\ncc -Wall -Werror -Wformat=2 -g   -c -o ms.o ms.c\ncc -Wall -Werror -Wformat=2 -g   -c -o net.o net.c\ncc -Wall -Werror -Wformat=2 -g   -c -o primes.o primes.c\ncc -Wall -Werror -Wformat=2 -g   -c -o prot.o prot.c\ncc -Wall -Werror -Wformat=2 -g   -c -o serv.o serv.c\ncc -Wall -Werror -Wformat=2 -g   -c -o time.o time.c\ncc -Wall -Werror -Wformat=2 -g   -c -o tube.o tube.c\ncc -Wall -Werror -Wformat=2 -g   -c -o util.o util.c\n./verc.sh >vers.c\ncc -Wall -Werror -Wformat=2 -g   -c -o walg.o walg.c\ncc -Wall -Werror -Wformat=2 -g   -c -o main.o main.c\ncc -Wall -Werror -Wformat=2 -g   -c -o vers.o vers.c\ncc   -o beanstalkd linux.o conn.o file.o heap.o job.o ms.o net.o primes.o prot.o serv.o time.o tube.o util.o vers.o walg.o main.o -lrt\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The `make` command completed successfully with exit code 0. The output shows that all object files were compiled and linked into the `beanstalkd` executable. Let me verify the binary exists.\nAction: Shell\nAction Input: ls -la beanstalkd"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { ls -la beanstalkd\n-rwxr-xr-x 1 root root 174120 Nov 21 08:12 beanstalkd\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The compilation was successful. The `make` command exited with code 0, and the `beanstalkd` executable file exists in the current directory with executable permissions.\nFinal Answer: COMPILATION-SUCCESS"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- CHANGELOG.md\n|-- CONTRIBUTING.md\n|-- CodeOfConduct.txt\n|-- Dockerfile\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- adm\n|   |-- Readme\n|   |-- launchd\n|   |-- systemd\n|   |-- systemv\n|   `-- upstart\n|-- conn.c\n|-- ct\n|   |-- License\n|   |-- ct.c\n|   |-- ct.h\n|   |-- gen\n|   `-- internal.h\n|-- darwin.c\n|-- dat.h\n|-- doc\n|   |-- beanstalkd.1\n|   |-- beanstalkd.1.html\n|   |-- beanstalkd.ronn\n|   |-- protocol.txt\n|   `-- protocol.zh-CN.md\n|-- file.c\n|-- freebsd.c\n|-- heap.c\n|-- job.c\n|-- linux.c\n|-- main.c\n|-- ms.c\n|-- net.c\n|-- pkg\n|   |-- README.md\n|   |-- beanstalkd.spec.in\n|   |-- bloghead.in\n|   |-- dist.sh\n|   |-- mail.sh\n|   `-- newstail.in\n|-- primes.c\n|-- prot.c\n|-- serv.c\n|-- sunos.c\n|-- testheap.c\n|-- testjobs.c\n|-- testms.c\n|-- testserv.c\n|-- testutil.c\n|-- time.c\n|-- tube.c\n|-- util.c\n|-- verc.sh\n|-- vers.sh\n`-- walg.c\n\n9 directories, 50 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.30262088775634766
+			],
+			[
+				"cat Makefile",
+				"root@c0mpi1er-c0nta1ner:/work# { cat Makefile\nPREFIX?=/usr/local\nBINDIR=$(DESTDIR)$(PREFIX)/bin\n\noverride CFLAGS+=-Wall -Werror -Wformat=2 -g\noverride LDFLAGS?=\n\nLDLIBS?=\n\nOS?=$(shell uname | tr 'A-Z' 'a-z')\nINSTALL?=install\nPKG_CONFIG?=pkg-config\n\nifeq ($(OS),sunos)\noverride LDFLAGS += -lxnet -lsocket -lnsl\nendif\n\nVERS=$(shell ./vers.sh)\nTARG=beanstalkd\nMOFILE=main.o\nOFILES=\\\n\t$(OS).o\\\n\tconn.o\\\n\tfile.o\\\n\theap.o\\\n\tjob.o\\\n\tms.o\\\n\tnet.o\\\n\tprimes.o\\\n\tprot.o\\\n\tserv.o\\\n\ttime.o\\\n\ttube.o\\\n\tutil.o\\\n\tvers.o\\\n\twalg.o\\\n\nTOFILES=\\\n\ttestheap.o\\\n\ttestjobs.o\\\n\ttestms.o\\\n\ttestserv.o\\\n\ttestutil.o\\\n\nHFILES=\\\n\tdat.h\\\n\nifeq ($(OS),linux)\n   LDLIBS+=-lrt\nendif\n\n# systemd support can be configured via USE_SYSTEMD:\n#        no: disabled\n#       yes: enabled, build fails if libsystemd is not found\n# otherwise: enabled if libsystemd is found\nifneq ($(USE_SYSTEMD),no)\nifeq ($(shell $(PKG_CONFIG) --exists libsystemd && echo $$?),0)\n\tLDLIBS+=$(shell $(PKG_CONFIG) --libs libsystemd)\n\tCPPFLAGS+=-DHAVE_LIBSYSTEMD\nelse\nifeq ($(USE_SYSTEMD),yes)\n$(error USE_SYSTEMD is set to \"$(USE_SYSTEMD)\", but $(PKG_CONFIG) cannot find libsystemd)\nendif\nendif\nendif\n\nCLEANFILES=\\\n\tvers.c\\\n\t$(wildcard *.gc*)\n\n.PHONY: all\nall: $(TARG)\n\n$(TARG): $(OFILES) $(MOFILE)\n\t$(LINK.o) -o $@ $^ $(LDLIBS)\n\n.PHONY: install\ninstall: $(BINDIR)/$(TARG)\n\n$(BINDIR)/%: %\n\t$(INSTALL) -d $(dir $@)\n\t$(INSTALL) $< $@\n\nCLEANFILES+=$(TARG)\n\n$(OFILES) $(MOFILE): $(HFILES)\n\nCLEANFILES+=$(wildcard *.o)\n\n.PHONY: clean\nclean:\n\trm -f $(CLEANFILES)\n\n.PHONY: check\ncheck: ct/_ctcheck\n\tct/_ctcheck\n\n.PHONY: bench\nbench: ct/_ctcheck\n\tct/_ctcheck -b\n\nct/_ctcheck: ct/_ctcheck.o ct/ct.o $(OFILES) $(TOFILES)\n\nct/_ctcheck.c: $(TOFILES) ct/gen\n\tct/gen $(TOFILES) >$@.part\n\tmv $@.part $@\n\nct/ct.o ct/_ctcheck.o: ct/ct.h ct/internal.h\n\n$(TOFILES): $(HFILES) ct/ct.h\n\nCLEANFILES+=$(wildcard ct/_* ct/*.o ct/*.gc*)\n\nifneq ($(shell ./verc.sh),$(shell cat vers.c 2>/dev/null))\n.PHONY: vers.c\nendif\nvers.c:\n\t./verc.sh >vers.c\n\ndoc/beanstalkd.1 doc/beanstalkd.1.html: doc/beanstalkd.ronn\n\tronn $<\n\nfreebsd.o: darwin.c\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15085268020629883
+			],
+			[
+				"make -j4",
+				"root@c0mpi1er-c0nta1ner:/work# { make -j4\ncc -Wall -Werror -Wformat=2 -g   -c -o linux.o linux.c\ncc -Wall -Werror -Wformat=2 -g   -c -o conn.o conn.c\ncc -Wall -Werror -Wformat=2 -g   -c -o file.o file.c\ncc -Wall -Werror -Wformat=2 -g   -c -o heap.o heap.c\ncc -Wall -Werror -Wformat=2 -g   -c -o job.o job.c\ncc -Wall -Werror -Wformat=2 -g   -c -o ms.o ms.c\ncc -Wall -Werror -Wformat=2 -g   -c -o net.o net.c\ncc -Wall -Werror -Wformat=2 -g   -c -o primes.o primes.c\ncc -Wall -Werror -Wformat=2 -g   -c -o prot.o prot.c\ncc -Wall -Werror -Wformat=2 -g   -c -o serv.o serv.c\ncc -Wall -Werror -Wformat=2 -g   -c -o time.o time.c\ncc -Wall -Werror -Wformat=2 -g   -c -o tube.o tube.c\ncc -Wall -Werror -Wformat=2 -g   -c -o util.o util.c\n./verc.sh >vers.c\ncc -Wall -Werror -Wformat=2 -g   -c -o walg.o walg.c\ncc -Wall -Werror -Wformat=2 -g   -c -o main.o main.c\ncc -Wall -Werror -Wformat=2 -g   -c -o vers.o vers.c\ncc   -o beanstalkd linux.o conn.o file.o heap.o job.o ms.o net.o primes.o prot.o serv.o time.o tube.o util.o vers.o walg.o main.o -lrt\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				1.864485740661621
+			],
+			[
+				"ls -la beanstalkd",
+				"root@c0mpi1er-c0nta1ner:/work# { ls -la beanstalkd\n-rwxr-xr-x 1 root root 174120 Nov 21 08:12 beanstalkd\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15140080451965332
+			]
+		],
+		"CompileNavigator": [
+			[
+				".\n|-- CHANGELOG.md\n|-- CONTRIBUTING.md\n|-- CodeOfConduct.txt\n|-- Dockerfile\n|-- LICENSE\n|-- Makefile\n|-- README.md\n|-- adm\n|   |-- Readme\n|   |-- launchd\n|   |-- systemd\n|   |-- systemv\n|   `-- upstart\n|-- conn.c\n|-- ct\n|   |-- License\n|   |-- ct.c\n|   |-- ct.h\n|   |-- gen\n|   `-- internal.h\n|-- darwin.c\n|-- dat.h\n|-- doc\n|   |-- beanstalkd.1\n|   |-- beanstalkd.1.html\n|   |-- beanstalkd.ronn\n|   |-- protocol.txt\n|   `-- protocol.zh-CN.md\n|-- file.c\n|-- freebsd.c\n|-- heap.c\n|-- job.c\n|-- linux.c\n|-- main.c\n|-- ms.c\n|-- net.c\n|-- pkg\n|   |-- README.md\n|   |-- beanstalkd.spec.in\n|   |-- bloghead.in\n|   |-- dist.sh\n|   |-- mail.sh\n|   `-- newstail.in\n|-- primes.c\n|-- prot.c\n|-- serv.c\n|-- sunos.c\n|-- testheap.c\n|-- testjobs.c\n|-- testms.c\n|-- testserv.c\n|-- testutil.c\n|-- time.c\n|-- tube.c\n|-- util.c\n|-- verc.sh\n|-- vers.sh\n`-- walg.c",
+				"To compile the beanstalkd project, use the following steps:\n\n1.  **Prerequisites**: Ensure you have a C compiler and `make` installed. If you want systemd support, ensure `libsystemd` is available via `pkg-config`.\n2.  **Compilation**: Run the following command in the project root directory:\n    ```bash\n    make\n    ```\n    *   *Optional*: To explicitly disable systemd support, use `make USE_SYSTEMD=no`.\n    *   *Optional*: To force enable systemd support, use `make USE_SYSTEMD=yes`.\n3.  **Installation** (Optional): To install the compiled binary to `/usr/local/bin` (or a custom prefix), run:\n    ```bash\n    make install\n    ```",
+				[
+					[
+						"debate",
+						"README.md",
+						"Makefile"
+					],
+					[
+						"search_instructions_from_files",
+						"/work/Makefile",
+						"To compile the project on Linux from the git cloned source code, use the following command:\n\n```bash\nmake\n```\n\n**Prerequisites and Notes:**\n*   **OS Detection**: The Makefile detects the OS using `uname`. For Linux, it automatically adds `-lrt` to `LDLIBS`.\n*   **Systemd Support**:\n    *   By default, systemd support is enabled if `libsystemd` is found via `pkg-config`.\n    *   To explicitly disable systemd support, use: `make USE_SYSTEMD=no`\n    *   To force enable systemd support (failing if `libsystemd` is not found), use: `make USE_SYSTEMD=yes`\n*   **Installation**: After compilation, you can install the binary using:\n    ```bash\n    make install\n    ```\n    (This installs to `$(DESTDIR)/$(PREFIX)/bin`, defaulting to `/usr/local/bin` if `DESTDIR` is not set).\n*   **Cleaning**: To remove generated files, use:\n    ```bash\n    make clean\n    ```\n*   **Testing**: To run the test suite, use:\n    ```bash\n    make check\n    ```"
+					]
+				]
+			]
+		],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "True",
+		"checker_result": "True(strict=False)",
+		"project": "beanstalkd",
+		"ablation_mode": "full",
+		"strict_checker": false,
+		"checker_non_strict": true,
+		"checker_strict": true,
+		"elapsed_seconds": 71.48,
+		"iterations": 5,
+		"tool_calls": {
+			"Shell": 4,
+			"CompileNavigator": 1,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [
+			"beanstalkd"
+		],
+		"all_artifacts": [
+			"beanstalkd"
+		],
+		"smoke_check": {
+			"checked_count": 1,
+			"passed": true,
+			"missing_libs": [],
+			"details": [
+				{
+					"artifact": "beanstalkd",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/beanstalkd: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, with debug_info, not stripped",
+					"ldd_output": "linux-vdso.so.1 (0x00007ea401766000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ea401576000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007ea401768000)"
+				}
+			]
+		}
+	}
+}

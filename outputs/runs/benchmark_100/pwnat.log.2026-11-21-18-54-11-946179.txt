@@ -1,0 +1,154 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+CompileNavigator: 
+        A tool for finding out the compilation instruction from project structure.
+        @param project_structure: The project structure.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project pwnat from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
+3. If there are any difficulties during compilation, try to break them without calling tools.
+4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- COPYING-pingtunnel
+|-- Changes
+|-- Makefile
+|-- Makefile.Win32
+|-- Makefile.mingw-win32
+|-- README-udptunnel
+|-- README.md
+|-- cross-compile-mingw.sh
+|-- manpage.txt
+|-- mingw-win32.bat
+`-- src
+    |-- client.c
+    |-- client.h
+    |-- common.h
+    |-- destination.c
+    |-- destination.h
+    |-- gettimeofday.c
+    |-- gettimeofday.h
+    |-- list.c
+    |-- list.h
+    |-- message.c
+    |-- message.h
+    |-- packet.c
+    |-- packet.h
+    |-- pwnat.c
+    |-- socket.c
+    |-- socket.h
+    |-- strlcpy.c
+    |-- udpclient.c
+    |-- udpserver.c
+    |-- xgetopt.c
+    `-- xgetopt.h
+
+2 directories, 31 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: CompileNavigator
+Action Input: .
+|-- COPYING-pingtunnel
+|-- Changes
+|-- Makefile
+|-- Makefile.Win32
+|-- Makefile.mingw-win32
+|-- README-udptunnel
+|-- README.md
+|-- cross-compile-mingw.sh
+|-- manpage.txt
+|-- mingw-win32.bat
+`-- src
+    |-- client.c
+    |-- client.h
+    |-- common.h
+    |-- destination.c
+    |-- destination.h
+    |-- gettimeofday.c
+    |-- gettimeofday.h
+    |-- list.c
+    |-- list.h
+    |-- message.c
+    |-- message.h
+    |-- packet.c
+    |-- packet.h
+    |-- pwnat.c
+    |-- socket.c
+    |-- socket.h
+    |-- strlcpy.c
+    |-- udpclient.c
+    |-- udpserver.c
+    |-- xgetopt.c
+    `-- xgetopt.h
+Observation: To compile the `pwnat` project on Linux:
+
+1.  Ensure the `OS` variable in the `Makefile` is set to `LINUX` (this is the default setting).
+2.  Run the following command in the project root directory:
+    ```bash
+    make
+    ```
+    This compiles the `pwnat` binary using `gcc` with the flags: `-Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address`.
+Thought: Action: Shell
+Action Input: make
+Observation: root@c0mpi1er-c0nta1ner:/work# { make -j4
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/socket.o -c src/socket.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/message.o -c src/message.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/strlcpy.o -c src/strlcpy.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/client.o -c src/client.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/packet.o -c src/packet.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/list.o -c src/list.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/destination.o -c src/destination.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/udpserver.o -c src/udpserver.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o src/udpclient.o -c src/udpclient.c
+gcc -Wall -Wextra -Wpedantic -Wshadow -Wpointer-arith -Wwrite-strings -D LINUX -fsanitize=address -o pwnat src/pwnat.c src/socket.o src/message.o src/strlcpy.o src/client.o src/packet.o src/list.o src/destination.o src/udpserver.o src/udpclient.o 
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls -l pwnat
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls -l pwnat
+-rwxr-xr-x 1 root root 111688 Nov 21 11:54 pwnat
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The `make` command completed successfully with exit code 0, and the `pwnat` executable file was generated in the project root directory. The compilation is successful.
+Final Answer: COMPILATION-SUCCESS

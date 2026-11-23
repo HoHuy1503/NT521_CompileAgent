@@ -1,0 +1,903 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+CompileNavigator: 
+        A tool for finding out the compilation instruction from project structure.
+        @param project_structure: The project structure.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project msquic from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
+3. If there are any difficulties during compilation, try to break them without calling tools.
+4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- CMakeLists.txt
+|-- CMakePresets.json
+|-- Cargo.toml
+|-- Directory.Packages.props
+|-- LICENSE
+|-- README.md
+|-- THIRD-PARTY-NOTICES
+|-- cmake
+|   |-- GitCommands.cmake
+|   |-- PdbAltPath.txt
+|   |-- PrefixOpenSSLArchives.cmake
+|   |-- SourceLink.cmake
+|   |-- openssl-prefix-rename.sh
+|   |-- rpath.txt
+|   |-- source_link.json.in
+|   `-- toolchains
+|-- codecov.yml
+|-- docs
+|   |-- API.md
+|   |-- Architecture.md
+|   |-- BUILD.md
+|   |-- CIBIR.md
+|   |-- Deployment.md
+|   |-- Diagnostics.md
+|   |-- Execution.md
+|   |-- FAQ.md
+|   |-- FIPS.md
+|   |-- InteropServerSetup.md
+|   |-- OpenSSLSymbolPrefix.md
+|   |-- PGO.md
+|   |-- Platforms.md
+|   |-- PreviewFeatures.md
+|   |-- QTIP.md
+|   |-- Release.md
+|   |-- Sample.md
+|   |-- Settings.md
+|   |-- Streams.md
+|   |-- TEST.md
+|   |-- TaskManagement.md
+|   |-- ThreatModel.md
+|   |-- TroubleshootingGuide.md
+|   |-- Versions.md
+|   |-- XDP.md
+|   |-- api
+|   |-- contrib
+|   |-- experimental
+|   |-- images
+|   `-- tat
+|-- global.json
+|-- msquic.kernel.sln
+|-- rust-toolchain.toml
+|-- scripts
+|   |-- Batch-ReverseMirrorPRs.ps1
+|   |-- Create-ReverseMirrorPR.ps1
+|   |-- DotNetTest.ps1
+|   |-- Invoke-EtwTraceCollection.ps1
+|   |-- alpine-configure-packaging-key.sh
+|   |-- alpine-generate-hash.sh
+|   |-- build.ps1
+|   |-- build.rs
+|   |-- clog.inputs
+|   |-- create-release.ps1
+|   |-- docfx-replace-url.ps1
+|   |-- docker-script.sh
+|   |-- download-failures.ps1
+|   |-- duonic.sh
+|   |-- emulated-performance.ps1
+|   |-- generate-alpine-packaging-file.ps1
+|   |-- generate-docfx-yml.ps1
+|   |-- generate-dotnet.ps1
+|   |-- generatevpackpat
+|   |-- get-buildconfig.ps1
+|   |-- install-powershell-docker.sh
+|   |-- install-powershell.sh
+|   |-- install-test-certificates.ps1
+|   |-- interop.ps1
+|   |-- log.ps1
+|   |-- log_wrapper.sh
+|   |-- lola-perf.ps1
+|   |-- make-packages.sh
+|   |-- make-pgo-pr.ps1
+|   |-- merge-coverage.ps1
+|   |-- merge-darwin.ps1
+|   |-- package-build.sh
+|   |-- package-darwin-framework.ps1
+|   |-- package-darwin-xcframework.ps1
+|   |-- package-distribution.ps1
+|   |-- package-nuget.ps1
+|   |-- prepare-docfx.ps1
+|   |-- prepare-machine.ps1
+|   |-- publish-quictrace.ps1
+|   |-- qns.Dockerfile
+|   |-- quic_callback.ps1
+|   |-- recvfuzz.ps1
+|   |-- rps.ps1
+|   |-- run-executable.ps1
+|   |-- run-gtest.ps1
+|   |-- run_endpoint.sh
+|   |-- secnetperf-helpers.psm1
+|   |-- secnetperf.ps1
+|   |-- sign.ps1
+|   |-- spin.ps1
+|   |-- t.cmd
+|   |-- templates
+|   |-- test.ps1
+|   |-- update-docfx-site.ps1
+|   |-- update-sidecar.ps1
+|   |-- update-version.ps1
+|   |-- validate-msquic-docker.ps1
+|   |-- wpa.ps1
+|   |-- write-versions.ps1
+|   `-- xdp.json
+|-- src
+|   |-- bin
+|   |-- core
+|   |-- cs
+|   |-- distribution
+|   |-- fuzzing
+|   |-- generated
+|   |-- inc
+|   |-- manifest
+|   |-- perf
+|   |-- platform
+|   |-- plugins
+|   |-- rs
+|   |-- test
+|   `-- tools
+|-- submodules
+|   |-- CMakeLists.txt
+|   |-- clog
+|   |-- googletest
+|   |-- openssl
+|   |-- quictls
+|   `-- xdp-for-windows
+`-- version.json
+
+33 directories, 103 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I need to understand the project structure and find the compilation instructions. Let me use the CompileNavigator tool to get the compilation instructions.
+Action: CompileNavigator
+Action Input: .
+|-- CMakeLists.txt
+|-- CMakePresets.json
+|-- Cargo.toml
+|-- Directory.Packages.props
+|-- LICENSE
+|-- README.md
+|-- THIRD-PARTY-NOTICES
+|-- cmake
+|   |-- GitCommands.cmake
+|   |-- PdbAltPath.txt
+|   |-- PrefixOpenSSLArchives.cmake
+|   |-- SourceLink.cmake
+|   |-- openssl-prefix-rename.sh
+|   |-- rpath.txt
+|   |-- source_link.json.in
+|   `-- toolchains
+|-- codecov.yml
+|-- docs
+|   |-- API.md
+|   |-- Architecture.md
+|   |-- BUILD.md
+|   |-- CIBIR.md
+|   |-- Deployment.md
+|   |-- Diagnostics.md
+|   |-- Execution.md
+|   |-- FAQ.md
+|   |-- FIPS.md
+|   |-- InteropServerSetup.md
+|   |-- OpenSSLSymbolPrefix.md
+|   |-- PGO.md
+|   |-- Platforms.md
+|   |-- PreviewFeatures.md
+|   |-- QTIP.md
+|   |-- Release.md
+|   |-- Sample.md
+|   |-- Settings.md
+|   |-- Streams.md
+|   |-- TEST.md
+|   |-- TaskManagement.md
+|   |-- ThreatModel.md
+|   |-- TroubleshootingGuide.md
+|   |-- Versions.md
+|   |-- XDP.md
+|   |-- api
+|   |-- contrib
+|   |-- experimental
+|   |-- images
+|   `-- tat
+|-- global.json
+|-- msquic.kernel.sln
+|-- rust-toolchain.toml
+|-- scripts
+|   |-- Batch-ReverseMirrorPRs.ps1
+|   |-- Create-ReverseMirrorPR.ps1
+|   |-- DotNetTest.ps1
+|   |-- Invoke-EtwTraceCollection.ps1
+|   |-- alpine-configure-packaging-key.sh
+|   |-- alpine-generate-hash.sh
+|   |-- build.ps1
+|   |-- build.rs
+|   |-- clog.inputs
+|   |-- create-release.ps1
+|   |-- docfx-replace-url.ps1
+|   |-- docker-script.sh
+|   |-- download-failures.ps1
+|   |-- duonic.sh
+|   |-- emulated-performance.ps1
+|   |-- generate-alpine-packaging-file.ps1
+|   |-- generate-docfx-yml.ps1
+|   |-- generate-dotnet.ps1
+|   |-- generatevpackpat
+|   |-- get-buildconfig.ps1
+|   |-- install-powershell-docker.sh
+|   |-- install-powershell.sh
+|   |-- install-test-certificates.ps1
+|   |-- interop.ps1
+|   |-- log.ps1
+|   |-- log_wrapper.sh
+|   |-- lola-perf.ps1
+|   |-- merge-coverage.ps1
+|   |-- merge-darwin.ps1
+|   |-- package-build.sh
+|   |-- package-darwin-framework.ps1
+|   |-- package-darwin-xcframework.ps1
+|   |-- package-distribution.ps1
+|   |-- package-nuget.ps1
+|   |-- prepare-docfx.ps1
+|   |-- prepare-machine.ps1
+|   |-- publish-quictrace.ps1
+|   |-- qns.Dockerfile
+|   |-- quic_callback.ps1
+|   |-- recvfuzz.ps1
+|   |-- rps.ps1
+|   |-- run-executable.ps1
+|   |-- run-gtest.ps1
+|   |-- run_endpoint.sh
+|   |-- secnetperf-helpers.psm1
+|   |-- secnetperf.ps1
+|   |-- sign.ps1
+|   |-- spin.ps1
+|   |-- t.cmd
+|   |-- templates
+|   |-- test.ps1
+|   |-- update-docfx-site.ps1
+|   |-- update-sidecar.ps1
+|   |-- update-version.ps1
+|   |-- validate-msquic-docker.ps1
+|   |-- wpa.ps1
+|   |-- write-versions.ps1
+|   `-- xdp.json
+|-- src
+|   |-- bin
+|   |-- core
+|   |-- cs
+|   |-- distribution
+|   |-- fuzzing
+|   |-- generated
+|   |-- inc
+|   |-- manifest
+|   |-- perf
+|   |-- platform
+|   |-- plugins
+|   |-- rs
+|   |-- test
+|   `-- tools
+|-- submodules
+|   |-- CMakeLists.txt
+|   |-- clog
+|   |-- googletest
+|   |-- openssl
+|   |-- quictls
+|   `-- xdp-for-windows
+`-- version.json
+
+33 directories, 103 files
+Observation: # MsQuic Compilation Instructions
+
+## Prerequisites
+1. **Clone the repository**:
+   ```bash
+   git clone --recurse-submodules https://github.com/microsoft/msquic.git
+   ```
+   *For existing repos:* `git submodule update --init --recursive`
+
+2. **Install Dependencies**:
+   - **.NET Core SDK**: Version 3.1 or newer (e.g., .NET 9).
+   - **CMake**: Minimum version 3.20 (Windows) or 3.16 (Linux/macOS).
+   - **PowerShell**: Recommended for building. Install via package manager if not present.
+
+---
+
+## Method 1: Building with PowerShell (Recommended)
+
+### 1. Prepare the Machine
+Run the following script to install necessary dependencies:
+```powershell
+./scripts/prepare-machine.ps1
+```
+
+### 2. Build the Project
+Execute the build script:
+```powershell
+./scripts/build.ps1
+```
+
+### Common Build Options
+- **Configuration**: `-Config <Debug/Release>` (Default: Debug)
+- **Architecture**: `-Arch <x86/x64/arm/arm64>` (Default: x64)
+- **TLS Provider**: `-Tls <schannel/openssl>` (Default: Platform-dependent)
+  - *Note*: `schannel` requires Windows Server 2022+. Use `-Tls openssl` for Linux or older Windows.
+- **Static Library**: `-Static` (Windows only)
+- **External OpenSSL**: `-UseExternalOpenSSL` (Requires OpenSSL 3.5.0+)
+- **Clean Build**: `-Clean`
+
+**Example**: Build with OpenSSL on Linux:
+```powershell
+./scripts/build.ps1 -Tls openssl
+```
+
+### Build Output
+- Intermediate files: `build/`
+- Final binaries: `artifacts/`
+
+---
+
+## Method 2: Building with CMake (Direct)
+
+*Note: This method requires disabling logging and is less frequently updated than the PowerShell method.*
+
+### 1. Install Dependencies (Linux Example)
+```bash
+sudo apt-add-repository ppa:lttng/stable-2.13
+sudo apt-get update
+sudo apt-get install cmake build-essential liblttng-ust-dev lttng-tools
+```
+
+### 2. Generate Build Files
+```bash
+mkdir build && cd build
+cmake -G 'Unix Makefiles' ..
+```
+
+### 3. Build
+```bash
+cmake --build .
+```
+Thought: Thought: I need to compile msquic on Linux. The recommended method is using PowerShell with the build script, but I can also use CMake directly. Let me first check if the submodules are initialized and then try to build using CMake since we're on Linux. Let me first check if git submodules are present.
+Action: Shell
+Action Input: ls submodules/
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/
+CMakeLists.txt	clog  googletest  openssl  quictls  xdp-for-windows
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/openssl/ | head -20
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/openssl/ | head -20
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/quictls/ | head -20
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/quictls/ | head -20
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/clog/ | head -20
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/clog/ | head -20
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: The submodules appear to be empty. I need to initialize them. Let me check if git is available and initialize the submodules.
+Action: Shell
+Action Input: git submodule update --init --recursive 2>&1 | head -30
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init --recursive 2>&1 | head -30
+Submodule 'submodules/clog' (https://github.com/microsoft/CLOG.git) registered for path 'submodules/clog'
+Submodule 'submodules/googletest' (https://github.com/google/googletest) registered for path 'submodules/googletest'
+Submodule 'submodules/openssl' (https://github.com/openssl/openssl) registered for path 'submodules/openssl'
+Submodule 'submodules/quictls' (https://github.com/quictls/openssl.git) registered for path 'submodules/quictls'
+Submodule 'submodules/xdp-for-windows' (https://github.com/microsoft/xdp-for-windows.git) registered for path 'submodules/xdp-for-windows'
+Cloning into '/work/submodules/clog'...
+Cloning into '/work/submodules/googletest'...
+Cloning into '/work/submodules/openssl'...
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+Thought: Action: Shell
+Action Input: ls submodules/openssl/ | head -5
+Observation: { ls submodules/openssl/ | head -5
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: git submodule update --init --recursive 2>&1 | tail -20
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init --recursive 2>&1 | tail -20
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/clog submodules/googletest 2>&1 | tail -10
+Observation: { git submodule update --init submodules/clog submodules/googletest 2>&1 | tail -10
+Submodule path 'submodules/googletest': checked out '24990589481d2ed05602a304bee5ca716273762a'
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/clog/ | head -5
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/clog/ | head -5
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/clog/
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/clog/
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/clog 2>&1 | tail -10
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init submodules/clog 2>&1 | tail -10
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls submodules/clog/
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls submodules/clog/
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: git submodule status
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule status
+ 33bd2b6fe3969386fa98758d358dd2d0453c63e4 submodules/clog (0.3.0-29-g33bd2b6)
+ 24990589481d2ed05602a304bee5ca716273762a submodules/googletest (release-1.8.0-3749-g24990589)
+-76e9885bfced7c7978dc963bed77abead8fff93f submodules/openssl
+-ff36838bb69801cad56823159a036977bcbe5c75 submodules/quictls
+-d372b52577a724e04fa4c06acb90bbfa4719fc25 submodules/xdp-for-windows
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/openssl 2>&1 | tail -5
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init submodules/openssl 2>&1 | tail -5
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/quictls 2>&1 | tail -5
+Observation: { git submodule update --init submodules/quictls 2>&1 | tail -5
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+Thought: Action: Shell
+Action Input: ls submodules/openssl/ | head -5
+Observation: { ls submodules/openssl/ | head -5
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/quictls 2>&1 | tail -5
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init submodules/quictls 2>&1 | tail -5
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+Thought: Action: Shell
+Action Input: git submodule update --init submodules/quictls 2>&1 | tail -5
+Observation: root@c0mpi1er-c0nta1ner:/work# { git submodule update --init submodules/quictls 2>&1 | tail -5
+^C
+root@c0mpi1er-c0nta1ner:/work# 
+Command execution timeout!
+
+[SYSTEM WARNING] You have already executed this exact action multiple times with the same result. Do NOT repeat it; try a different command/flag or conclude with Final Answer.
+Thought: Action: Shell
+Action Input: ls submodules/quictls/ | head -5
+Observation: { ls submodules/quictls/ | head -5
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: cat CMakeLists.txt | head -100
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat CMakeLists.txt | head -100
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+if ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
+    cmake_minimum_required(VERSION 3.20)
+else()
+    cmake_minimum_required(VERSION 3.16)
+endif()
+
+# Disable in-source builds to prevent source tree corruption.
+if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+  message(FATAL_ERROR "
+FATAL: In-source builds are not allowed.
+       You should create a separate directory for build files.
+")
+endif()
+
+message(STATUS "CMAKE Version: ${CMAKE_VERSION}")
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_VS_GLOBALS "UseInternalMSUniCrtPackage=true")
+
+message(STATUS "Source Dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "Host System name: ${CMAKE_HOST_SYSTEM_NAME}")
+if ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
+    if (NOT DEFINED CMAKE_SYSTEM_VERSION)
+        set(CMAKE_SYSTEM_VERSION 10.0.26100.0 CACHE STRING INTERNAL FORCE)
+    endif()
+endif()
+
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+    message(STATUS "Setting policy 0091")
+else()
+    message(WARNING "CMake version too old to support Policy 0091; CRT static linking won't work")
+endif()
+
+if (POLICY CMP0111)
+    cmake_policy(SET CMP0111 NEW)
+endif()
+
+project(msquic)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# Set a default build type if none was specified
+set(default_build_type "Release")
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+        STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+                 "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+message(STATUS "System name: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "System version: ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "Platform version: ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+set(QUIC_MAJOR_VERSION 2)
+set(QUIC_FULL_VERSION 2.7.0)
+
+if (WIN32)
+    set(CX_PLATFORM "windows")
+elseif (APPLE)
+    set(CX_PLATFORM "darwin")
+elseif (UNIX)
+    set(CX_PLATFORM "linux")
+endif()
+message(STATUS "QUIC Platform: ${CX_PLATFORM}")
+
+enable_testing()
+
+if (NOT "${QUIC_TLS}" STREQUAL "")
+    message(FATAL_ERROR "QUIC_TLS is deprecated, Use QUIC_TLS_LIB instead")
+endif()
+
+# Set the default TLS method for each platform.
+if (WIN32)
+    set(QUIC_TLS_LIB "schannel" CACHE STRING "TLS Library to use")
+else()
+    set(QUIC_TLS_LIB "quictls" CACHE STRING "TLS Library to use")
+endif()
+
+option(QUIC_BUILD_TOOLS "Builds the tools code" OFF)
+option(QUIC_BUILD_TEST "Builds the test code" OFF)
+option(QUIC_BUILD_PERF "Builds the perf code" OFF)
+option(QUIC_BUILD_SHARED "Builds msquic as a dynamic library" ON)
+option(QUIC_ENABLE_LOGGING "Enables logging" OFF)
+option(QUIC_ENABLE_ALL_SANITIZERS "Enables all sanitizers" OFF)
+option(QUIC_ENABLE_ASAN "Enables only Address Sanitizer" OFF)
+option(QUIC_ENABLE_LSAN "Enables only Leak Sanitizer" OFF)
+option(QUIC_ENABLE_UBSAN "Enables only Undefined Behavior Sanitizer" OFF)
+option(QUIC_ENABLE_TSAN "Enables only Thread Sanitizer" OFF)
+option(QUIC_ENABLE_EXTRA_SANITIZERS "Enables only extra sanitizers" OFF)
+option(QUIC_SKIP_SANITIZE_SUBMODULES "Skip passing sanitizer settings to submodule build" OFF)
+option(QUIC_ENABLE_POOL_ALLOC "Enables pool allocations" ON)
+option(QUIC_STATIC_LINK_CRT "Statically links the C runtime" ON)
+option(QUIC_STATIC_LINK_PARTIAL_CRT "Statically links the compiler-specific portion of the C runtime" ON)
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: grep -n "quictls\|QUIC_TLS_LIB\|openssl" CMakeLists.txt | head -30
+Observation: root@c0mpi1er-c0nta1ner:/work# { grep -n "quictls\|QUIC_TLS_LIB\|openssl" CMakeLists.txt | head -30
+76:    message(FATAL_ERROR "QUIC_TLS is deprecated, Use QUIC_TLS_LIB instead")
+81:    set(QUIC_TLS_LIB "schannel" CACHE STRING "TLS Library to use")
+83:    set(QUIC_TLS_LIB "quictls" CACHE STRING "TLS Library to use")
+114:option(QUIC_USE_SYSTEM_LIBCRYPTO "Use system libcrypto if quictls TLS" OFF)
+134:# a non-quictls/openssl TLS_LIB (e.g. schannel) errors loudly instead of being
+138:    if(NOT (QUIC_TLS_LIB STREQUAL "quictls" OR QUIC_TLS_LIB STREQUAL "openssl"))
+140:            "QUIC_OPENSSL_SYMBOL_PREFIX requires QUIC_TLS_LIB=quictls or openssl "
+141:            "(got QUIC_TLS_LIB='${QUIC_TLS_LIB}'). The prefix only applies to the "
+430:if(QUIC_TLS_LIB STREQUAL "schannel")
+444:if(QUIC_TLS_LIB STREQUAL "quictls" OR QUIC_TLS_LIB STREQUAL "openssl")
+445:    message(STATUS "Enabling quictls/openssl configuration tests")
+668:        set(QUIC_PGO_NAME "msquic.${QUIC_TLS_LIB}.pgd")
+797:if(QUIC_TLS_LIB STREQUAL "quictls" OR QUIC_TLS_LIB STREQUAL "openssl")
+801:    if(QUIC_TLS_LIB STREQUAL "quictls" AND (QUIC_USE_EXTERNAL_OPENSSL OR QUIC_OPENSSL_INCLUDE_DIR OR QUIC_OPENSSL_LIB_DIR OR QUIC_OPENSSL_ROOT_DIR))
+802:        message(FATAL_ERROR "Manual OpenSSL selection is not supported with the 'quictls'. 'quictls' must be built from submodules to ensure static linkage with required QUIC APIs. Use 'openssl' provider for external 3.5.0+ OpenSSL.")
+805:    # Only 'openssl' provider supports external selection for now
+806:    if(QUIC_TLS_LIB STREQUAL "openssl" AND (QUIC_USE_EXTERNAL_OPENSSL OR QUIC_OPENSSL_INCLUDE_DIR OR QUIC_OPENSSL_LIB_DIR OR QUIC_OPENSSL_ROOT_DIR))
+870:        # build-tree-only paths under ${CMAKE_BINARY_DIR}/openssl-prefixed/.
+877:        prefix_openssl_archives(
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: grep -n "QUIC_USE_SYSTEM_LIBCRYPTO\|find_package.*OpenSSL\|find_library.*crypto\|find_library.*ssl" CMakeLists.txt | head -20
+Observation: root@c0mpi1er-c0nta1ner:/work# { grep -n "QUIC_USE_SYSTEM_LIBCRYPTO\|find_package.*OpenSSL\|find_library.*crypto\|find_library.*ssl" CMakeLists.txt | head -20
+114:option(QUIC_USE_SYSTEM_LIBCRYPTO "Use system libcrypto if quictls TLS" OFF)
+123:# QUIC_USE_SYSTEM_LIBCRYPTO would be silently ignored. Reject the combination
+125:if(QUIC_USE_EXTERNAL_OPENSSL AND QUIC_USE_SYSTEM_LIBCRYPTO)
+127:        "QUIC_USE_SYSTEM_LIBCRYPTO is incompatible with QUIC_USE_EXTERNAL_OPENSSL. "
+129:        "the system; QUIC_USE_SYSTEM_LIBCRYPTO only applies to the bundled submodule "
+274:    if (QUIC_USE_SYSTEM_LIBCRYPTO)
+811:                find_library(LIB_CRYPTO NAMES crypto libcrypto PATHS ${QUIC_OPENSSL_LIB_DIR} NO_DEFAULT_PATH)
+812:                find_library(LIB_SSL NAMES ssl libssl PATHS ${QUIC_OPENSSL_LIB_DIR} NO_DEFAULT_PATH)
+814:                find_library(LIB_CRYPTO NAMES "crypto${CMAKE_STATIC_LIBRARY_SUFFIX}" "libcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}" PATHS ${QUIC_OPENSSL_LIB_DIR} NO_DEFAULT_PATH)
+815:                find_library(LIB_SSL NAMES "ssl${CMAKE_STATIC_LIBRARY_SUFFIX}" "libssl${CMAKE_STATIC_LIBRARY_SUFFIX}" PATHS ${QUIC_OPENSSL_LIB_DIR} NO_DEFAULT_PATH)
+833:            find_package(OpenSSL 3.5.0 REQUIRED)
+848:            CMAKE_ARGS "-DQUIC_USE_SYSTEM_LIBCRYPTO=${QUIC_USE_SYSTEM_LIBCRYPTO}"
+863:        if(QUIC_USE_SYSTEM_LIBCRYPTO)
+864:            message(FATAL_ERROR "QUIC_OPENSSL_SYMBOL_PREFIX is incompatible with QUIC_USE_SYSTEM_LIBCRYPTO; the system libcrypto cannot be renamed.")
+895:if (QUIC_USE_SYSTEM_LIBCRYPTO)
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: apt-get update && apt-get install -y cmake build-essential libssl-dev 2>&1 | tail -5
+Observation: root@c0mpi1er-c0nta1ner:/work# { apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y cmake build-essential libssl-dev 2>&1 | tail -5
+
+0% [Working]
+            
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+
+0% [1 InRelease 6517 B/151 kB 4%]
+                                 
+0% [Waiting for headers]
+                        
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+
+0% [2 InRelease 19.5 kB/55.4 kB 35%]
+                                    
+0% [Waiting for headers]
+                        
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+
+0% [3 InRelease 6349 B/34.8 kB 18%]
+                                   
+0% [Working]
+0% [Working]
+            
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+
+0% [4 Packages 2121 B/8790 kB 0%]
+0% [4 Packages 90.0 kB/8790 kB 1%]
+19% [4 Packages 392 kB/8790 kB 4%]
+                                  
+90% [Working]
+90% [4 Packages store 0 B] [Waiting for headers]
+                                                
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+
+90% [4 Packages store 0 B] [Waiting for headers]
+                                                
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [378 kB]
+
+90% [4 Packages store 0 B] [6 Packages 4924 B/378 kB 1%]
+                                                        
+93% [4 Packages store 0 B]
+                          
+96% [Working]
+96% [5 Packages store 0 B]
+                          
+98% [Working]
+98% [6 Packages store 0 B]
+                          
+100% [Working]
+              
+Fetched 9417 kB in 1s (8484 kB/s)
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 99%
+
+Reading package lists... 99%
+
+Reading package lists... Done
+
+Reading state information...
+cmake is already the newest version (3.25.1-1).
+build-essential is already the newest version (12.9).
+libssl-dev is already the newest version (3.0.22-1~deb12u2).
+0 upgraded, 0 newly installed, 0 to remove and 187 not upgraded.
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: grep -n "QUIC_USE_EXTERNAL_OPENSSL" CMakeLists.txt | head -10
+Observation: root@c0mpi1er-c0nta1ner:/work# { grep -n "QUIC_USE_EXTERNAL_OPENSSL" CMakeLists.txt | head -10
+115:option(QUIC_USE_EXTERNAL_OPENSSL "Use external OpenSSL instead of building from submodules" OFF)
+121:# QUIC_USE_EXTERNAL_OPENSSL skips the submodule build
+125:if(QUIC_USE_EXTERNAL_OPENSSL AND QUIC_USE_SYSTEM_LIBCRYPTO)
+127:        "QUIC_USE_SYSTEM_LIBCRYPTO is incompatible with QUIC_USE_EXTERNAL_OPENSSL. "
+801:    if(QUIC_TLS_LIB STREQUAL "quictls" AND (QUIC_USE_EXTERNAL_OPENSSL OR QUIC_OPENSSL_INCLUDE_DIR OR QUIC_OPENSSL_LIB_DIR OR QUIC_OPENSSL_ROOT_DIR))
+806:    if(QUIC_TLS_LIB STREQUAL "openssl" AND (QUIC_USE_EXTERNAL_OPENSSL OR QUIC_OPENSSL_INCLUDE_DIR OR QUIC_OPENSSL_LIB_DIR OR QUIC_OPENSSL_ROOT_DIR))
+860:        if(QUIC_USE_EXTERNAL_OPENSSL OR QUIC_OPENSSL_INCLUDE_DIR OR QUIC_OPENSSL_LIB_DIR OR QUIC_OPENSSL_ROOT_DIR)
+861:            message(FATAL_ERROR "QUIC_OPENSSL_SYMBOL_PREFIX requires the bundled OpenSSL build; do not combine with QUIC_USE_EXTERNAL_OPENSSL / QUIC_OPENSSL_INCLUDE_DIR / QUIC_OPENSSL_LIB_DIR / QUIC_OPENSSL_ROOT_DIR.")
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: mkdir -p build && cd build && cmake -DQUIC_TLS_LIB=openssl -DQUIC_USE_EXTERNAL_OPENSSL=ON .. 2>&1 | tail -30
+Observation: root@c0mpi1er-c0nta1ner:/work# { mkdir -p build && cd build && cmake -DQUIC_TLS_LIB=openssl -DQUIC_USE_EXTERNAL_OPENSSL=ON .. 2>&1 | tail -30
+-- Looking for _SC_PHYS_PAGES
+-- Looking for _SC_PHYS_PAGES - found
+-- Looking for sysconf
+-- Looking for sysconf - found
+-- Looking for UDP_SEGMENT
+-- Looking for UDP_SEGMENT - found
+-- Looking for SO_ATTACH_REUSEPORT_CBPF
+-- Looking for SO_ATTACH_REUSEPORT_CBPF - found
+-- Looking for sendmmsg
+-- Looking for sendmmsg - found
+-- Enabling quictls/openssl configuration tests
+-- Enabling CA file tests
+-- QUIC_ENABLE_LOGGING is false. Disabling logging
+-- Found libatomic: /usr/lib/x86_64-linux-gnu/libatomic.so.1
+-- Found libnuma: /usr/lib/x86_64-linux-gnu/libnuma.so.1
+-- numa.h not found. If build fails, install libnuma-dev
+-- Enabling shared ephemeral port work around
+CMake Error at /usr/share/cmake-3.25/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+  Could NOT find OpenSSL, try to set the path to OpenSSL root folder in the
+  system variable OPENSSL_ROOT_DIR: Found unsuitable version "3.0.22", but
+  required is at least "3.5.0" (found /usr/lib/x86_64-linux-gnu/libcrypto.so,
+  )
+Call Stack (most recent call first):
+  /usr/share/cmake-3.25/Modules/FindPackageHandleStandardArgs.cmake:598 (_FPHSA_FAILURE_MESSAGE)
+  /usr/share/cmake-3.25/Modules/FindOpenSSL.cmake:613 (find_package_handle_standard_args)
+  CMakeLists.txt:833 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/work/build/CMakeFiles/CMakeOutput.log".
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: cd /work && rm -rf build && mkdir -p build && cd build && cmake -DQUIC_TLS_LIB=quictls -DQUIC_USE_SYSTEM_LIBCRYPTO=ON .. 2>&1 | tail -30
+Observation: root@c0mpi1er-c0nta1ner:/work/build# { cd /work && rm -rf build && mkdir -p build && cd build && cmake -DQUIC_TLS_LIB=quictls -DQUIC_USE_SYSTEM_LIBCRYPTO=ON .. 2>&1 | tail -30
+-- Version Build ID: 0
+-- Version Suffix: -private
+-- Looking for _SC_PHYS_PAGES
+-- Looking for _SC_PHYS_PAGES - found
+-- Looking for sysconf
+-- Looking for sysconf - found
+-- Looking for UDP_SEGMENT
+-- Looking for UDP_SEGMENT - found
+-- Looking for SO_ATTACH_REUSEPORT_CBPF
+-- Looking for SO_ATTACH_REUSEPORT_CBPF - found
+-- Looking for sendmmsg
+-- Looking for sendmmsg - found
+-- Enabling quictls/openssl configuration tests
+-- Enabling CA file tests
+-- QUIC_ENABLE_LOGGING is false. Disabling logging
+-- Found libatomic: /usr/lib/x86_64-linux-gnu/libatomic.so.1
+-- Found libnuma: /usr/lib/x86_64-linux-gnu/libnuma.so.1
+-- numa.h not found. If build fails, install libnuma-dev
+-- Enabling shared ephemeral port work around
+-- Configuring for OpenSSL 3.x
+-- Setting openssldir to /usr/lib/ssl
+-- Configuring OpenSSL: /work/submodules/quictls/config;CC=/usr/bin/cc;CXX=/usr/local/bin/c++ enable-tls1_3;no-makedepend;no-dgram;no-ssl3;no-psk;no-srp;no-zlib;no-egd;no-idea;no-rc5;no-rc4;no-afalgeng;no-comp;no-cms;no-ct;no-srp;no-srtp;no-ts;no-gost;no-dso;no-ec2m;no-tls1;no-tls1_1;no-tls1_2;no-dtls;no-dtls1;no-dtls1_2;no-ssl;no-ssl3-method;no-tls1-method;no-tls1_1-method;no-tls1_2-method;no-dtls1-method;no-dtls1_2-method;no-siphash;no-whirlpool;no-aria;no-bf;no-blake2;no-sm2;no-sm3;no-sm4;no-camellia;no-cast;no-md4;no-mdc2;no-ocb;no-rc2;no-rmd160;no-scrypt;no-seed;no-weak-ssl-ciphers;no-shared;no-tests;no-uplink;no-cmp;no-fips;no-padlockeng;no-siv;no-legacy;no-dtls;no-deprecated;--libdir=lib;--openssldir="/usr/lib/ssl";--prefix=/work/build/_deps/opensslquic-build/quictls
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.22")  
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Configuring for QuicTLS
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /work/build
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: cd /work/build && cmake --build . -j$(nproc) 2>&1 | tail -30
+Observation: root@c0mpi1er-c0nta1ner:/work/build# { cd /work/build && cmake --build . -j4 2>&1 | tail -30
+[ 27%] Building C object src/core/CMakeFiles/core.dir/frame.c.o
+[ 28%] Building C object src/core/CMakeFiles/core.dir/partition.c.o
+[ 30%] Building C object src/core/CMakeFiles/core.dir/library.c.o
+[ 31%] Building C object src/core/CMakeFiles/core.dir/listener.c.o
+[ 33%] Building C object src/core/CMakeFiles/core.dir/lookup.c.o
+[ 34%] Building C object src/core/CMakeFiles/core.dir/loss_detection.c.o
+[ 36%] Building C object src/core/CMakeFiles/core.dir/mtu_discovery.c.o
+[ 37%] Building C object src/core/CMakeFiles/core.dir/operation.c.o
+[ 39%] Building C object src/core/CMakeFiles/core.dir/packet.c.o
+[ 40%] Building C object src/core/CMakeFiles/core.dir/packet_builder.c.o
+[ 42%] Building C object src/core/CMakeFiles/core.dir/packet_space.c.o
+[ 43%] Building C object src/core/CMakeFiles/core.dir/path.c.o
+[ 45%] Building C object src/core/CMakeFiles/core.dir/range.c.o
+[ 48%] Building C object src/core/CMakeFiles/core.dir/recv_buffer.c.o
+[ 48%] Building C object src/core/CMakeFiles/core.dir/registration.c.o
+[ 50%] Building C object src/core/CMakeFiles/core.dir/send.c.o
+[ 51%] Building C object src/core/CMakeFiles/core.dir/send_buffer.c.o
+[ 54%] Building C object src/core/CMakeFiles/core.dir/sent_packet_metadata.c.o
+[ 54%] Building C object src/core/CMakeFiles/core.dir/settings.c.o
+[ 57%] Building C object src/core/CMakeFiles/core.dir/stream.c.o
+[ 57%] Building C object src/core/CMakeFiles/core.dir/stream_recv.c.o
+[ 59%] Building C object src/core/CMakeFiles/core.dir/stream_send.c.o
+[ 60%] Building C object src/core/CMakeFiles/core.dir/stream_set.c.o
+[ 63%] Building C object src/core/CMakeFiles/core.dir/timer_wheel.c.o
+[ 63%] Building C object src/core/CMakeFiles/core.dir/worker.c.o
+[ 65%] Building C object src/core/CMakeFiles/core.dir/version_neg.c.o
+[ 66%] Building C object src/core/CMakeFiles/core.dir/sliding_window_extremum.c.o
+[ 68%] Linking C static library ../../obj/Release/libcore.a
+[ 68%] Built target core
+gmake: *** [Makefile:146: all] Error 2
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: cd /work/build && cmake --build . -j4 2>&1 | grep -i "error" | head -20
+Observation: root@c0mpi1er-c0nta1ner:/work/build# { cd /work/build && cmake --build . -j4 2>&1 | grep -i "error" | head -20
+gmake[2]: *** [_deps/opensslquic-build/CMakeFiles/OpenSSL_Target.dir/build.make:83: _deps/opensslquic-build/submodules/quictls/Makefile] Error 127
+gmake[1]: *** [CMakeFiles/Makefile2:190: _deps/opensslquic-build/CMakeFiles/OpenSSL_Target.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Agent stopped due to iteration limit or time limit.

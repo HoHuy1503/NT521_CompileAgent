@@ -1,0 +1,133 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+CompileNavigator: 
+        A tool for finding out the compilation instruction from project structure.
+        @param project_structure: The project structure.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project ttygif from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
+3. If there are any difficulties during compilation, try to break them without calling tools.
+4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- SECURITY.md
+|-- Slackbuild
+|   |-- slack-desc
+|   |-- ttygif-1.5.0.tar.gz
+|   `-- ttygif.SlackBuild
+|-- io.c
+|-- io.h
+|-- string_builder.c
+|-- string_builder.h
+|-- ttygif.c
+|-- ttygif.png
+|-- ttyrec.h
+|-- utils.c
+`-- utils.h
+
+2 directories, 16 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: CompileNavigator
+Action Input: .
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- SECURITY.md
+|-- Slackbuild
+|   |-- slack-desc
+|   |-- ttygif-1.5.0.tar.gz
+|   `-- ttygif.SlackBuild
+|-- io.c
+|-- io.h
+|-- string_builder.c
+|-- string_builder.h
+|-- ttygif.c
+|-- ttygif.png
+|-- ttyrec.h
+|-- utils.c
+`-- utils.h
+Observation: To compile the `ttygif` project, use the following commands:
+
+1. **Build the project**:
+   ```bash
+   make
+   ```
+   This compiles the `ttygif` binary using `gcc` with optimization flags (`-O2`), warnings enabled (`-Wall`), and the Linux-specific define (`-DOS_LINUX`).
+
+2. **Install the binary** (optional):
+   ```bash
+   make install
+   ```
+   This installs the compiled binary to `/usr/local/bin` (or a custom prefix specified via `PREFIX`).
+
+3. **Clean build artifacts** (optional):
+   ```bash
+   make clean
+   ```
+Thought: Action: Shell
+Action Input: make
+Observation: root@c0mpi1er-c0nta1ner:/work# { make -j4
+gcc -O2 -Wall -DVERSION='"1.4.0"' -DOS_LINUX   -c -o ttygif.o ttygif.c
+gcc -O2 -Wall -DVERSION='"1.4.0"' -DOS_LINUX   -c -o io.o io.c
+gcc -O2 -Wall -DVERSION='"1.4.0"' -DOS_LINUX   -c -o string_builder.o string_builder.c
+gcc -O2 -Wall -DVERSION='"1.4.0"' -DOS_LINUX   -c -o utils.o utils.c
+gcc -O2 -Wall -DVERSION='"1.4.0"' -DOS_LINUX -o ttygif ttygif.o io.o string_builder.o utils.o
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Observation: The compilation completed successfully with no errors. The `ttygif` binary was created.
+
+Let me verify the binary exists:
+Action: Shell
+Action Input: ls -la ttygif && file ttygif
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls -la ttygif && file ttygif
+-rwxr-xr-x 1 root root 23008 Nov 21 11:35 ttygif
+ttygif: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, not stripped
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The compilation was successful. The `make` command completed without errors, and the `ttygif` executable file was generated and verified as a valid ELF 64-bit executable.
+Final Answer: COMPILATION-SUCCESS

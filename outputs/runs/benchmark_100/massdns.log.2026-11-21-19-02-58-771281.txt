@@ -1,0 +1,177 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+CompileNavigator: 
+        A tool for finding out the compilation instruction from project structure.
+        @param project_structure: The project structure.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, CompileNavigator, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project massdns from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Use the CompileNavigator tool to looking for compilation instructions. Try to avoid reading documents in Shell tool, unless you think it's necessary.
+3. If there are any difficulties during compilation, try to break them without calling tools.
+4. Unless you encounter a problem that you cannot solve, there is no need to call the ErrorSolver tool.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+8. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- CMakeLists.txt
+|-- Dockerfile
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- doc
+|   `-- massdns.1
+|-- lists
+|   |-- names.txt
+|   |-- names_small.txt
+|   `-- resolvers.txt
+|-- scripts
+|   |-- auth-addrs.sh
+|   |-- censys-extract.py
+|   |-- ct.py
+|   |-- dnsparse.py
+|   |-- get-resolvers.py
+|   |-- get-resolvers.sh
+|   |-- massdnsA.jq
+|   |-- massdnsAAAA.jq
+|   |-- ptr.py
+|   |-- recon.py
+|   |-- requirements.txt
+|   `-- subbrute.py
+|-- src
+|   |-- auto_concurrency.h
+|   |-- buffers.h
+|   |-- cmd.h
+|   |-- dns.h
+|   |-- flow.h
+|   |-- hashmap.h
+|   |-- list.h
+|   |-- main.c
+|   |-- massdns.h
+|   |-- net.h
+|   |-- random.h
+|   |-- security.h
+|   |-- string.h
+|   |-- tcp.h
+|   `-- timed_ring.h
+`-- tests
+    |-- ignore-code-test-json
+    |-- multi-lookup-A-ipv4-dedicated-resolver
+    |-- run-tests.sh
+    |-- single-lookup-A-ipv4-dedicated-resolver
+    |-- single-lookup-A-ipv4-resolver
+    |-- single-lookup-A-ipv4-resolver-pipe
+    `-- single-lookup-A-ipv6-resolver
+
+12 directories, 37 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: CompileNavigator
+Action Input: .
+|-- CMakeLists.txt
+|-- Dockerfile
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- doc
+|   `-- massdns.1
+|-- lists
+|   |-- names.txt
+|   |-- names_small.txt
+|   `-- resolvers.txt
+|-- scripts
+|   |-- auth-addrs.sh
+|   |-- censys-extract.py
+|   |-- ct.py
+|   |-- dnsparse.py
+|   |-- get-resolvers.py
+|   |-- get-resolvers.sh
+|   |-- massdnsA.jq
+|   |-- massdnsAAAA.jq
+|   |-- ptr.py
+|   |-- recon.py
+|   |-- requirements.txt
+|   `-- subbrute.py
+|-- src
+|   |-- auto_concurrency.h
+|   |-- buffers.h
+|   |-- cmd.h
+|   |-- dns.h
+|   |-- flow.h
+|   |-- hashmap.h
+|   |-- list.h
+|   |-- main.c
+|   |-- massdns.h
+|   |-- net.h
+|   |-- random.h
+|   |-- security.h
+|   |-- string.h
+|   |-- tcp.h
+|   `-- timed_ring.h
+`-- tests
+    |-- ignore-code-test-json
+    |-- multi-lookup-A-ipv4-dedicated-resolver
+    |-- run-tests.sh
+    |-- single-lookup-A-ipv4-dedicated-resolver
+    |-- single-lookup-A-ipv4-resolver
+    |-- single-lookup-A-ipv4-resolver-pipe
+    `-- single-lookup-A-ipv6-resolver
+Observation: To compile massdns, follow these steps:
+
+1. Clone the git repository and navigate to the project root folder.
+2. Run `make` to build from source.
+3. If you are not on Linux, run `make nolinux`.
+4. On Windows, ensure the Cygwin packages `gcc-core`, `git`, and `make` are installed.
+Thought: Action: Shell
+Action Input: make
+Observation: root@c0mpi1er-c0nta1ner:/work# { make -j4
+fatal: No names found, cannot describe anything.
+mkdir -p bin
+cc    -DMASSDNS_REVISION=\"\" -O3 -std=c11 -DHAVE_EPOLL -DHAVE_SYSINFO -Wall -fstack-protector-strong src/main.c -o bin/massdns
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Action: Shell
+Action Input: ls -l bin/massdns
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls -l bin/massdns
+-rwxr-xr-x 1 root root 124584 Nov 21 12:02 bin/massdns
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The compilation was successful. The `make` command completed with exit code 0, and the executable file `bin/massdns` was created.
+Final Answer: COMPILATION-SUCCESS
