@@ -1,0 +1,298 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project llama2.c from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Inspect project files (such as README, CMakeLists.txt, Makefile, configure.ac) directly via the Shell tool to determine the build instructions.
+3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.
+4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+/no_think
+
+Thought:Thought: I need to start by exploring the project structure to understand what I'm working with.
+Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- LICENSE
+|-- Makefile
+|-- README.md
+|-- assets
+|   `-- llama_cute.jpg
+|-- build_msvc.bat
+|-- configurator.py
+|-- doc
+|   |-- stories260K.md
+|   `-- train_llama_tokenizer.md
+|-- export.py
+|-- model.py
+|-- requirements.txt
+|-- run.c
+|-- run.ipynb
+|-- runq.c
+|-- sample.py
+|-- test.c
+|-- test_all.py
+|-- tinystories.py
+|-- tokenizer.bin
+|-- tokenizer.model
+|-- tokenizer.py
+|-- train.py
+|-- win.c
+`-- win.h
+
+3 directories, 24 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I see there's a Makefile and several C files. The user specifically asked to compile `llama2.c`, but I don't see it in the tree output. Let me check the README and Makefile to understand the build process, and also look for llama2.c.
+Action: Shell
+Action Input: cat README.md
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat README.md
+## llama2.c
+
+<p align="center">
+  <img src="assets/llama_cute.jpg" width="300" height="300" alt="Cute Llama">
+</p>
+
+Have you ever wanted to inference a baby [Llama 2](https://ai.meta.com/llama/) model in pure C? No? Well, now you can!
+
+Train the Llama 2 LLM architecture in PyTorch then inference it with one simple 700-line C file ([run.c](run.c)). You might think that you need many billion parameter LLMs to do anything useful, but in fact very small LLMs can have surprisingly strong performance if you make the domain narrow enough (ref: [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) paper). This repo is a "fullstack" train + inference solution for Llama 2 LLM, with focus on minimalism and simplicity.
+
+As the architecture is identical, you can also load and inference Meta's Llama 2 models. However, the current code only inferences models in fp32, so you will most likely not be able to productively load models larger than 7B. Work on model quantization is currently ongoing.
+
+Please note that this repo started recently as a fun weekend project: I took my earlier [nanoGPT](https://github.com/karpathy/nanoGPT), tuned it to implement the Llama-2 architecture instead of GPT-2, and the meat of it was writing the C inference engine in [run.c](run.c). So the project is young and moving quickly. Hat tip to the awesome [llama.cpp](https://github.com/ggerganov/llama.cpp) for inspiring this project. Compared to llama.cpp, I wanted something super simple, minimal, and educational so I chose to hard-code the Llama 2 architecture and just roll one inference file of pure C with no dependencies.
+
+## feel the magic
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/karpathy/llama2.c/blob/master/run.ipynb)
+
+First, navigate to the folder where you keep your projects and clone this repository to this folder:
+
+```bash
+git clone https://github.com/karpathy/llama2.c.git
+```
+
+Then, open the repository folder:
+
+```bash
+cd llama2.c
+```
+
+Now, let's just run a baby Llama 2 model in C. You need a model checkpoint. Download this 15M parameter model I trained on the [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories) dataset (~60MB download):
+
+```bash
+wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories15M.bin
+```
+
+Compile and run the C code:
+
+```bash
+make run
+./run stories15M.bin
+```
+
+You'll see the text stream a sample. On my M1 MacBook Air this runs at ~110 tokens/s. See [performance](#performance) or the Makefile for compile flags that can significantly speed this up. We can also try a bit bigger 42M parameter model:
+
+```bash
+wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories42M.bin
+./run stories42M.bin
+```
+
+This still runs at interactive rates and samples more coherent and diverse stories:
+
+> Once upon a time, there was a little girl named Lily. She loved playing with her toys on top of her bed. One day, she decided to have a tea party with her stuffed animals. She poured some tea into a tiny teapot and put it on top of the teapot. Suddenly, her little brother Max came into the room and wanted to join the tea party too. Lily didn't want to share her tea and she told Max to go away. Max started to cry and Lily felt bad. She decided to yield her tea party to Max and they both shared the teapot. But then, something unexpected happened. The teapot started to shake and wiggle. Lily and Max were scared and didn't know what to do. Suddenly, the teapot started to fly towards the ceiling and landed on the top of the bed. Lily and Max were amazed and they hugged each other. They realized that sharing was much more fun than being selfish. From that day on, they always shared their tea parties and toys.
+
+You can also prompt the model with a prefix or a number of additional command line arguments, e.g. to sample at temperature 0.8 for 256 steps and with a prompt:
+
+```bash
+./run sto
+......
+ A Zig port of this project
+  - [llama2.zig](https://github.com/vodkaslime/llama2.zig) by @[vodkaslime](https://github.com/vodkaslime): a Zig port of this project
+  - [llama2.zig](https://github.com/clebert/llama2.zig) by @[clebert](https://github.com/clebert): a Zig port of this project
+- Julia
+  - [llama2.jl](https://github.com/juvi21/llama2.jl) by @[juvi21](https://github.com/juvi21): a Julia port of this project
+- Scala
+  - [llama2.scala](https://github.com/jrudolph/llama2.scala) by @[jrudolph](https://github.com/jrudolph): a Scala port of this project
+- Java
+  - [llama2.java](https://github.com/mukel/llama2.java) by @[mukel](https://github.com/mukel): a Java port of this project
+  - [llama2.java](https://github.com/neoremind/llama2.java) by @[neoremind](https://github.com/neoremind): a Java port of this project
+  - [llama2.tornadovm.java](https://github.com/mikepapadim/llama2.tornadovm.java) by @[mikepapadim](https://github.com/mikepapadim): an extension of the llama2.java with GPU-support through [TornadoVM](https://github.com/beehive-lab/TornadoVM).
+- Kotlin
+  - [llama2.kt](https://github.com/madroidmaq/llama2.kt) by @[madroidmaq](https://github.com/madroidmaq): a Kotlin port of this project
+  - [llama2-kmp](https://github.com/stepango/llama2-kmp) by @[stepango](https://github.com/stepango): a Kotlin multiplatform(KMP) port of this project 
+- Python
+  - [llama2.py](https://github.com/tairov/llama2.py) by @[tairov](https://github.com/tairov): a simple one file pure Python port of this project with zero dependencies
+- C#
+  - [llama2.cs](https://github.com/trrahul/llama2.cs) by @[trrahul](https://github.com/trrahul): a C# port of this project
+- F#
+  - [llama2.fs](https://github.com/micsh/llama2.fs) by @[micsh](https://github.com/micsh): a F# port of this project
+- Dart
+  - [llama2.dart](https://github.com/yiminghan/llama2.dart) by @[yiminghan](https://github.com/yiminghan/llama2.dart): one-file dart port of this project, works with Flutter!
+- Web
+  - [llama2c-web](https://github.com/dmarcos/llama2.c-web) by @[dmarcos](https://github.com/dmarcos): Super simple way to build unmodified llama2.c to WASM and run it in the browser. [Demo](https://diegomarcos.com/llama2.c-web/)
+  - [llama2.rs.wasm](https://github.com/mtb0x1/llama2.rs.wasm) by @[mtb0x1](https://github.com/mtb0x1/) : a [Demo](https://mtb0x1.github.io/llama2.rs.wasm/) of all listed rust ports to WASM, all in one web page.
+- WebAssembly
+  - [icpp-llm](https://github.com/icppWorld/icpp-llm): LLMs for the Internet Computer
+- Fortran
+  - [llama2.f90](https://github.com/rbitr/llama2.f90): a Fortran port of this project
+- Mojo
+  - [llama2.🔥](https://github.com/tairov/llama2.mojo) by @[tairov](https://github.com/tairov): pure Mojo port of this project
+- OCaml
+  - [llama2.ml](https://github.com/jackpeck/llama2.ml) by @[jackpeck](https://github.com/jackpeck): an OCaml port of this project
+- Hare
+  - [llama2.ha](https://sr.ht/~dvshkn/llama2.ha) by @[dvshkn](https://git.sr.ht/~dvshkn): a Hare port of this project
+- [llama2.c - Llama 2 Everywhere](https://github.com/trholding/llama2.c) by @[trholding](https://github.com/trholding): Standalone, Bootable & Portable Binary Llama 2
+- [llama2.c-zh - Bilingual Chinese and English](https://github.com/chenyangMl/llama2.c-zh) by @[chenyangMl](https://github.com/chenyangMl): Expand tokenizer to support training and inference in both Chinese and English
+- Haskell
+  - [llama2.hs](https://github.com/chris-ch/llama2.hs) by @[chris-ch](https://github.com/chris-ch): an Haskell port of this project
+
+## unsorted todos
+
+- add support in run.c of reading version 1+ files from export, later deprecate "version 0"
+- run.cu (CUDA) investigate and merge
+- add more tests inside [test.c](test.c)
+- add Engine class for use in sample.py that does efficient inference in PyTorch, e.g. KV cache keeping
+- make it easier to add a new dataset with not too much pain
+- (LoRA) finetuning and export of Llama 2 models
+
+## License
+
+MIT
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The README mentions `make run` to compile the C code. Let me check the Makefile to understand the build targets.
+Action: Shell
+Action Input: cat Makefile
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat Makefile
+# choose your compiler, e.g. gcc/clang
+# example override to clang: make run CC=clang
+CC = gcc
+
+# the most basic way of building that is most likely to work on most systems
+.PHONY: run
+run: run.c
+	$(CC) -O3 -o run run.c -lm
+	$(CC) -O3 -o runq runq.c -lm
+
+# useful for a debug build, can then e.g. analyze with valgrind, example:
+# $ valgrind --leak-check=full ./run out/model.bin -n 3
+rundebug: run.c
+	$(CC) -g -o run run.c -lm
+	$(CC) -g -o runq runq.c -lm
+
+# https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+# https://simonbyrne.github.io/notes/fastmath/
+# -Ofast enables all -O3 optimizations.
+# Disregards strict standards compliance.
+# It also enables optimizations that are not valid for all standard-compliant programs.
+# It turns on -ffast-math, -fallow-store-data-races and the Fortran-specific
+# -fstack-arrays, unless -fmax-stack-var-size is specified, and -fno-protect-parens.
+# It turns off -fsemantic-interposition.
+# In our specific application this is *probably* okay to use
+.PHONY: runfast
+runfast: run.c
+	$(CC) -Ofast -o run run.c -lm
+	$(CC) -Ofast -o runq runq.c -lm
+
+# additionally compiles with OpenMP, allowing multithreaded runs
+# make sure to also enable multiple threads when running, e.g.:
+# OMP_NUM_THREADS=4 ./run out/model.bin
+.PHONY: runomp
+runomp: run.c
+	$(CC) -Ofast -fopenmp -march=native run.c  -lm  -o run
+	$(CC) -Ofast -fopenmp -march=native runq.c  -lm  -o runq
+
+.PHONY: win64
+win64:
+	x86_64-w64-mingw32-gcc -Ofast -D_WIN32 -o run.exe -I. run.c win.c
+	x86_64-w64-mingw32-gcc -Ofast -D_WIN32 -o runq.exe -I. runq.c win.c
+
+# compiles with gnu99 standard flags for amazon linux, coreos, etc. compatibility
+.PHONY: rungnu
+rungnu:
+	$(CC) -Ofast -std=gnu11 -o run run.c -lm
+	$(CC) -Ofast -std=gnu11 -o runq runq.c -lm
+
+.PHONY: runompgnu
+runompgnu:
+	$(CC) -Ofast -fopenmp -std=gnu11 run.c  -lm  -o run
+	$(CC) -Ofast -fopenmp -std=gnu11 runq.c  -lm  -o runq
+
+# run all tests
+.PHONY: test
+test:
+	pytest
+
+# run only tests for run.c C implementation (is a bit faster if only C code changed)
+.PHONY: testc
+testc:
+	pytest -k runc
+
+# run the C tests, without touching pytest / python
+# to increase verbosity level run e.g. as `make testcc VERBOSITY=1`
+VERBOSITY ?= 0
+.PHONY: testcc
+testcc:
+	$(CC) -DVERBOSITY=$(VERBOSITY) -O3 -o testc test.c -lm
+	./testc
+
+.PHONY: clean
+clean:
+	rm -f run
+	rm -f runq
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The Makefile shows that the main compilation target is `make run`, which compiles `run.c` into an executable named `run`. The user asked to compile `llama2.c`, but the actual C source file is `run.c` (the project is called llama2.c but the main C file is run.c). Let me compile it using `make run`.
+Action: Shell
+Action Input: make run
+Observation: root@c0mpi1er-c0nta1ner:/work# { make -j4 run
+gcc -O3 -o run run.c -lm
+gcc -O3 -o runq runq.c -lm
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The compilation succeeded. Let me verify the executables were created.
+Action: Shell
+Action Input: ls -la run runq
+Observation: root@c0mpi1er-c0nta1ner:/work# { ls -la run runq
+-rwxr-xr-x 1 root root 39232 Nov 23 20:24 run
+-rwxr-xr-x 1 root root 39424 Nov 23 20:24 runq
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: The compilation was successful. Both `run` and `runq` executables were created. The project llama2.c has been compiled successfully.
+Final Answer: COMPILATION-SUCCESS

@@ -1,0 +1,115 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nErrorSolver: \n        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting\n        to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nImportant: Never write \"Observation:\" yourself. Stop immediately after \"Action Input:\".\n\nBegin!\nQuestion: I want you to help me compile the project tiny-AES-c from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Inspect project files (such as README, CMakeLists.txt, Makefile, configure.ac) directly via the Shell tool to determine the build instructions.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n/no_think\n\nThought:",
+			"Thought: I need to start by exploring the project structure to understand what I'm working with.\nAction: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- CMakeLists.txt\n|-- Makefile\n|-- README.md\n|-- aes.c\n|-- aes.h\n|-- aes.hpp\n|-- conanfile.py\n|-- library.json\n|-- library.properties\n|-- test.c\n|-- test.cpp\n|-- test_package\n|   |-- CMakeLists.txt\n|   `-- conanfile.py\n`-- unlicense.txt\n\n2 directories, 14 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: I see a CMakeLists.txt and a Makefile. Let me check the README and build files to understand the build process.\nAction: Shell\nAction Input: cat README.md"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat README.md\n![CI](https://github.com/kokke/tiny-AES-c/actions/workflows/c-cpp.yml/badge.svg)\n### Tiny AES in C\n\nThis is a small and portable implementation of the AES [ECB](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Electronic_Codebook_.28ECB.29), [CTR](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_.28CTR.29) and [CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_Block_Chaining_.28CBC.29) encryption algorithms written in C.\n\nYou can override the default key-size of 128 bit with 192 or 256 bit by defining the symbols AES192 or AES256 in [`aes.h`](https://github.com/kokke/tiny-AES-c/blob/master/aes.h).\n\nThe API is very simple and looks like this (I am using C99 `<stdint.h>`-style annotated types):\n\n```C\n/* Initialize context calling one of: */\nvoid AES_init_ctx(struct AES_ctx* ctx, const uint8_t* key);\nvoid AES_init_ctx_iv(struct AES_ctx* ctx, const uint8_t* key, const uint8_t* iv);\n\n/* ... or reset IV at random point: */\nvoid AES_ctx_set_iv(struct AES_ctx* ctx, const uint8_t* iv);\n\n/* Then start encrypting and decrypting with the functions below: */\nvoid AES_ECB_encrypt(const struct AES_ctx* ctx, uint8_t* buf);\nvoid AES_ECB_decrypt(const struct AES_ctx* ctx, uint8_t* buf);\n\nvoid AES_CBC_encrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\nvoid AES_CBC_decrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\n\n/* Same function for encrypting as for decrypting in CTR mode */\nvoid AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\n```\n\nImportant notes: \n * No padding is provided so for CBC and ECB all buffers should be multiples of 16 bytes. For padding [PKCS7](https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS7) is recommendable.\n * ECB mode is considered unsafe for most uses and is not implemented in streaming mode. If you need this mode, call the function for every block of 16 bytes you need encrypted. See [wikipedia's article on ECB](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Electronic_Codebook_(ECB)) for more details.\n * This library is designed for small code size and simplicity, intended for cases where small binary size, low memory footprint and portability is more important than high performance. If speed is a concern, you can try more complex libraries, e.g. [Mbed TLS](https://tls.mbed.org/), [OpenSSL](https://www.openssl.org/) etc.\n\nYou can choose to use any or all of the modes-of-operations, by defining the symbols CBC, CTR or ECB in [`aes.h`](https://github.com/kokke/tiny-AES-c/blob/master/aes.h) (read the comments for clarification).\n\nC++ users should `#include` [aes.hpp](https://github.com/kokke/tiny-AES-c/blob/master/aes.hpp) instead of [aes.h](https://github.com/kokke/tiny-AES-c/blob/master/aes.h)\n\nThere is no built-in error checking or protection from out-of-bounds memory access errors as a result of malicious input.\n\nThe module uses less than 200 bytes of RAM and 1-2K ROM when compiled for ARM, but YMMV depending on which modes are enabled.\n\nIt is one of the smallest implementations in C I've seen yet, but do contact me if you know of something smaller (or have improvements to the code here). \n\nI've successfully used the code on 64bit x86, 32bit ARM and 8 bit AVR platforms.\n\n\nGCC size output when only CTR mode is compiled for ARM:\n\n    $ arm-none-eabi-gcc -Os -DCBC=0 -DECB=0 -DCTR=1 -c aes.c\n    $ size aes.o\n       text    data     bss     dec     hex filename\n       1171       0       0    1171     493 aes.o\n\n.. and when compiling for the THUMB instruction set, we end up well below 1K in code size.\n\n    $ arm-none-eabi-gcc -Os -mthumb -DCBC=0 -DECB=0 -DCTR=1 -c aes.c\n    $ size aes.o\n       text    data     bss     dec     hex filename\n        903       0       0     903     387 aes.o\n\n\nI am using the Free Software Foundation, ARM GCC compiler:\n\n    $ arm-none-eabi-gcc --version\n    arm-none-eabi-gcc (4.8.4-1+11-1) 4.8.4 20141219 (release)\n    Copyright (C) 2013 Free Software Foundation, Inc.\n    This is free software; see the source for copying conditions.  There is NO\n    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n\n\n\nThis implementation is verified against the data in:\n\n[National Institute of Standards and Technology Special Publication 800-38A 2001 ED](http://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf) Appendix F: Example Vectors for Modes of Operation of the AES.\n\nThe other appendices in the document are valuable for implementation details on e.g. padding, generation of IVs and nonces in CTR-mode etc.\n\n\nA heartfelt thank-you to [all the nice people](https://github.com/kokke/tiny-AES-c/graphs/contributors) out there who have contributed to this project.\n\n\nAll material in this repository is in the public domain.\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: Let me check the Makefile and CMakeLists.txt to understand the build process.\nAction: Shell\nAction Input: cat Makefile"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat Makefile\n#CC           = avr-gcc\n#CFLAGS       = -Wall -mmcu=atmega16 -Os -Wl,-Map,test.map\n#OBJCOPY      = avr-objcopy\nCC           = gcc\nLD           = gcc\nAR           = ar\nARFLAGS      = rcs\nCFLAGS       = -Wall -Os -c\nLDFLAGS      = -Wall -Os -Wl,-Map,test.map\nifdef AES192\nCFLAGS += -DAES192=1\nendif\nifdef AES256\nCFLAGS += -DAES256=1\nendif\n\nOBJCOPYFLAGS = -j .text -O ihex\nOBJCOPY      = objcopy\n\n# include path to AVR library\nINCLUDE_PATH = /usr/lib/avr/include\n# splint static check\nSPLINT       = splint test.c aes.c -I$(INCLUDE_PATH) +charindex -unrecog\n\ndefault: test.elf\n\n.SILENT:\n.PHONY:  lint clean\n\ntest.hex : test.elf\n\techo copy object-code to new image and format in hex\n\t$(OBJCOPY) ${OBJCOPYFLAGS} $< $@\n\ntest.o : test.c aes.h aes.o\n\techo [CC] $@ $(CFLAGS)\n\t$(CC) $(CFLAGS) -o  $@ $<\n\naes.o : aes.c aes.h\n\techo [CC] $@ $(CFLAGS)\n\t$(CC) $(CFLAGS) -o $@ $<\n\ntest.elf : aes.o test.o\n\techo [LD] $@\n\t$(LD) $(LDFLAGS) -o $@ $^\n\naes.a : aes.o\n\techo [AR] $@\n\t$(AR) $(ARFLAGS) $@ $^\n\nlib : aes.a\n\nclean:\n\trm -f *.OBJ *.LST *.o *.gch *.out *.hex *.map *.elf *.a\n\ntest:\n\tmake clean && make && ./test.elf\n\tmake clean && make AES192=1 && ./test.elf\n\tmake clean && make AES256=1 && ./test.elf\n\nlint:\n\t$(call SPLINT)\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The Makefile shows that the default target is `test.elf` (an executable) and there's also a `lib` target that builds `aes.a` (a static library). Since this is a library project (tiny-AES-c), the main compilation target should be the static library `aes.a`. Let me also check the CMakeLists.txt to see what it builds.\nAction: Shell\nAction Input: cat CMakeLists.txt"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat CMakeLists.txt\ncmake_minimum_required(VERSION 3.12)\n\nproject(tiny-aes C)\n\nadd_library(${PROJECT_NAME} \"\")\ntarget_sources(${PROJECT_NAME}\n    PRIVATE\n        ${CMAKE_CURRENT_LIST_DIR}/aes.c\n    INTERFACE\n        ${CMAKE_CURRENT_LIST_DIR}/aes.h\n        ${CMAKE_CURRENT_LIST_DIR}/aes.hpp\n)\n\ntarget_include_directories(${PROJECT_NAME}\n    INTERFACE\n        ${CMAKE_CURRENT_LIST_DIR}\n)\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The CMakeLists.txt builds a library called `tiny-aes`. The Makefile has a `lib` target that builds `aes.a`. Since this is a library project, I should compile the static library. Let me use the Makefile's `lib` target which builds `aes.a`.\nAction: Shell\nAction Input: make lib"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { make -j4 lib\n[CC] aes.o -Wall -Os -c\n[AR] aes.a\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The `make lib` command succeeded. It compiled `aes.o` and created the static library `aes.a`. Let me verify the output files exist.\nAction: Shell\nAction Input: ls -la aes.a aes.o"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { ls -la aes.a aes.o\n-rw-r--r-- 1 root root 5044 Nov 23 18:40 aes.a\n-rw-r--r-- 1 root root 4736 Nov 23 18:40 aes.o\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The compilation was successful. The static library `aes.a` was created along with the object file `aes.o`. Let me verify the library contents to confirm it's valid.\nAction: Shell\nAction Input: ar t aes.a"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { ar t aes.a\naes.o\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The compilation was successful. The static library `aes.a` was created and contains the `aes.o` object file. The project compiled without any errors.\n\nFinal Answer: COMPILATION-SUCCESS"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- CMakeLists.txt\n|-- Makefile\n|-- README.md\n|-- aes.c\n|-- aes.h\n|-- aes.hpp\n|-- conanfile.py\n|-- library.json\n|-- library.properties\n|-- test.c\n|-- test.cpp\n|-- test_package\n|   |-- CMakeLists.txt\n|   `-- conanfile.py\n`-- unlicense.txt\n\n2 directories, 14 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15088152885437012
+			],
+			[
+				"cat README.md",
+				"root@c0mpi1er-c0nta1ner:/work# { cat README.md\n![CI](https://github.com/kokke/tiny-AES-c/actions/workflows/c-cpp.yml/badge.svg)\n### Tiny AES in C\n\nThis is a small and portable implementation of the AES [ECB](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Electronic_Codebook_.28ECB.29), [CTR](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Counter_.28CTR.29) and [CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_Block_Chaining_.28CBC.29) encryption algorithms written in C.\n\nYou can override the default key-size of 128 bit with 192 or 256 bit by defining the symbols AES192 or AES256 in [`aes.h`](https://github.com/kokke/tiny-AES-c/blob/master/aes.h).\n\nThe API is very simple and looks like this (I am using C99 `<stdint.h>`-style annotated types):\n\n```C\n/* Initialize context calling one of: */\nvoid AES_init_ctx(struct AES_ctx* ctx, const uint8_t* key);\nvoid AES_init_ctx_iv(struct AES_ctx* ctx, const uint8_t* key, const uint8_t* iv);\n\n/* ... or reset IV at random point: */\nvoid AES_ctx_set_iv(struct AES_ctx* ctx, const uint8_t* iv);\n\n/* Then start encrypting and decrypting with the functions below: */\nvoid AES_ECB_encrypt(const struct AES_ctx* ctx, uint8_t* buf);\nvoid AES_ECB_decrypt(const struct AES_ctx* ctx, uint8_t* buf);\n\nvoid AES_CBC_encrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\nvoid AES_CBC_decrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\n\n/* Same function for encrypting as for decrypting in CTR mode */\nvoid AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, size_t length);\n```\n\nImportant notes: \n * No padding is provided so for CBC and ECB all buffers should be multiples of 16 bytes. For padding [PKCS7](https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS7) is recommendable.\n * ECB mode is considered unsafe for most uses and is not implemented in streaming mode. If you need this mode, call the function for every block of 16 bytes you need encrypted. See [wikipedia's article on ECB](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Electronic_Codebook_(ECB)) for more details.\n * This library is designed for small code size and simplicity, intended for cases where small binary size, low memory footprint and portability is more important than high performance. If speed is a concern, you can try more complex libraries, e.g. [Mbed TLS](https://tls.mbed.org/), [OpenSSL](https://www.openssl.org/) etc.\n\nYou can choose to use any or all of the modes-of-operations, by defining the symbols CBC, CTR or ECB in [`aes.h`](https://github.com/kokke/tiny-AES-c/blob/master/aes.h) (read the comments for clarification).\n\nC++ users should `#include` [aes.hpp](https://github.com/kokke/tiny-AES-c/blob/master/aes.hpp) instead of [aes.h](https://github.com/kokke/tiny-AES-c/blob/master/aes.h)\n\nThere is no built-in error checking or protection from out-of-bounds memory access errors as a result of malicious input.\n\nThe module uses less than 200 bytes of RAM and 1-2K ROM when compiled for ARM, but YMMV depending on which modes are enabled.\n\nIt is one of the smallest implementations in C I've seen yet, but do contact me if you know of something smaller (or have improvements to the code here). \n\nI've successfully used the code on 64bit x86, 32bit ARM and 8 bit AVR platforms.\n\n\nGCC size output when only CTR mode is compiled for ARM:\n\n    $ arm-none-eabi-gcc -Os -DCBC=0 -DECB=0 -DCTR=1 -c aes.c\n    $ size aes.o\n       text    data     bss     dec     hex filename\n       1171       0       0    1171     493 aes.o\n\n.. and when compiling for the THUMB instruction set, we end up well below 1K in code size.\n\n    $ arm-none-eabi-gcc -Os -mthumb -DCBC=0 -DECB=0 -DCTR=1 -c aes.c\n    $ size aes.o\n       text    data     bss     dec     hex filename\n        903       0       0     903     387 aes.o\n\n\nI am using the Free Software Foundation, ARM GCC compiler:\n\n    $ arm-none-eabi-gcc --version\n    arm-none-eabi-gcc (4.8.4-1+11-1) 4.8.4 20141219 (release)\n    Copyright (C) 2013 Free Software Foundation, Inc.\n    This is free software; see the source for copying conditions.  There is NO\n    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n\n\n\nThis implementation is verified against the data in:\n\n[National Institute of Standards and Technology Special Publication 800-38A 2001 ED](http://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf) Appendix F: Example Vectors for Modes of Operation of the AES.\n\nThe other appendices in the document are valuable for implementation details on e.g. padding, generation of IVs and nonces in CTR-mode etc.\n\n\nA heartfelt thank-you to [all the nice people](https://github.com/kokke/tiny-AES-c/graphs/contributors) out there who have contributed to this project.\n\n\nAll material in this repository is in the public domain.\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15077447891235352
+			],
+			[
+				"cat Makefile",
+				"root@c0mpi1er-c0nta1ner:/work# { cat Makefile\n#CC           = avr-gcc\n#CFLAGS       = -Wall -mmcu=atmega16 -Os -Wl,-Map,test.map\n#OBJCOPY      = avr-objcopy\nCC           = gcc\nLD           = gcc\nAR           = ar\nARFLAGS      = rcs\nCFLAGS       = -Wall -Os -c\nLDFLAGS      = -Wall -Os -Wl,-Map,test.map\nifdef AES192\nCFLAGS += -DAES192=1\nendif\nifdef AES256\nCFLAGS += -DAES256=1\nendif\n\nOBJCOPYFLAGS = -j .text -O ihex\nOBJCOPY      = objcopy\n\n# include path to AVR library\nINCLUDE_PATH = /usr/lib/avr/include\n# splint static check\nSPLINT       = splint test.c aes.c -I$(INCLUDE_PATH) +charindex -unrecog\n\ndefault: test.elf\n\n.SILENT:\n.PHONY:  lint clean\n\ntest.hex : test.elf\n\techo copy object-code to new image and format in hex\n\t$(OBJCOPY) ${OBJCOPYFLAGS} $< $@\n\ntest.o : test.c aes.h aes.o\n\techo [CC] $@ $(CFLAGS)\n\t$(CC) $(CFLAGS) -o  $@ $<\n\naes.o : aes.c aes.h\n\techo [CC] $@ $(CFLAGS)\n\t$(CC) $(CFLAGS) -o $@ $<\n\ntest.elf : aes.o test.o\n\techo [LD] $@\n\t$(LD) $(LDFLAGS) -o $@ $^\n\naes.a : aes.o\n\techo [AR] $@\n\t$(AR) $(ARFLAGS) $@ $^\n\nlib : aes.a\n\nclean:\n\trm -f *.OBJ *.LST *.o *.gch *.out *.hex *.map *.elf *.a\n\ntest:\n\tmake clean && make && ./test.elf\n\tmake clean && make AES192=1 && ./test.elf\n\tmake clean && make AES256=1 && ./test.elf\n\nlint:\n\t$(call SPLINT)\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15107154846191406
+			],
+			[
+				"cat CMakeLists.txt",
+				"root@c0mpi1er-c0nta1ner:/work# { cat CMakeLists.txt\ncmake_minimum_required(VERSION 3.12)\n\nproject(tiny-aes C)\n\nadd_library(${PROJECT_NAME} \"\")\ntarget_sources(${PROJECT_NAME}\n    PRIVATE\n        ${CMAKE_CURRENT_LIST_DIR}/aes.c\n    INTERFACE\n        ${CMAKE_CURRENT_LIST_DIR}/aes.h\n        ${CMAKE_CURRENT_LIST_DIR}/aes.hpp\n)\n\ntarget_include_directories(${PROJECT_NAME}\n    INTERFACE\n        ${CMAKE_CURRENT_LIST_DIR}\n)\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.1507561206817627
+			],
+			[
+				"make -j4 lib",
+				"root@c0mpi1er-c0nta1ner:/work# { make -j4 lib\n[CC] aes.o -Wall -Os -c\n[AR] aes.a\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.30196571350097656
+			],
+			[
+				"ls -la aes.a aes.o",
+				"root@c0mpi1er-c0nta1ner:/work# { ls -la aes.a aes.o\n-rw-r--r-- 1 root root 5044 Nov 23 18:40 aes.a\n-rw-r--r-- 1 root root 4736 Nov 23 18:40 aes.o\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15092253684997559
+			],
+			[
+				"ar t aes.a",
+				"root@c0mpi1er-c0nta1ner:/work# { ar t aes.a\naes.o\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15087294578552246
+			]
+		],
+		"CompileNavigator": [],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "True",
+		"checker_result": "True(strict=False)",
+		"project": "tiny-AES-c",
+		"ablation_mode": "no_navigator",
+		"strict_checker": false,
+		"checker_non_strict": true,
+		"checker_strict": false,
+		"elapsed_seconds": 40.94,
+		"iterations": 7,
+		"tool_calls": {
+			"Shell": 7,
+			"CompileNavigator": 0,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [
+			"aes.o"
+		],
+		"all_artifacts": [
+			"aes.a",
+			"aes.o"
+		],
+		"smoke_check": {
+			"checked_count": 1,
+			"passed": true,
+			"missing_libs": [],
+			"details": [
+				{
+					"artifact": "aes.o",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/aes.o: ELF 64-bit LSB relocatable, x86-64, version 1 (SYSV), not stripped",
+					"ldd_output": ""
+				}
+			]
+		}
+	}
+}

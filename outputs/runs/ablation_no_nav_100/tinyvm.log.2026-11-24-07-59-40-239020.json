@@ -1,0 +1,116 @@
+{
+	"autocompiler": [
+		[
+			"You are an experienced software development engineer. You have access to the following tools:\n\nShell: \n        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.\n        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.\n        @param command: The command to execute.\n        \nErrorSolver: \n        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting\n        to solve errors encountered during compilation.\n        @param mistake: the mistake in the compilation process.\n        \n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [ Shell, ErrorSolver ]\nAction Input: the input to the action, do not explain the input further\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\n\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nImportant: Never write \"Observation:\" yourself. Stop immediately after \"Action Input:\".\n\nBegin!\nQuestion: I want you to help me compile the project tinyvm from source code. Please complete the compilation task step by step.\n\nThe project has been downloaded into /work/, which is also the Shell's initial path.\nYou should follow these rules:\n1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.\n2. Inspect project files (such as README, CMakeLists.txt, Makefile, configure.ac) directly via the Shell tool to determine the build instructions.\n3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.\n4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.\n5. No need to install this project or test it, just compile it.\n6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.\n7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.\n/no_think\n\nThought:",
+			"Thought: I need to start by exploring the project structure to understand what kind of project this is and how to build it.\nAction: Shell\nAction Input: tree . -L 2"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- GNUmakefile\n|-- LICENSE\n|-- README\n|-- SYNTAX\n|-- TODO\n|-- bin\n|-- include\n|   `-- tvm\n|-- lib\n|-- libtvm\n|   |-- tvm.c\n|   |-- tvm_file.c\n|   |-- tvm_htab.c\n|   |-- tvm_lexer.c\n|   |-- tvm_memory.c\n|   |-- tvm_parser.c\n|   |-- tvm_preprocessor.c\n|   `-- tvm_program.c\n|-- mlibc\n|-- programs\n|   |-- asm\n|   |-- c\n|   `-- tinyvm\n|-- src\n|   `-- tvmi.c\n`-- tdb\n    |-- README\n    |-- main.c\n    |-- tdb.c\n    |-- tdb.h\n    `-- tdb_breakpoint.h\n\n13 directories, 19 files\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: I see a GNUmakefile, which suggests this is a Make-based project. Let me check the README and the GNUmakefile to understand the build process.\nAction: Shell\nAction Input: cat README"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat README\nTinyVM is a virtual machine with the goal of having a small footprint.\nLow memory usage, a small amount of code, and a small binary.\n\nBuilding can be accomplished on UNIX-like systems with make and GCC.\n\nThere are no external dependencies, save the C standard library.\n\nBuilding can be accomplished using \"make,\" or \"make rebuild\".\n\nTo build a debug version, add \"DEBUG=yes\" after \"make\". To build a binary with\nprofiling enabled, add \"PROFILE=yes\" after \"make\".\n\nI can be reached at \"joseph.kogut(at)gmail.com\"\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The README says to use `make` or `make rebuild`. Let me check the GNUmakefile to understand the build targets.\nAction: Shell\nAction Input: cat GNUmakefile"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { cat GNUmakefile\nCC = clang\n\nCFLAGS = -Wall -pipe -Iinclude/ -std=gnu11\nOFLAGS = \nLFLAGS = $(CFLAGS) -Llib/\nPEDANTIC_FLAGS = -Werror -pedantic -pedantic-errors\nFREESTANDING_FLAGS = -nostdlib -nodefaultlibs -fno-builtin -Imlibc/include\n\nLIBTVM_SOURCES = $(wildcard libtvm/*.c)\nLIBTVM_OBJECTS = $(LIBTVM_SOURCES:.c=.o)\n\nTDB_SOURCES = $(wildcard tdb/*.c)\nTDB_OBJECTS = $(TDB_SOURCES:.c=.o)\n\nBIN_DIR = bin\nLIB_DIR = lib\nINC_DIR = include\nPROGRAM_DIR = programs\nINSTALL_PREFIX = /usr\n\nDEBUG = no\nPEDANTIC = yes\nOPTIMIZATION = -O3\n\nFREESTANDING = no\n\nPROFILER = operf\nPROF_ARGS = \"programs/tinyvm/euler/euler7.vm\"\n\nifeq ($(DEBUG), yes)\n\tCFLAGS += -g\nendif\n\nifeq ($(PEDANTIC), yes)\n\tCFLAGS += $(PEDANTIC_FLAGS)\nendif\n\nifeq ($(FREESTANDING), yes)\n\tLFLAGS += -Lmlibc/lib -lminimalc\n\tCFLAGS += $(FREESTANDING_FLAGS)\n\tFREESTANDING_DEPS = mlibc\nendif\n\nCFLAGS += $(OPTIMIZATION)\n\nall: libtvm tvmi tdb\n\ninstall: libtvm tvmi\n\tcp -f $(BIN_DIR)/tvmi $(INSTALL_PREFIX)/bin/\n\tcp -rf $(INC_DIR)/tvm $(INSTALL_PREFIX)/include/\n\tcp -f $(LIB_DIR)/libtvm* $(INSTALL_PREFIX)/lib/\n\nuninstall:\n\trm -rf /usr/bin/tvmi\n\trm -rf /usr/include/tvmi\n\trm -rf /usr/lib/libtvm*\n\nlibtvm: $(LIBTVM_OBJECTS)\n\tar rcs $(LIB_DIR)/libtvm.a $(LIBTVM_OBJECTS)\n\nsubmodules:\n\tgit submodule update --init\n\nmlibc: submodules\n\t(cd mlibc && $(MAKE))\n\n# Build the TVM interpreter\ntvmi: libtvm $(FREESTANDING_DEPS)\n\t$(CC) src/tvmi.c -ltvm $(LFLAGS) -o $(BIN_DIR)/tvmi\n\ntdb: libtvm $(TDB_OBJECTS) $(FREESTANDING_DEPS)\n\t$(CC) $(TDB_OBJECTS) -ltvm $(LFLAGS) -o $(BIN_DIR)/tdb\n\nprofile: tvmi\n\ttime $(PROFILER) $(BIN_DIR)/tvmi $(PROF_ARGS)\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(BIN_DIR)/* $(LIB_DIR)/* libtvm/*.o tdb/*.o gmon.out *.save *.o core* vgcore*\n\nrebuild: clean all\n\n.PHONY : clean\n.SILENT : clean\n.NOTPARALLEL : clean\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The GNUmakefile uses `CC = clang`. I need to check if clang is installed. If not, I can either install it or override CC to gcc. Let me first try to build with make and see what happens.\nAction: Shell\nAction Input: which clang || echo \"clang not found\""
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { which clang || echo \"clang not found\"\nclang not found\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: Clang is not installed. I can either install clang or override the CC variable to use gcc. Since the project is simple C code, using gcc should work fine. Let me try building with `make CC=gcc`.\nAction: Shell\nAction Input: make CC=gcc"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { make -j4 CC=gcc\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm.c -o libtvm/tvm.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_file.c -o libtvm/tvm_file.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_htab.c -o libtvm/tvm_htab.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_lexer.c -o libtvm/tvm_lexer.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_memory.c -o libtvm/tvm_memory.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_parser.c -o libtvm/tvm_parser.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_preprocessor.c -o libtvm/tvm_preprocessor.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_program.c -o libtvm/tvm_program.o\nar rcs lib/libtvm.a libtvm/tvm.o libtvm/tvm_file.o libtvm/tvm_htab.o libtvm/tvm_lexer.o libtvm/tvm_memory.o libtvm/tvm_parser.o libtvm/tvm_preprocessor.o libtvm/tvm_program.o\ngcc src/tvmi.c -ltvm -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -Llib/ -o bin/tvmi\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c tdb/main.c -o tdb/main.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c tdb/tdb.c -o tdb/tdb.o\ngcc tdb/main.o tdb/tdb.o -ltvm -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -Llib/ -o bin/tdb\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The compilation completed successfully with exit code 0. Let me verify the build artifacts exist.\nAction: Shell\nAction Input: ls -la bin/ lib/"
+		],
+		[
+			"root@c0mpi1er-c0nta1ner:/work# { ls -la bin/ lib/\nbin/:\ntotal 52\ndrwxrwxrwx 1 root root  4096 Nov 24 00:59 .\ndrwxrwxrwx 1 root root  4096 Nov 21 19:23 ..\n-rwxrwxrwx 1 root root    17 Nov 21 19:23 .gitignore\n-rwxr-xr-x 1 root root 27312 Nov 24 00:59 tdb\n-rwxr-xr-x 1 root root 22832 Nov 24 00:59 tvmi\n\nlib/:\ntotal 32\ndrwxrwxrwx 1 root root  4096 Nov 24 00:59 .\ndrwxrwxrwx 1 root root  4096 Nov 21 19:23 ..\n-rwxrwxrwx 1 root root     9 Nov 21 19:23 .gitignore\n-rw-r--r-- 1 root root 30236 Nov 24 00:59 libtvm.a\n\nroot@c0mpi1er-c0nta1ner:/work#\n[Exit code: 0]",
+			"Thought: The compilation was successful. The build produced:\n1. `lib/libtvm.a` - the static library\n2. `bin/tvmi` - the TVM interpreter executable\n3. `bin/tdb` - the debugger executable\n\nAll three targets from the `all` target in the GNUmakefile were built successfully.\n\nFinal Answer: COMPILATION-SUCCESS"
+		]
+	],
+	"tools": {
+		"Shell": [
+			[
+				"tree . -L 2",
+				"root@c0mpi1er-c0nta1ner:/work# { tree . -L 2\n.\n|-- GNUmakefile\n|-- LICENSE\n|-- README\n|-- SYNTAX\n|-- TODO\n|-- bin\n|-- include\n|   `-- tvm\n|-- lib\n|-- libtvm\n|   |-- tvm.c\n|   |-- tvm_file.c\n|   |-- tvm_htab.c\n|   |-- tvm_lexer.c\n|   |-- tvm_memory.c\n|   |-- tvm_parser.c\n|   |-- tvm_preprocessor.c\n|   `-- tvm_program.c\n|-- mlibc\n|-- programs\n|   |-- asm\n|   |-- c\n|   `-- tinyvm\n|-- src\n|   `-- tvmi.c\n`-- tdb\n    |-- README\n    |-- main.c\n    |-- tdb.c\n    |-- tdb.h\n    `-- tdb_breakpoint.h\n\n13 directories, 19 files\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.25139355659484863
+			],
+			[
+				"cat README",
+				"root@c0mpi1er-c0nta1ner:/work# { cat README\nTinyVM is a virtual machine with the goal of having a small footprint.\nLow memory usage, a small amount of code, and a small binary.\n\nBuilding can be accomplished on UNIX-like systems with make and GCC.\n\nThere are no external dependencies, save the C standard library.\n\nBuilding can be accomplished using \"make,\" or \"make rebuild\".\n\nTo build a debug version, add \"DEBUG=yes\" after \"make\". To build a binary with\nprofiling enabled, add \"PROFILE=yes\" after \"make\".\n\nI can be reached at \"joseph.kogut(at)gmail.com\"\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15097355842590332
+			],
+			[
+				"cat GNUmakefile",
+				"root@c0mpi1er-c0nta1ner:/work# { cat GNUmakefile\nCC = clang\n\nCFLAGS = -Wall -pipe -Iinclude/ -std=gnu11\nOFLAGS = \nLFLAGS = $(CFLAGS) -Llib/\nPEDANTIC_FLAGS = -Werror -pedantic -pedantic-errors\nFREESTANDING_FLAGS = -nostdlib -nodefaultlibs -fno-builtin -Imlibc/include\n\nLIBTVM_SOURCES = $(wildcard libtvm/*.c)\nLIBTVM_OBJECTS = $(LIBTVM_SOURCES:.c=.o)\n\nTDB_SOURCES = $(wildcard tdb/*.c)\nTDB_OBJECTS = $(TDB_SOURCES:.c=.o)\n\nBIN_DIR = bin\nLIB_DIR = lib\nINC_DIR = include\nPROGRAM_DIR = programs\nINSTALL_PREFIX = /usr\n\nDEBUG = no\nPEDANTIC = yes\nOPTIMIZATION = -O3\n\nFREESTANDING = no\n\nPROFILER = operf\nPROF_ARGS = \"programs/tinyvm/euler/euler7.vm\"\n\nifeq ($(DEBUG), yes)\n\tCFLAGS += -g\nendif\n\nifeq ($(PEDANTIC), yes)\n\tCFLAGS += $(PEDANTIC_FLAGS)\nendif\n\nifeq ($(FREESTANDING), yes)\n\tLFLAGS += -Lmlibc/lib -lminimalc\n\tCFLAGS += $(FREESTANDING_FLAGS)\n\tFREESTANDING_DEPS = mlibc\nendif\n\nCFLAGS += $(OPTIMIZATION)\n\nall: libtvm tvmi tdb\n\ninstall: libtvm tvmi\n\tcp -f $(BIN_DIR)/tvmi $(INSTALL_PREFIX)/bin/\n\tcp -rf $(INC_DIR)/tvm $(INSTALL_PREFIX)/include/\n\tcp -f $(LIB_DIR)/libtvm* $(INSTALL_PREFIX)/lib/\n\nuninstall:\n\trm -rf /usr/bin/tvmi\n\trm -rf /usr/include/tvmi\n\trm -rf /usr/lib/libtvm*\n\nlibtvm: $(LIBTVM_OBJECTS)\n\tar rcs $(LIB_DIR)/libtvm.a $(LIBTVM_OBJECTS)\n\nsubmodules:\n\tgit submodule update --init\n\nmlibc: submodules\n\t(cd mlibc && $(MAKE))\n\n# Build the TVM interpreter\ntvmi: libtvm $(FREESTANDING_DEPS)\n\t$(CC) src/tvmi.c -ltvm $(LFLAGS) -o $(BIN_DIR)/tvmi\n\ntdb: libtvm $(TDB_OBJECTS) $(FREESTANDING_DEPS)\n\t$(CC) $(TDB_OBJECTS) -ltvm $(LFLAGS) -o $(BIN_DIR)/tdb\n\nprofile: tvmi\n\ttime $(PROFILER) $(BIN_DIR)/tvmi $(PROF_ARGS)\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\nclean:\n\trm -rf $(BIN_DIR)/* $(LIB_DIR)/* libtvm/*.o tdb/*.o gmon.out *.save *.o core* vgcore*\n\nrebuild: clean all\n\n.PHONY : clean\n.SILENT : clean\n.NOTPARALLEL : clean\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15181231498718262
+			],
+			[
+				"which clang || echo \"clang not found\"",
+				"root@c0mpi1er-c0nta1ner:/work# { which clang || echo \"clang not found\"\nclang not found\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.15138673782348633
+			],
+			[
+				"make -j4 CC=gcc",
+				"root@c0mpi1er-c0nta1ner:/work# { make -j4 CC=gcc\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm.c -o libtvm/tvm.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_file.c -o libtvm/tvm_file.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_htab.c -o libtvm/tvm_htab.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_lexer.c -o libtvm/tvm_lexer.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_memory.c -o libtvm/tvm_memory.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_parser.c -o libtvm/tvm_parser.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_preprocessor.c -o libtvm/tvm_preprocessor.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c libtvm/tvm_program.c -o libtvm/tvm_program.o\nar rcs lib/libtvm.a libtvm/tvm.o libtvm/tvm_file.o libtvm/tvm_htab.o libtvm/tvm_lexer.o libtvm/tvm_memory.o libtvm/tvm_parser.o libtvm/tvm_preprocessor.o libtvm/tvm_program.o\ngcc src/tvmi.c -ltvm -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -Llib/ -o bin/tvmi\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c tdb/main.c -o tdb/main.o\ngcc -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -c tdb/tdb.c -o tdb/tdb.o\ngcc tdb/main.o tdb/tdb.o -ltvm -Wall -pipe -Iinclude/ -std=gnu11 -Werror -pedantic -pedantic-errors -O3 -Llib/ -o bin/tdb\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				4.285642385482788
+			],
+			[
+				"ls -la bin/ lib/",
+				"root@c0mpi1er-c0nta1ner:/work# { ls -la bin/ lib/\nbin/:\ntotal 52\ndrwxrwxrwx 1 root root  4096 Nov 24 00:59 .\ndrwxrwxrwx 1 root root  4096 Nov 21 19:23 ..\n-rwxrwxrwx 1 root root    17 Nov 21 19:23 .gitignore\n-rwxr-xr-x 1 root root 27312 Nov 24 00:59 tdb\n-rwxr-xr-x 1 root root 22832 Nov 24 00:59 tvmi\n\nlib/:\ntotal 32\ndrwxrwxrwx 1 root root  4096 Nov 24 00:59 .\ndrwxrwxrwx 1 root root  4096 Nov 21 19:23 ..\n-rwxrwxrwx 1 root root     9 Nov 21 19:23 .gitignore\n-rw-r--r-- 1 root root 30236 Nov 24 00:59 libtvm.a\n\nroot@c0mpi1er-c0nta1ner:/work# ",
+				0.20130372047424316
+			]
+		],
+		"CompileNavigator": [],
+		"ErrorSolver": []
+	},
+	"build": {
+		"model_result": "True",
+		"checker_result": "True(strict=False)",
+		"project": "tinyvm",
+		"ablation_mode": "no_navigator",
+		"strict_checker": false,
+		"checker_non_strict": true,
+		"checker_strict": true,
+		"elapsed_seconds": 41.8,
+		"iterations": 6,
+		"tool_calls": {
+			"Shell": 6,
+			"CompileNavigator": 0,
+			"ErrorSolver": 0
+		},
+		"matched_targets": [
+			"bin/tdb",
+			"bin/tvmi"
+		],
+		"all_artifacts": [
+			"bin/tdb",
+			"bin/tvmi",
+			"lib/libtvm.a"
+		],
+		"smoke_check": {
+			"checked_count": 2,
+			"passed": true,
+			"missing_libs": [],
+			"details": [
+				{
+					"artifact": "bin/tdb",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/bin/tdb: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, not stripped",
+					"ldd_output": "linux-vdso.so.1 (0x00007dd9e142b000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007dd9e123b000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007dd9e142d000)"
+				},
+				{
+					"artifact": "bin/tvmi",
+					"file_ok": true,
+					"missing_lib": false,
+					"ok": true,
+					"file_output": "/work/bin/tvmi: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, not stripped",
+					"ldd_output": "linux-vdso.so.1 (0x000072b1fbcc6000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000072b1fbad6000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000072b1fbcc8000)"
+				}
+			]
+		}
+	}
+}

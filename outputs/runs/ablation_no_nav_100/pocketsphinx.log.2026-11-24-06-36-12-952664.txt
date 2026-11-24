@@ -1,0 +1,881 @@
+You are an experienced software development engineer. You have access to the following tools:
+
+Shell: 
+        Execute a command in an interactive shell on the local container (Debian GNU/Linux 12 with GCC 13.2.0 and root user). Initially, we are in the /work/ directory.
+        Note: APT package lists are not pre-cached; always run 'apt-get update && apt-get install -y <pkg>' when installing missing libraries or headers.
+        @param command: The command to execute.
+        
+ErrorSolver: 
+        Reconcile with 3 agents across 2 rounds (Initial + Debate) using Weighted Confidence Voting
+        to solve errors encountered during compilation.
+        @param mistake: the mistake in the compilation process.
+        
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [ Shell, ErrorSolver ]
+Action Input: the input to the action, do not explain the input further
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Important: Never write "Observation:" yourself. Stop immediately after "Action Input:".
+
+Begin!
+Question: I want you to help me compile the project pocketsphinx from source code. Please complete the compilation task step by step.
+
+The project has been downloaded into /work/, which is also the Shell's initial path.
+You should follow these rules:
+1. Use the Shell tool to execute any command for compilation, and it is recommended to use `tree . -L 2` command to show the project structure.
+2. Inspect project files (such as README, CMakeLists.txt, Makefile, configure.ac) directly via the Shell tool to determine the build instructions.
+3. If a build or configuration command fails with missing headers/libraries, dependency errors, or compiler/linker errors that you cannot immediately resolve, call the ErrorSolver tool with the error details to obtain a verified fix.
+4. APT package lists are not pre-cached in this container: whenever installing packages or missing libraries, always run `apt-get update && apt-get install -y <package>`.
+5. No need to install this project or test it, just compile it.
+6. Compilation target should be the main body of the project, for example, the executable programs for a tool-type project or the shared/static libraries for a library project.
+7. When you've done your best, you need to check if the project actually compiled successfully and output COMPILATION-SUCCESS, COMPILATION-FAIL, or COMPILATION-UNCERTAIN as the final answer.
+/no_think
+
+Thought:Action: Shell
+Action Input: tree . -L 2
+Observation: root@c0mpi1er-c0nta1ner:/work# { tree . -L 2
+.
+|-- AUTHORS
+|-- CMakeLists.txt
+|-- Dockerfile
+|-- LICENSE
+|-- MANIFEST.in
+|-- NEWS
+|-- README.md
+|-- config.h.in
+|-- cython
+|   |-- CMakeLists.txt
+|   |-- README.md
+|   |-- _pocketsphinx.pxd
+|   |-- _pocketsphinx.pyx
+|   |-- pocketsphinx
+|   |-- pypocketsphinx-examples.py
+|   `-- test
+|-- docs
+|   |-- Makefile
+|   |-- gen_config.py
+|   |-- make.bat
+|   |-- requirements.txt
+|   |-- source
+|   `-- thread_safety.md
+|-- doxygen
+|   |-- CMakeLists.txt
+|   |-- args2man.pl
+|   |-- pocketsphinx.1
+|   |-- pocketsphinx.1.in
+|   |-- pocketsphinx_batch.1
+|   |-- pocketsphinx_batch.1.in
+|   |-- pocketsphinx_lm_convert.1
+|   |-- pocketsphinx_lm_convert.1.in
+|   |-- pocketsphinx_lm_eval.1
+|   |-- pocketsphinx_lm_eval.1.in
+|   |-- pocketsphinx_mdef_convert.1
+|   |-- pocketsphinx_pitch.1
+|   |-- pocketsphinx_pitch.1.in
+|   |-- sphinx_cepview.1
+|   |-- sphinx_cepview.1.in
+|   |-- sphinx_cont_seg.1
+|   |-- sphinx_cont_seg.1.in
+|   |-- sphinx_fe.1
+|   |-- sphinx_fe.1.in
+|   `-- sphinx_lm_sort.1
+|-- examples
+|   |-- CMakeLists.txt
+|   |-- README.md
+|   |-- endpointer_timestamp_example.c
+|   |-- live.c
+|   |-- live.py
+|   |-- live_portaudio.c
+|   |-- live_pulseaudio.c
+|   |-- live_win32.c
+|   |-- segment.py
+|   |-- simple.c
+|   `-- simple.py
+|-- gst
+|   |-- CMakeLists.txt
+|   |-- gstpocketsphinx.c
+|   |-- gstpocketsphinx.h
+|   |-- livedemo.c
+|   `-- livedemo.py
+|-- include
+|   |-- pocketsphinx
+|   `-- pocketsphinx.h
+|-- indent.sh
+|-- model
+|   |-- CMakeLists.txt
+|   `-- en-us
+|-- pocketsphinx.pc.in
+|-- programs
+|   |-- CMakeLists.txt
+|   |-- fsg2dot.pl
+|   |-- pocketsphinx_batch.c
+|   |-- pocketsphinx_jsgf2fsg.c
+|   |-- pocketsphinx_lm_convert.c
+|   |-- pocketsphinx_lm_eval.c
+|   |-- pocketsphinx_main.c
+|   |-- pocketsphinx_mdef_convert.c
+|   `-- pocketsphinx_pitch.c
+|-- pyproject.toml
+|-- sphinx_config.h.in
+|-- src
+|   |-- CMakeLists.txt
+|   |-- acmod.c
+|   |-- acmod.h
+|   |-- allphone_search.c
+|   |-- allphone_search.h
+|   |-- bin_mdef.c
+|   |-- bin_mdef.h
+|   |-- common_audio
+|   |-- config_macro.h
+|   |-- dict.c
+|   |-- dict.h
+|   |-- dict2pid.c
+|   |-- dict2pid.h
+|   |-- fast_ptm.txt
+|   |-- fe
+|   |-- feat
+|   |-- fsg_history.c
+|   |-- fsg_history.h
+|   |-- fsg_lextree.c
+|   |-- fsg_lextree.h
+|   |-- fsg_search.c
+|   |-- fsg_search_internal.h
+|   |-- hmm.c
+|   |-- hmm.h
+|   |-- jsmn.h
+|   |-- kws_detections.c
+|   |-- kws_detections.h
+|   |-- kws_search.c
+|   |-- kws_search.h
+|   |-- lm
+|   |-- mdef.c
+|   |-- mdef.h
+|   |-- ms_gauden.c
+|   |-- ms_gauden.h
+|   |-- ms_mgau.c
+|   |-- ms_mgau.h
+|   |-- ms_senone.c
+|   |-- ms_senone.h
+|   |-- ngram_search.c
+|   |-- ngram_search.h
+|   |-- ngram_search_fwdflat.c
+|   |-- ngram_search_fwdflat.h
+|   |-- ngram_search_fwdtree.c
+|   |-- ngram_search_fwdtree.h
+|   |-- phone_loop_search.c
+|   |-- phone_loop_search.h
+|   |-- pocketsphinx.c
+|   |-- pocketsphinx_internal.h
+|   |-- ps_alignment.c
+|   |-- ps_alignment_internal.h
+|   |-- ps_config.c
+|   |-- ps_endpointer.c
+|   |-- ps_lattice.c
+|   |-- ps_lattice_internal.h
+|   |-- ps_mllr.c
+|   |-- ps_vad.c
+|   |-- ptm_mgau.c
+|   |-- ptm_mgau.h
+|   |-- rtc_base
+|   |-- s2_semi_mgau.c
+|   |-- s2_semi_mgau.h
+|   |-- s3types.h
+|   |-- state_align_search.c
+|   |-- state_align_search.h
+|   |-- tied_mgau_common.h
+|   |-- tmat.c
+|   |-- tmat.h
+|   `-- util
+`-- test
+    |-- CMakeLists.txt
+    |-- compare_table.pl
+    |-- data
+    |-- regression
+    |-- testfuncs.sh.in
+    |-- testfuncs_cygwin.sh
+    |-- unit
+    `-- word_align.pl
+
+25 directories, 136 files
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I need to inspect the CMakeLists.txt to understand the build requirements and dependencies.
+Action: Shell
+Action Input: cat CMakeLists.txt
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat CMakeLists.txt
+cmake_minimum_required(VERSION 3.25)
+
+project(PocketSphinx VERSION 5.1.1
+  DESCRIPTION "A small speech recognizer"
+  HOMEPAGE_URL "https://github.com/cmusphinx/pocketsphinx"
+  LANGUAGES C)
+include(CMakePrintHelpers)
+set(PACKAGE_NAME ${PROJECT_NAME})
+string(TOLOWER ${PROJECT_NAME} PROJECT_SHORTNAME)
+set(PACKAGE_VERSION ${PROJECT_VERSION})
+set(PACKAGE_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
+set(PACKAGE_TARNAME "${PROJECT_SHORTNAME}-${PROJECT_VERSION}")
+set(PACKAGE_URL ${PROJECT_HOMEPAGE_URL})
+set(PACKAGE_BUGREPORT dhdaines@gmail.com)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  include(CTest)
+  add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+endif()
+
+include(CheckTypeSize)
+include(CheckSymbolExists)
+include(CheckLibraryExists)
+include(TestBigEndian)
+include(GNUInstallDirs)
+
+CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+CHECK_SYMBOL_EXISTS(snprintf stdio.h HAVE_SNPRINTF)
+CHECK_SYMBOL_EXISTS(popen stdio.h HAVE_POPEN)
+CHECK_TYPE_SIZE(long LONG)
+CHECK_TYPE_SIZE("long long" LONG_LONG)
+# OMG CMake is so incredibly awful
+set(SIZEOF_LONG ${LONG})
+set(SIZEOF_LONG_LONG ${LONG_LONG})
+cmake_print_variables(SIZEOF_LONG SIZEOF_LONG_LONG)
+test_big_endian(WORDS_BIGENDIAN)
+cmake_print_variables(WORDS_BIGENDIAN)
+
+# Don't do this
+#if(CMAKE_BUILD_TYPE STREQUAL Debug)
+#  set(SPHINX_DEBUG 1)
+#endif()
+
+# Compiles some code as the wrong endianness in order to ensure that
+# it works properly
+if(DEBUG_ENDIAN)
+  add_definitions(-DDEBUG_ENDIAN)
+endif()
+cmake_print_variables(SPHINX_DEBUG DEBUG_ENDIAN)
+
+if(MSVC)
+  add_compile_options(/W3)
+else()
+  add_compile_options(-Wall -Wextra)
+endif()
+
+option(FIXED_POINT "Build using fixed-point math" OFF)
+if(NOT DEFAULT_RADIX)
+  set(DEFAULT_RADIX 12)
+endif()
+cmake_print_variables(FIXED_POINT DEFAULT_RADIX)
+
+option(PS_THREAD_LOCAL_RNG "Use thread-local storage for random number generator" ON)
+if(PS_THREAD_LOCAL_RNG)
+  # Test for thread-local storage support
+  include(CheckCSourceCompiles)
+  check_c_source_compiles("
+    _Thread_local int x;
+    int main() { x = 42; return 0; }
+  " HAVE_C11_THREAD_LOCAL)
+
+  check_c_source_compiles("
+    __thread int x;
+    int main() { x = 42; return 0; }
+  " HAVE_GCC_THREAD_LOCAL)
+
+  check_c_source_compiles("
+    __declspec(thread) int x;
+    int main() { x = 42; return 0; }
+  " HAVE_MSVC_THREAD_LOCAL)
+
+  if(HAVE_C11_THREAD_LOCAL OR HAVE_GCC_THREAD_LOCAL OR HAVE_MSVC_THREAD_LOCAL)
+    add_definitions(-DPS_USE_THREAD_LOCAL_RNG)
+    message(STATUS "Thread-local storage support: ENABLED")
+  else()
+    message(WARNING "Thread-local storage not supported on this compiler. Disabling PS_THREAD_LOCAL_RNG")
+    set(PS_THREAD_LOCAL_RNG OFF)
+  endif()
+else()
+  message(STATUS "Thread-local storage support: DISABLED")
+endif()
+cmake_print_variables(PS_THREAD_LOCAL_RNG)
+
+# Maybe not a great idea, but it does work on both Windows and Linux
+set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+configure_file(config.h.in config.h)
+configure_file(sphinx_config.h.in include/pocketsphinx/sphinx_config.h)
+add_definitions(-DHAVE_CONFIG_H)
+
+if(SKBUILD)
+  # Python build
+
+  # Allow compiling against systemwide libpocketsphinx.so for Docker
+  # or distribution packages
+  option(USE_INSTALLED_POCKETSPHINX "Build using installed PocketSphinx library" OFF)
+  if(USE_INSTALLED_POCKETSPHINX)
+    find_package(PkgConfig)
+    # Get the libraries and headers
+    pkg_check_modules(POCKETSPHINX pocketsphinx)
+    # Set the model directory to the systemwide one.  Don't try to use
+    # CMAKE_INSTALL_FULL_DATADIR!  That is not what you want.
+    pkg_get_variable(MODELDIR pocketsphinx modeldir)
+  else()
+    add_subdirectory(src)
+  endif()
+  add_subdirectory(cython)
+else()
+  # C build
+
+  # Set the default model directory to the install location
+  set(MODELDIR ${CMAKE_INSTALL_FULL_DATADIR}/pocketsphinx/model)
+  option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+  if(BUILD_SHARED_LIBS)
+    add_definitions(-DSPHINX_DLL)
+  endif()
+  add_subdirectory(src)
+  add_subdirectory(model)
+  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    add_subdirectory(doxygen)
+    add_subdirectory(programs)
+    add_subdirectory(examples)
+  endif()
+  
+  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_subdirectory(test)
+  endif()
+  configure_file(pocketsphinx.pc.in pocketsphinx.pc @ONLY)
+  install(TARGETS pocketsphinx LIBRARY)
+  install(DIRECTORY include/ TYPE INCLUDE)
+  install(DIRECTORY ${CMAKE_BINARY_DIR}/include/ TYPE INCLUDE)
+  install(FILES ${CMAKE_BINARY_DIR}/pocketsphinx.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+  option(BUILD_GSTREAMER "Build GStreamer plugin" OFF)
+  if(BUILD_GSTREAMER)
+    add_subdirectory(gst)
+  endif()
+endif()
+
+# Can print this at the end, just to know what it was
+cmake_print_variables(MODELDIR)
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I need to check the src/CMakeLists.txt to understand the dependencies required for the main library.
+Action: Shell
+Action Input: cat src/CMakeLists.txt
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat src/CMakeLists.txt
+add_library(pocketsphinx
+acmod.c
+allphone_search.c
+bin_mdef.c
+common_audio/vad/vad_gmm.c
+common_audio/vad/webrtc_vad.c
+common_audio/vad/vad_filterbank.c
+common_audio/vad/vad_core.c
+common_audio/vad/vad_sp.c
+common_audio/signal_processing/division_operations.c
+common_audio/signal_processing/resample_48khz.c
+common_audio/signal_processing/resample.c
+common_audio/signal_processing/resample_fractional.c
+common_audio/signal_processing/downsample_fast.c
+common_audio/signal_processing/min_max_operations.c
+common_audio/signal_processing/cross_correlation.c
+common_audio/signal_processing/vector_scaling_operations.c
+common_audio/signal_processing/resample_by_2_internal.c
+common_audio/signal_processing/energy.c
+common_audio/signal_processing/spl_inl.c
+common_audio/signal_processing/get_scaling_square.c
+dict2pid.c
+dict.c
+fe/fe_sigproc.c
+fe/fixlog.c
+fe/fe_warp_inverse_linear.c
+fe/fe_noise.c
+fe/fe_warp.c
+fe/fe_interface.c
+fe/fe_warp_affine.c
+fe/yin.c
+fe/fe_warp_piecewise_linear.c
+feat/cmn.c
+feat/agc.c
+feat/cmn_live.c
+feat/feat.c
+feat/lda.c
+fsg_history.c
+fsg_lextree.c
+fsg_search.c
+hmm.c
+kws_detections.c
+kws_search.c
+lm/lm_trie_quant.c
+lm/ngram_model_trie.c
+lm/fsg_model.c
+lm/jsgf.c
+lm/ngram_model_set.c
+lm/ngrams_raw.c
+lm/jsgf_scanner.c
+lm/bitarr.c
+lm/ngram_model.c
+lm/lm_trie.c
+lm/jsgf_parser.c
+mdef.c
+ms_gauden.c
+ms_mgau.c
+ms_senone.c
+ngram_search.c
+ngram_search_fwdflat.c
+ngram_search_fwdtree.c
+phone_loop_search.c
+pocketsphinx.c
+ps_alignment.c
+ps_config.c
+ps_endpointer.c
+ps_lattice.c
+ps_mllr.c
+ps_vad.c
+ptm_mgau.c
+s2_semi_mgau.c
+state_align_search.c
+tmat.c
+util/strfuncs.c
+util/dtoa.c
+util/case.c
+util/filename.c
+util/slamch.c
+util/cmd_ln.c
+util/blas_lite.c
+util/blkarray_list.c
+util/vector.c
+util/mmio.c
+util/hash_table.c
+util/err.c
+util/ckd_alloc.c
+util/slapack_lite.c
+util/matrix.c
+util/bio.c
+util/heap.c
+util/priority_queue.c
+util/bitvec.c
+util/profile.c
+util/errno.c
+util/logmath.c
+util/glist.c
+util/f2c_lite.c
+util/listelem_alloc.c
+util/pio.c
+util/genrand.c
+util/soundfiles.c
+  )
+target_include_directories(
+  pocketsphinx PRIVATE ${CMAKE_BINARY_DIR}
+  pocketsphinx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+  pocketsphinx PUBLIC ${CMAKE_SOURCE_DIR}/include
+  pocketsphinx PUBLIC ${CMAKE_BINARY_DIR}/include
+  pocketsphinx INTERFACE ${CMAKE_SOURCE_DIR}/include
+  pocketsphinx INTERFACE ${CMAKE_BINARY_DIR}/include
+  )
+if(APPLE)
+  # Things we might need are here
+  target_link_directories(pocketsphinx PUBLIC /usr/local/lib)
+endif()
+find_library(MATH_LIBRARY m)
+if(MATH_LIBRARY)
+  target_link_libraries(pocketsphinx PUBLIC ${MATH_LIBRARY})
+endif()
+# Shared library version != package version, but we will make it the
+# same for now to avoid confusion
+set_target_properties(pocketsphinx PROPERTIES
+  VERSION 5.0.0
+  SOVERSION 5
+  )
+# No idea why this can't just go in the above list but oh well
+if(MODELDIR)
+  set_property(TARGET pocketsphinx PROPERTY
+    COMPILE_DEFINITIONS POCKETSPHINX_EXPORTS;SPHINXBASE_EXPORTS;MODELDIR="${MODELDIR}"
+    )
+else()
+  set_property(TARGET pocketsphinx PROPERTY
+    COMPILE_DEFINITIONS POCKETSPHINX_EXPORTS;SPHINXBASE_EXPORTS)
+endif()
+find_package(BISON 3.0.0)
+if(BISON_FOUND)
+  bison_target(JSGFParser lm/jsgf_parser.y
+    ${CMAKE_CURRENT_SOURCE_DIR}/lm/jsgf_parser.c
+    DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/lm/jsgf_parser.h)
+endif()
+find_package(FLEX)
+if(FLEX_FOUND)
+  flex_target(JSGFScanner lm/_jsgf_scanner.l
+    ${CMAKE_CURRENT_SOURCE_DIR}/lm/jsgf_scanner.c
+    DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/lm/jsgf_scanner.h)
+endif()
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I need to check the programs and examples CMakeLists.txt to understand what additional dependencies might be needed.
+Action: Shell
+Action Input: cat programs/CMakeLists.txt examples/CMakeLists.txt
+Observation: root@c0mpi1er-c0nta1ner:/work# { cat programs/CMakeLists.txt examples/CMakeLists.txt
+set(POCKETSPHINX_PROGRAMS
+  pocketsphinx_main
+  pocketsphinx_batch
+  pocketsphinx_mdef_convert
+  pocketsphinx_jsgf2fsg
+  pocketsphinx_lm_convert
+  pocketsphinx_lm_eval
+  pocketsphinx_pitch
+  )
+foreach(PROGRAM ${POCKETSPHINX_PROGRAMS})
+  add_executable(${PROGRAM} ${PROGRAM}.c)
+  target_link_libraries(${PROGRAM} pocketsphinx)
+  target_include_directories(
+    ${PROGRAM} PRIVATE ${CMAKE_SOURCE_DIR}/src
+    ${PROGRAM} PRIVATE ${CMAKE_BINARY_DIR})
+
+  if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    add_dependencies(check ${PROGRAM})
+  endif()
+
+endforeach()
+# CMake and its lovely flat namespace
+set_target_properties(pocketsphinx_main PROPERTIES OUTPUT_NAME pocketsphinx)
+
+# The cmake docs indicate you should check MACOSX_BUNDLE
+# and that MACOSX_BUNDLE is initialized based on the value
+# of CMAKE_MACOSX_BUNDLE but in practice, MACOSX_BUNDLE
+# seems blank regardless of the value of CMAKE_MACOSX_BUNDLE.
+# Since MACOSX_BUNDLE seems intended to just forward the value
+# of CMAKE_MACOSX_BUNDLE anyway, we check CMAKE_MACOSX_BUNDLE
+# directly.
+if(CMAKE_MACOSX_BUNDLE)
+  install(TARGETS ${POCKETSPHINX_PROGRAMS}
+          RUNTIME DESTINATION bin
+          BUNDLE DESTINATION bin
+  )
+else()
+  install(TARGETS ${POCKETSPHINX_PROGRAMS} RUNTIME)
+endif()
+set(EXAMPLES
+  live
+  simple
+  )
+
+foreach(EXAMPLE ${EXAMPLES})
+  add_executable(${EXAMPLE} EXCLUDE_FROM_ALL ${EXAMPLE}.c)
+  target_link_libraries(${EXAMPLE} pocketsphinx)
+  target_include_directories(
+    ${EXAMPLE} PRIVATE ${CMAKE_BINARY_DIR}
+    )
+endforeach()
+
+add_custom_target(examples DEPENDS ${EXAMPLES})
+
+# Try to find portaudio and pulseaudio with pkg-config
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules(PULSEAUDIO libpulse-simple)
+  if(PULSEAUDIO_FOUND)
+    add_executable(live_pulseaudio EXCLUDE_FROM_ALL live_pulseaudio.c)
+    target_link_libraries(live_pulseaudio pocketsphinx ${PULSEAUDIO_LIBRARIES})
+    target_include_directories(live_pulseaudio PRIVATE ${CMAKE_BINARY_DIR}
+      live_pulseaudio PUBLIC ${PULSEAUDIO_INCLUDE_DIRS})
+  endif()
+
+  pkg_check_modules(PORTAUDIO portaudio-2.0)
+  if(PORTAUDIO_FOUND)
+    add_executable(live_portaudio EXCLUDE_FROM_ALL live_portaudio.c)
+    target_link_libraries(live_portaudio pocketsphinx ${PORTAUDIO_LIBRARIES})
+    target_include_directories(live_portaudio PRIVATE ${CMAKE_BINARY_DIR}
+      live_portaudio PUBLIC ${PORTAUDIO_INCLUDE_DIRS})
+  endif()
+endif()
+
+# Try to find portaudio with its old package finder thing
+if(NOT PORTAUDIO_FOUND)
+  find_package(portaudio QUIET)
+  if(TARGET portaudio_static)
+    add_executable(live_portaudio EXCLUDE_FROM_ALL live_portaudio.c)
+    target_link_libraries(live_portaudio pocketsphinx portaudio_static)
+    set(PORTAUDIO_FOUND 1)
+  endif()
+endif()
+
+# Try to find portaudio with its new package finder thing
+if(NOT PORTAUDIO_FOUND)
+  find_package(PortAudio QUIET)
+  if(TARGET PortAudio::PortAudio)
+    add_executable(live_portaudio EXCLUDE_FROM_ALL live_portaudio.c)
+    target_link_libraries(live_portaudio pocketsphinx PortAudio::PortAudio)
+    set(PORTAUDIO_FOUND 1)
+  endif()
+endif()
+
+if(WIN32)
+  add_executable(live_win32 EXCLUDE_FROM_ALL live_win32.c)
+  target_link_libraries(live_win32 pocketsphinx winmm)
+endif()
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: I need to install the required dependencies (cmake, bison, flex, pkg-config) and then build the project.
+Action: Shell
+Action Input: apt-get update && apt-get install -y cmake bison flex pkg-config
+Observation: root@c0mpi1er-c0nta1ner:/work# { apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y cmake bison flex pkg-config
+
+0% [Working]
+            
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+
+0% [1 InRelease 4260 B/151 kB 3%]
+                                 
+0% [Waiting for headers]
+                        
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+
+0% [2 InRelease 6391 B/55.4 kB 12%]
+                                   
+0% [Waiting for headers]
+0% [Waiting for headers]
+                        
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+
+0% [3 InRelease 3512 B/34.8 kB 10%]
+                                   
+0% [Working]
+0% [Waiting for headers]
+                        
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+
+0% [4 Packages 7801 B/8790 kB 0%]
+16% [4 Packages 129 kB/8790 kB 1%]
+                                  
+90% [Working]
+90% [4 Packages store 0 B] [Waiting for headers]
+                                                
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+
+90% [4 Packages store 0 B] [Waiting for headers]
+                                                
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [380 kB]
+
+90% [4 Packages store 0 B] [6 Packages 16.3 kB/380 kB 4%]
+                                                         
+93% [4 Packages store 0 B]
+                          
+96% [Working]
+96% [5 Packages store 0 B]
+                          
+98% [Working]
+98% [6 Packages store 0 B]
+                          
+100% [Working]
+              
+Fetched 9418 kB in 1s (8886 kB/s)
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 99%
+
+Reading package lists... 99%
+
+Reading package lists... Done
+
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 0%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 94%
+
+Reading package lists... 99%
+
+Reading package lists... 99%
+
+Reading package lists... Done
+
+
+Building dependency tree... 0%
+
+Building dependency tree... 0%
+
+Building dependency tree... 50%
+
+Building dependency tree... 50%
+
+Building dependency tree... Done
+
+
+Reading state information... 0% 
+
+Reading state information... 0%
+
+Reading state information... Done
+
+cmake is already the newest version (3.25.1-1).
+bison is already the newest version (2:3.8.2+dfsg-1+b1).
+flex is already the newest version (2.6.4-8.2).
+pkg-config is already the newest version (1.8.1-1).
+0 upgraded, 0 newly installed, 0 to remove and 187 not upgraded.
+
+root@c0mpi1er-c0nta1ner:/work#
+[Exit code: 0]
+Thought: Thought: All dependencies are already installed. Now I need to create a build directory and run cmake to configure the project.
+Action: Shell
+Action Input: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
+Observation: root@c0mpi1er-c0nta1ner:/work# { mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
+-- The C compiler identification is GNU 13.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Looking for unistd.h
+-- Looking for unistd.h - found
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for sys/stat.h
+-- Looking for sys/stat.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for snprintf
+-- Looking for snprintf - found
+-- Looking for popen
+-- Looking for popen - found
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of long
+-- Check size of long - done
+-- Check size of long long
+-- Check size of long long - done
+-- SIZEOF_LONG="8" ; SIZEOF_LONG_LONG="8"
+-- WORDS_BIGENDIAN="0"
+-- SPHINX_DEBUG="" ; DEBUG_ENDIAN=""
+-- FIXED_POINT="OFF" ; DEFAULT_RADIX="12"
+-- Performing Test HAVE_C11_THREAD_LOCAL
+-- Performing Test HAVE_C11_THREAD_LOCAL - Success
+-- Performing Test HAVE_GCC_THREAD_LOCAL
+-- Performing Test HAVE_GCC_THREAD_LOCAL - Success
+-- Performing Test HAVE_MSVC_THREAD_LOCAL
+-- Performing Test HAVE_MSVC_THREAD_LOCAL - Failed
+-- Thread-local storage support: ENABLED
+-- PS_THREAD_LOCAL_RNG="ON"
+-- Found BISON: /usr/bin/bison (found suitable version "3.8.2", minimum required is "3.0.0") 
+-- Found FLEX: /usr/bin/flex (found version "2.6.4") 
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+-- Checking for module 'libpulse-simple'
+--   Package 'libpulse-simple', required by 'virtual:world', not found
+-- Checking for module 'portaudio-2.0'
+--   Package 'portaudio-2.0', required by 'virtual:world', not found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- MODELDIR="/usr/local/share/pocketsphinx/model"
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /work/build
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Thought: CMake configuration was successful. Now I need to build the project using make.
+Action: Shell
+Action Input: make -j$(nproc)
+Observation: [ 67%] Building C object src/CMakeFiles/pocketsphinx.dir/util/filename.c.o
+[ 67%] Building C object src/CMakeFiles/pocketsphinx.dir/util/slamch.c.o
+[ 70%] Building C object src/CMakeFiles/pocketsphinx.dir/util/cmd_ln.c.o
+[ 70%] Building C object src/CMakeFiles/pocketsphinx.dir/util/blkarray_list.c.o
+[ 70%] Building C object src/CMakeFiles/pocketsphinx.dir/util/blas_lite.c.o
+[ 72%] Building C object src/CMakeFiles/pocketsphinx.dir/util/vector.c.o
+[ 72%] Building C object src/CMakeFiles/pocketsphinx.dir/util/mmio.c.o
+[ 72%] Building C object src/CMakeFiles/pocketsphinx.dir/util/hash_table.c.o
+[ 75%] Building C object src/CMakeFiles/pocketsphinx.dir/util/err.c.o
+[ 75%] Building C object src/CMakeFiles/pocketsphinx.dir/util/ckd_alloc.c.o
+[ 75%] Building C object src/CMakeFiles/pocketsphinx.dir/util/slapack_lite.c.o
+[ 77%] Building C object src/CMakeFiles/pocketsphinx.dir/util/matrix.c.o
+[ 77%] Building C object src/CMakeFiles/pocketsphinx.dir/util/bio.c.o
+[ 77%] Building C object src/CMakeFiles/pocketsphinx.dir/util/heap.c.o
+[ 80%] Building C object src/CMakeFiles/pocketsphinx.dir/util/priority_queue.c.o
+[ 80%] Building C object src/CMakeFiles/pocketsphinx.dir/util/bitvec.c.o
+[ 80%] Building C object src/CMakeFiles/pocketsphinx.dir/util/profile.c.o
+[ 82%] Building C object src/CMakeFiles/pocketsphinx.dir/util/errno.c.o
+[ 82%] Building C object src/CMakeFiles/pocketsphinx.dir/util/logmath.c.o
+[ 82%] Building C object src/CMakeFiles/pocketsphinx.dir/util/glist.c.o
+[ 85%] Building C object src/CMakeFiles/pocketsphinx.dir/util/f2c_lite.c.o
+[ 85%] Building C object src/CMakeFiles/pocketsphinx.dir/util/listelem_alloc.c.o
+[ 85%] Building C object src/CMakeFiles/pocketsphinx.dir/util/pio.c.o
+[ 87%] Building C object src/CMakeFiles/pocketsphinx.dir/util/genrand.c.o
+[ 87%] Building C object src/CMakeFiles/pocketsphinx.dir/util/soundfiles.c.o
+[ 87%] Linking C static library ../libpocketsphinx.a
+[ 87%] Built target pocketsphinx
+[ 87%] Building C object programs/CMakeFiles/pocketsphinx_jsgf2fsg.dir/pocketsphinx_jsgf2fsg.c.o
+[ 90%] Building C object programs/CMakeFiles/pocketsphinx_mdef_convert.dir/pocketsphinx_mdef_convert.c.o
+[ 90%] Building C object programs/CMakeFiles/pocketsphinx_batch.dir/pocketsphinx_batch.c.o
+[ 90%] Building C object programs/CMakeFiles/pocketsphinx_main.dir/pocketsphinx_main.c.o
+[ 90%] Linking C executable ../pocketsphinx_mdef_convert
+[ 92%] Linking C executable ../pocketsphinx_jsgf2fsg
+[ 92%] Linking C executable ../pocketsphinx_batch
+[ 92%] Built target pocketsphinx_mdef_convert
+[ 95%] Linking C executable ../pocketsphinx
+[ 95%] Building C object programs/CMakeFiles/pocketsphinx_lm_convert.dir/pocketsphinx_lm_convert.c.o
+[ 95%] Built target pocketsphinx_jsgf2fsg
+[ 97%] Building C object programs/CMakeFiles/pocketsphinx_lm_eval.dir/pocketsphinx_lm_eval.c.o
+[ 97%] Linking C executable ../pocketsphinx_lm_convert
+[ 97%] Built target pocketsphinx_batch
+[ 97%] Linking C executable ../pocketsphinx_lm_eval
+[100%] Building C object programs/CMakeFiles/pocketsphinx_pitch.dir/pocketsphinx_pitch.c.o
+[100%] Built target pocketsphinx_lm_convert
+[100%] Built target pocketsphinx_main
+[100%] Built target pocketsphinx_lm_eval
+[100%] Linking C executable ../pocketsphinx_pitch
+[100%] Built target pocketsphinx_pitch
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Thought: The compilation completed successfully. Let me verify the build artifacts exist.
+Action: Shell
+Action Input: ls -la /work/build/libpocketsphinx.a /work/build/pocketsphinx /work/build/pocketsphinx_batch /work/build/pocketsphinx_mdef_convert /work/build/pocketsphinx_jsgf2fsg /work/build/pocketsphinx_lm_convert /work/build/pocketsphinx_lm_eval /work/build/pocketsphinx_pitch
+Observation: root@c0mpi1er-c0nta1ner:/work/build# 
+<ork/build/pocketsphinx_jsgf2fsg /work/build/pocketsphinx_lm_convert /work/build/pocketsphinx_lm_eval /work/build/pocketsphinx_pitch
+-rw-r--r-- 1 root root 1208202 Nov 23 23:35 /work/build/libpocketsphinx.a
+-rwxr-xr-x 1 root root  602440 Nov 23 23:35 /work/build/pocketsphinx
+-rwxr-xr-x 1 root root  569424 Nov 23 23:35 /work/build/pocketsphinx_batch
+-rwxr-xr-x 1 root root  171800 Nov 23 23:35 /work/build/pocketsphinx_jsgf2fsg
+-rwxr-xr-x 1 root root  170664 Nov 23 23:35 /work/build/pocketsphinx_lm_convert
+-rwxr-xr-x 1 root root  170736 Nov 23 23:35 /work/build/pocketsphinx_lm_eval
+-rwxr-xr-x 1 root root  119328 Nov 23 23:35 /work/build/pocketsphinx_mdef_convert
+-rwxr-xr-x 1 root root  116024 Nov 23 23:35 /work/build/pocketsphinx_pitch
+
+root@c0mpi1er-c0nta1ner:/work/build#
+[Exit code: 0]
+Thought: Thought: The compilation was successful. All the main executables and the static library were built without errors.
+Final Answer: COMPILATION-SUCCESS
